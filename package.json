@@ -1,0 +1,44 @@
+{
+  "name": "sapphire.js-template",
+  "scripts": {
+    "prepare": "husky install",
+    "dev": "node scripts/dev.js",
+    "start": "node dist/index.js",
+    "build": "node scripts/build.js",
+    "lint": "biome lint src/"
+  },
+  "dependencies": {
+    "@prisma/client": "5.11.0",
+    "@sapphire/decorators": "^6.1.0",
+    "@sapphire/framework": "^5.0.7",
+    "@sapphire/pieces": "^4.2.2",
+    "@sapphire/plugin-hmr": "^3.0.1",
+    "@sapphire/plugin-logger": "^4.0.2",
+    "@sapphire/plugin-utilities-store": "^2.0.2",
+    "discord.js": "^14.14.1",
+    "dotenv": "^16.4.5",
+    "remeda": "^1.50.1",
+    "tslib": "^2.6.2",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "1.6.1",
+    "@total-typescript/ts-reset": "^0.5.1",
+    "@types/better-sqlite3": "^7.6.9",
+    "chokidar": "^3.6.0",
+    "concurrently": "^8.2.2",
+    "cross-spawn": "^7.0.3",
+    "husky": "^9.0.11",
+    "lint-staged": "^15.2.2",
+    "prisma": "^5.11.0",
+    "resolve-tspaths": "^0.8.18",
+    "tsup": "^8.0.2",
+    "typescript": "^5.4.2"
+  },
+  "lint-staged": {
+    "**/*.(ts|js)": [
+      "bash -c 'pnpm tsc --noEmit'",
+      "pnpm lint"
+    ]
+  }
+}
