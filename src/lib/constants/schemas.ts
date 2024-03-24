@@ -44,6 +44,13 @@ export const Systems = z.enum([
 
 export type System = z.infer<typeof Systems>;
 
+export const NotificationChannels = z.enum([
+	"HABBO_USERNAME_ADDED",
+	"HABBO_USERNAME_CHANGED",
+]);
+
+export type NotificationChannel = z.infer<typeof NotificationChannels>;
+
 // Utils
 
 /** Tries to execute a function and executes a fallback if it throws. */

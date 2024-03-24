@@ -9,6 +9,7 @@ import {
 	Systems,
 	Snowflake,
 	Committees,
+	NotificationChannels,
 } from "$lib/constants/schemas";
 
 const OrderedSnowflake = z.object({
@@ -26,10 +27,12 @@ export const EnvironmentSchema = z.object({
 		.enum(enumKeys<keyof typeof LogLevel>(LogLevel))
 		.transform((value) => LogLevel[value]),
 
+	GUILD_ID: Snowflake,
 	DEFAULT_ROLES: z.array(Snowflake),
 	SECTORS_ROLES: typedRecord(Sectors, OrderedSnowflake),
 	SYSTEMS_ROLES: typedRecord(Systems, OrderedSnowflake),
 	COMMITTEES_ROLES: typedRecord(Committees, OrderedSnowflake),
+	NOTIFICATION_CHANNELS: typedRecord(NotificationChannels, Snowflake),
 });
 
 export const __DEV__ = process.env.NODE_ENV === "development";

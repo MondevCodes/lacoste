@@ -4,6 +4,7 @@ import { Utility } from "@sapphire/plugin-utilities-store";
 import { ENVIRONMENT } from "$lib/env";
 
 import type {
+	GuildMember,
 	Message,
 	MessageEditOptions,
 	MessagePayload,
@@ -104,11 +105,15 @@ export class DiscordUtility extends Utility {
 	 * ```
 	 */
 	public async hasPermission<T extends Category>(
-		message: Message<true>,
 		options: DiscordHasPermissionOptions<T>,
+		message: Message,
 	) {
+		if (!message.inGuild()) {
+			throw new Error("Cannot check permissions outside of a guild.");
+		}
+
 		const member =
-			message.member ?? (await message.guild.members.fetch(message.author.id));
+			message.member ?? (await message.guild?.members.fetch(message.author.id));
 
 		const exactRole = Object.values(ROLES_ORDER[options.category]).find(
 			(x) => x.id === options.checkFor,
@@ -131,20 +136,14 @@ export class DiscordUtility extends Utility {
 
 	/**
 	 * Adds default roles to the member.
-	 * @param message Message object to infer member.
+	 * @param member Member to add default roles to.
 	 *
 	 * @example
 	 * ```ts
 	 * await this.container.utilities.discord.addDefaultRoles(message);
 	 * ```
 	 */
-	public async addDefaultRoles(message: Message) {
-		if (!message.inGuild())
-			throw new Error("Cannot add default roles outside of a guild.");
-
-		const member =
-			message.member ?? (await message.guild.members.fetch(message.author.id));
-
+	public async addDefaultRoles(member: GuildMember) {
 		await member.roles.add(ENVIRONMENT.DEFAULT_ROLES).catch((error) => {
 			this.container.logger.error(
 				"[Utilities/DiscordUtility] Could not add default roles.",

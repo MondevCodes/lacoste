@@ -5,7 +5,16 @@ export function typedRecord<K extends string, T extends z.ZodTypeAny>(
 	key: z.ZodEnum<SpreadArray<K>>,
 	value: T,
 ) {
-	return z.record(key, value);
+	return z.object(
+		key._def.values.reduce(
+			(agg, k) => ({
+				// biome-ignore lint/performance/noAccumulatingSpread: Required to be spread.
+				...agg,
+				[k]: value.optional(),
+			}),
+			{} as Record<K, T>,
+		),
+	);
 }
 
 export function enumKeys<
