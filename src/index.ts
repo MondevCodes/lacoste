@@ -167,7 +167,7 @@ async function run(): Promise<void> {
 			IntentsBitField.Flags.MessageContent,
 		],
 
-		defaultPrefix: "!",
+		defaultPrefix: "-",
 		baseUserDirectory: null,
 
 		caseInsensitiveCommands: true,
