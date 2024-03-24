@@ -15,6 +15,8 @@
     "@sapphire/plugin-hmr": "^3.0.1",
     "@sapphire/plugin-logger": "^4.0.2",
     "@sapphire/plugin-utilities-store": "^2.0.2",
+    "@sapphire/result": "^2.6.6",
+    "axios": "^1.6.8",
     "discord.js": "^14.14.1",
     "dotenv": "^16.4.5",
     "remeda": "^1.50.1",

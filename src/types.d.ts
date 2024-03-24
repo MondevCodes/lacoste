@@ -7,6 +7,8 @@ import "@sapphire/plugin-logger";
 import "@sapphire/plugin-utilities-store";
 
 import type { PrismaClient } from "@prisma/client";
+
+import type { HabboUtility } from "$lib/utilities/habbo";
 import type { DiscordUtility } from "$lib/utilities/discord";
 import type { InquirerUtility } from "$lib/utilities/inquirer";
 import type { PaginationUtility } from "$lib/utilities/pagination";
@@ -26,6 +28,7 @@ declare module "@sapphire/pieces" {
 
 declare module "@sapphire/plugin-utilities-store" {
 	interface Utilities {
+		habbo: HabboUtility;
 		discord: DiscordUtility;
 		inquirer: InquirerUtility;
 		pagination: PaginationUtility;
