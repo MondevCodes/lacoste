@@ -12,4 +12,26 @@ model User {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  habboId   String @unique
+  discordId String @unique
+
+  SentTransactions     Transaction[] @relation(name: "URST")
+  ReceivedTransactions Transaction[] @relation(name: "URRT")
+}
+
+model Transaction {
+  id String @id @map("_id")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  amount Float
+  reason String?
+
+  user   User   @relation(name: "URRT", fields: [userId], references: [id])
+  userId String
+
+  author   User?   @relation(name: "URST", fields: [authorId], references: [id])
+  authorId String?
 }
