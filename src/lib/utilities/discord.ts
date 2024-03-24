@@ -1,6 +1,8 @@
 import { ApplyOptions } from "@sapphire/decorators";
 import { Utility } from "@sapphire/plugin-utilities-store";
 
+import { Environment } from "$lib/env";
+
 import type {
 	Message,
 	MessageEditOptions,
@@ -9,16 +11,19 @@ import type {
 } from "discord.js";
 
 export type DiscordEphemeralReplyOptions =
-	| ({ method: "reply"; deleteIn?: number } & (
+	| ({ method?: "reply"; deleteIn?: number } & (
 			| string
 			| MessagePayload
 			| MessageReplyOptions
 	  ))
-	| ({ method: "edit"; deleteIn?: number } & (
+	| ({ method?: "edit"; deleteIn?: number } & (
 			| string
 			| MessagePayload
 			| MessageEditOptions
 	  ));
+
+export type DiscordRestrictedKeys =
+	(typeof Environment.AUTHORIZED_ROLES)[number]["key"];
 
 @ApplyOptions<Utility.Options>({
 	name: "discord",
@@ -45,7 +50,7 @@ export class DiscordUtility extends Utility {
 		let messageSent: Message;
 
 		if (options.method === "reply") messageSent = await message.reply(options);
-		else messageSent = await message.edit(options);
+		else messageSent = await message.edit(options as MessageEditOptions);
 
 		setTimeout(async () => {
 			if (messageSent.deletable) {
@@ -57,5 +62,26 @@ export class DiscordUtility extends Utility {
 				);
 			}
 		}, options.deleteIn ?? 15_000);
+	}
+
+	public async isAuthorized(role: DiscordRestrictedKeys, message: Message) {
+		if (!message.inGuild()) {
+			throw new Error("Cannot send message outside of a guild.");
+		}
+
+		const member =
+			message.member ?? (await message.guild.members.fetch(message.author));
+
+		const ids = Environment.AUTHORIZED_ROLES.find((r) => r.key === role)?.ids;
+
+		if (!ids) {
+			this.container.logger.warn(
+				`[Utilities/DiscordUtility] Unknown role: ${role}`,
+			);
+
+			return false;
+		}
+
+		return member.roles.cache.some((r) => ids.includes(r.id));
 	}
 }

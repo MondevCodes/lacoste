@@ -5,7 +5,7 @@ export default defineConfig({
 	splitting: false,
 	sourcemap: true,
 	keepNames: true,
-	minify: true,
+	// minify: true,
 
 	format: ["cjs"],
 
@@ -23,4 +23,6 @@ export default defineConfig({
 	replaceNodeEnv: true,
 	bundle: false,
 	clean: true,
+
+	onSuccess: "resolve-tspaths -o dist/",
 });
