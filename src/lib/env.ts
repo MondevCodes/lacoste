@@ -2,66 +2,37 @@ import { z } from "zod";
 import { LogLevel } from "@sapphire/framework";
 
 import { TokenRegex } from "$lib/constants/regexes";
+import { enumKeys, typedRecord } from "$lib/helpers/zod-helpers";
 
-export const LOG_LEVEL = {
-	Trace: LogLevel.Trace,
-	Debug: LogLevel.Debug,
-	Info: LogLevel.Info,
-	Warn: LogLevel.Warn,
-	Error: LogLevel.Error,
-	Fatal: LogLevel.Fatal,
-	None: LogLevel.None,
-	"10": LogLevel.Trace,
-	"20": LogLevel.Debug,
-	"30": LogLevel.Info,
-	"40": LogLevel.Warn,
-	"50": LogLevel.Error,
-	"60": LogLevel.Fatal,
-	"100": LogLevel.None,
-};
+import {
+	Sectors,
+	Systems,
+	Snowflake,
+	Committees,
+} from "$lib/constants/schemas";
 
-export type LogLevelObject = keyof typeof LOG_LEVEL;
+const OrderedSnowflake = z.object({
+	index: z.number().default(0),
+	id: Snowflake,
+});
 
-const AuthorizedRoles = z.enum([
-	"ESTAGIÁRIO",
-	"LÍDER_DE_MODELOS",
-	"SUPERVISOR",
-	"COORDENADOR",
-	"SUB_GERENTE",
-	"GERENTE",
-	"ADMINISTRADOR_EM_OBS",
-	"ADMINISTRADOR",
-]);
+export type OrderedSnowflake = z.infer<typeof OrderedSnowflake>;
 
-const EnvSchema = z.object({
-	NODE_ENV: z.enum(["development", "production"]),
-
+export const EnvironmentSchema = z.object({
+	NODE_ENV: z.string().regex(TokenRegex),
 	DISCORD_TOKEN: z.string().regex(TokenRegex),
 
 	LOG_LEVEL: z
-		.enum(Object.keys(LOG_LEVEL) as [LogLevelObject, ...LogLevelObject[]])
-		.transform((value) => LOG_LEVEL[value]),
+		.enum(enumKeys<keyof typeof LogLevel>(LogLevel))
+		.transform((value) => LogLevel[value]),
 
-	AUTHORIZED_ROLES: z
-		.string()
-		.transform((str) => JSON.parse(str))
-		.pipe(
-			z.array(
-				z.object({
-					key: AuthorizedRoles,
-					ids: z.array(z.string()),
-					minimumTime: z.number(),
-				}),
-			),
-		),
+	DEFAULT_ROLES: z.array(Snowflake),
+	SECTORS_ROLES: typedRecord(Sectors, OrderedSnowflake),
+	SYSTEMS_ROLES: typedRecord(Systems, OrderedSnowflake),
+	COMMITTEES_ROLES: typedRecord(Committees, OrderedSnowflake),
 });
-
-export const Environment = EnvSchema.parse({
-	NODE_ENV: process.env.NODE_ENV,
-	...process.env,
-});
-
-export type Env = z.infer<typeof EnvSchema>;
 
 export const __DEV__ = process.env.NODE_ENV === "development";
 export const __PROD__ = process.env.NODE_ENV === "production";
+
+export const ENVIRONMENT = EnvironmentSchema.parse(process.env);

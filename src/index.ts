@@ -12,7 +12,7 @@ import { PrismaClient } from "@prisma/client";
 import { SapphireClient, container } from "@sapphire/framework";
 import { IntentsBitField, type ClientOptions } from "discord.js";
 
-import { Environment, __DEV__ } from "$lib/env";
+import { ENVIRONMENT, __DEV__ } from "$lib/env";
 
 /**
  * Reads all files recursively from the given directory.
@@ -178,13 +178,13 @@ async function run(): Promise<void> {
 		loadApplicationCommandRegistriesStatusListeners: true,
 
 		hmr: { enabled: __DEV__ },
-		logger: { level: Environment.LOG_LEVEL },
+		logger: { level: ENVIRONMENT.LOG_LEVEL },
 	});
 
 	container.prisma = new PrismaClient();
 
 	await container.prisma.$connect();
-	await sapphireClient.login(Environment.DISCORD_TOKEN);
+	await sapphireClient.login(ENVIRONMENT.DISCORD_TOKEN);
 }
 
 if (require.main === module) {
