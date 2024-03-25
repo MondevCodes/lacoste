@@ -106,15 +106,8 @@ export class DiscordUtility extends Utility {
 	 */
 	public async hasPermission<T extends Category>(
 		options: DiscordHasPermissionOptions<T>,
-		message: Message,
+		member: GuildMember,
 	) {
-		if (!message.inGuild()) {
-			throw new Error("Cannot check permissions outside of a guild.");
-		}
-
-		const member =
-			message.member ?? (await message.guild?.members.fetch(message.author.id));
-
 		const exactRole = Object.values(ROLES_ORDER[options.category]).find(
 			(x) => x.id === options.checkFor,
 		);

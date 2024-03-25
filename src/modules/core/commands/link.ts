@@ -11,9 +11,16 @@ import { EmbedBuilder, type Message } from "discord.js";
 })
 export class LinkCommand extends Command {
 	public override async messageRun(message: Message, args: Args) {
+		if (!message.inGuild()) {
+			throw new Error("Cannot check permissions outside of a guild.");
+		}
+
+		const memberToCheck =
+			message.member ?? (await message.guild?.members.fetch(message.author.id));
+
 		const isAuthorized = await this.container.utilities.discord.hasPermission(
 			{ category: "SECTOR", checkFor: "PROMOCIONAL" },
-			message,
+			memberToCheck,
 		);
 
 		if (!isAuthorized) {

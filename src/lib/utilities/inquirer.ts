@@ -24,6 +24,7 @@ import type {
 	TextInputBuilder,
 	MessageReplyOptions,
 	ModalSubmitInteraction,
+	CacheType,
 } from "discord.js";
 
 const ID_SEPARATOR = "&";
@@ -111,15 +112,21 @@ export interface ButtonsInquirerOptions extends BaseOptions<ButtonValue> {
 }
 
 export interface ModalInquirerOptions
-	extends Omit<BaseOptions<unknown>, "choices"> {
+	extends Omit<BaseOptions<unknown>, "choices" | "question"> {
 	/** Title of the modal. */
 	title: string;
 
 	/** Inputs to display in the modal. The inputs will be displayed in the order they are in the array. */
 	inputs: TextInputBuilder[];
 
+	/** Weather to listen for an interaction or send a button */
+	listenInteraction?: boolean;
+
 	/** Label to display on the submit button. */
-	startButtonLabel: string;
+	startButtonLabel?: string;
+
+	/** Question to ask the user. */
+	question?: string | MessageReplyOptions;
 }
 
 export type SelectMenuOptionType =
@@ -368,48 +375,59 @@ export class InquirerUtility extends Utility {
 			await interaction.deferReply({ ephemeral: true });
 		}
 
-		const button = new ButtonBuilder()
-			.setLabel(options.startButtonLabel)
-			.setCustomId(`${uuid}${ID_SEPARATOR}start`)
-			.setStyle(ButtonStyle.Success);
+		let modalSubmit: ModalSubmitInteraction<CacheType>;
 
-		const buttonRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
-			button,
-		);
+		if (options.listenInteraction && interaction.isButton()) {
+			modalSubmit = await interaction.awaitModalSubmit({
+				time: options.timeout ?? 1000 * 60,
+				filter: (component) => component.user.id === interaction.user.id,
+			});
+		} else {
+			const button = new ButtonBuilder()
+				.setLabel(options.startButtonLabel ?? "Start")
+				.setCustomId(`${uuid}${ID_SEPARATOR}start`)
+				.setStyle(ButtonStyle.Success);
 
-		const messageOptions: MessageReplyOptions = {
-			components: [buttonRow],
-			...(typeof options.question === "string"
-				? { content: options.question }
-				: options.question),
-		};
+			const buttonRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+				button,
+			);
 
-		if (options.inDM) {
-			await channel.send(messageOptions);
-		} else await interaction.editReply(messageOptions);
+			const messageOptions: MessageReplyOptions = {
+				components: [buttonRow],
+				...(typeof options.question === "string"
+					? { content: options.question }
+					: options.question),
+			};
 
-		const collectedButton = await channel.awaitMessageComponent({
-			componentType: ComponentType.Button,
-			filter: (component) =>
-				component.customId.startsWith(`${uuid}${ID_SEPARATOR}`) &&
-				component.user.id === interaction.user.id,
-			time: options.timeout ?? 1000 * 30,
-		});
+			if (options.inDM) {
+				await channel.send(messageOptions);
+			} else await interaction.editReply(messageOptions);
 
-		const modal = new ModalBuilder().setCustomId(uuid).setTitle(options.title);
+			const collectedButton = await channel.awaitMessageComponent({
+				componentType: ComponentType.Button,
+				filter: (component) =>
+					component.customId.startsWith(`${uuid}${ID_SEPARATOR}`) &&
+					component.user.id === interaction.user.id,
+				time: options.timeout ?? 1000 * 30,
+			});
 
-		modal.addComponents(
-			options.inputs.map((input) =>
-				new ActionRowBuilder<TextInputBuilder>().addComponents(input),
-			),
-		);
+			const modal = new ModalBuilder()
+				.setCustomId(uuid)
+				.setTitle(options.title);
 
-		await collectedButton.showModal(modal);
+			modal.addComponents(
+				options.inputs.map((input) =>
+					new ActionRowBuilder<TextInputBuilder>().addComponents(input),
+				),
+			);
 
-		const modalSubmit = await collectedButton.awaitModalSubmit({
-			time: options.timeout ?? 1000 * 60,
-			filter: (component) => component.user.id === interaction.user.id,
-		});
+			await collectedButton.showModal(modal);
+
+			modalSubmit = await collectedButton.awaitModalSubmit({
+				time: options.timeout ?? 1000 * 60,
+				filter: (component) => component.user.id === interaction.user.id,
+			});
+		}
 
 		await modalSubmit.deferReply({ ephemeral: true });
 
