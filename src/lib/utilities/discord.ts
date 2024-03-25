@@ -4,7 +4,9 @@ import { Utility } from "@sapphire/plugin-utilities-store";
 import { ENVIRONMENT } from "$lib/env";
 
 import type {
+	Guild,
 	GuildMember,
+	GuildMemberRoleManager,
 	Message,
 	MessageEditOptions,
 	MessagePayload,
@@ -91,10 +93,50 @@ export class DiscordUtility extends Utility {
 	}
 
 	/**
+	 * Infer the highest sector role from a list of roles.
+	 * @returns The highest sector role from the list if it exists, otherwise `null`.
+	 *
+	 * @example
+	 * ```ts
+	 * const roles = new GuildMemberRoleManager(member);
+	 * const highestRole = this.#inferHighestSectorRole(roles);
+	 *
+	 * // => Role { id: '123456789012345678' }
+	 * ```
+	 */
+	public inferHighestSectorRole(roles: GuildMemberRoleManager) {
+		const sectorRoles = roles.cache.filter((role) =>
+			Object.values(ENVIRONMENT.SECTORS_ROLES).some((r) => r.id === role.id),
+		);
+
+		if (sectorRoles.size === 0) return null;
+
+		return sectorRoles.reduce((highest, current) => {
+			const currentIndex =
+				Object.values(ENVIRONMENT.SECTORS_ROLES).find(
+					(r) => r.id === current.id,
+				)?.index ?? 0;
+
+			const highestIndex =
+				Object.values(ENVIRONMENT.SECTORS_ROLES).find(
+					(r) => r.id === highest.id,
+				)?.index ?? 0;
+
+			if (!currentIndex || !highestIndex) {
+				return current;
+			}
+
+			return currentIndex > highestIndex ? current : highest;
+		});
+	}
+
+	/**
 	 * Checks if the user has the required permissions.
 	 * @param message Message object to check for permissions.
 	 * @param options Object containing the category and role to check for.
 	 * @returns Boolean indicating whether the user has the required permissions.
+	 *
+	 * @deprecated Use `hasPermissionByRole` instead.
 	 *
 	 * @example
 	 * ```ts
@@ -104,7 +146,7 @@ export class DiscordUtility extends Utility {
 	 * });
 	 * ```
 	 */
-	public async hasPermission<T extends Category>(
+	public hasPermission<T extends Category>(
 		options: DiscordHasPermissionOptions<T>,
 		member: GuildMember,
 	) {
@@ -128,6 +170,37 @@ export class DiscordUtility extends Utility {
 	}
 
 	/**
+	 * Checks if the user has the required permissions.
+	 * @param message Message object to check for permissions.
+	 * @param options Object containing the category and role to check for.
+	 * @returns Boolean indicating whether the user has the required permissions.
+	 */
+	public hasPermissionByRole<T extends Category>(
+		options: DiscordHasPermissionOptions<T> & {
+			/** Member's roles object manager to check. */
+			roles: GuildMemberRoleManager;
+		},
+	) {
+		const exactRole = Object.values(ROLES_ORDER[options.category]).find(
+			(x) => x.id === options.checkFor,
+		);
+
+		if (!exactRole) {
+			throw new Error(
+				`[Utilities/DiscordUtility] Invalid role "${options.checkFor}" for category "${options.category}".`,
+			);
+		}
+
+		const higherRoles = Object.values(ROLES_ORDER[options.category]).filter(
+			(x) => x.index >= (exactRole.index ?? 0),
+		);
+
+		return options.exact
+			? options.roles.cache.has(exactRole.id)
+			: higherRoles.some((x) => options.roles.cache.has(x.id));
+	}
+
+	/**
 	 * Adds default roles to the member.
 	 * @param member Member to add default roles to.
 	 *
@@ -143,5 +216,26 @@ export class DiscordUtility extends Utility {
 				{ error },
 			);
 		});
+	}
+
+	#guild: Guild | null = null;
+
+	/**
+	 * Gets the guild object.
+	 * @returns Guild object.
+	 *
+	 * @example
+	 * ```ts
+	 * const guild = await this.container.utilities.discord.getGuild();
+	 * ```
+	 */
+	public async getGuild() {
+		if (!this.#guild) {
+			this.#guild = await this.container.client.guilds.fetch(
+				ENVIRONMENT.GUILD_ID,
+			);
+		}
+
+		return this.#guild;
 	}
 }

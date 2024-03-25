@@ -13,7 +13,6 @@ export const Sectors = z.enum([
 	"SISTEMA",
 	"EXCLUSIVOS",
 	"FEDERAÇÃO",
-	"FUNDO",
 	"PRESIDÊNCIA",
 	"DIRETORIA",
 	"ADMINISTRATIVO",
@@ -45,11 +44,14 @@ export const Systems = z.enum([
 export type System = z.infer<typeof Systems>;
 
 export const NotificationChannels = z.enum([
+	"APPROVAL_REQUEST",
+
 	"FORM_NOTES",
 	"FORM_WARNINGS",
 	"FORM_INTERVIEW",
 	"FORM_EVALUATION",
 	"FORM_ORGANIZATIONAL",
+
 	"HABBO_USERNAME_ADDED",
 	"HABBO_USERNAME_CHANGED",
 ]);
