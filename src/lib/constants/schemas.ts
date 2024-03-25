@@ -47,6 +47,7 @@ export type System = z.infer<typeof Systems>;
 export const NotificationChannels = z.enum([
 	"FORM_INTERVIEW",
 	"FORM_EVALUATION",
+	"FORM_ORGANIZATIONAL",
 	"HABBO_USERNAME_ADDED",
 	"HABBO_USERNAME_CHANGED",
 ]);

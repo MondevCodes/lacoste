@@ -36,13 +36,14 @@ export class FormSendCommand extends Command {
 		}
 
 		const evaluationFlag = args.getFlags("avaliação", "av");
+		const organizationalFlag = args.getFlags("organizacional", "org");
 
-		if (evaluationFlag) {
+		if (evaluationFlag && !organizationalFlag) {
 			await message.channel.send({
 				embeds: [
 					new EmbedBuilder()
 						.setColor(EmbedColors.Default)
-						.setTitle("Formulário de Avaliação / Entrevista")
+						.setTitle("Formulários de Avaliação / Entrevista")
 						.setDescription(
 							"Selecione o tipo de formulário que deseja e responda o questionário que será aberto. Ao finalizar, seu formulário será enviado para a equipe de avaliação.",
 						),
@@ -58,6 +59,29 @@ export class FormSendCommand extends Command {
 							.setLabel("Entrevistar")
 							.setStyle(ButtonStyle.Primary)
 							.setCustomId(FormIds.Entrevista),
+					),
+				],
+			});
+
+			return;
+		}
+
+		if (organizationalFlag && !evaluationFlag) {
+			await message.channel.send({
+				embeds: [
+					new EmbedBuilder()
+						.setColor(EmbedColors.Default)
+						.setTitle("Formulários de Organizacional")
+						.setDescription(
+							"Selecione o tipo de formulário que deseja e responda o questionário que será aberto. Ao finalizar, seu formulário será enviado para o canal de relatórios.",
+						),
+				],
+				components: [
+					new ActionRowBuilder<ButtonBuilder>().addComponents(
+						new ButtonBuilder()
+							.setLabel("Relatório Presencial")
+							.setStyle(ButtonStyle.Success)
+							.setCustomId(FormIds.Organizacional),
 					),
 				],
 			});
