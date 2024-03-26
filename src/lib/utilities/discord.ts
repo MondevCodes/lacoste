@@ -51,7 +51,7 @@ const ROLES_ORDER = {
 	COMMITTEE: ENVIRONMENT.COMMITTEES_ROLES,
 	SECTOR: ENVIRONMENT.SECTORS_ROLES,
 	SYSTEM: ENVIRONMENT.SYSTEMS_ROLES,
-} as const;
+} satisfies Record<Category, object>;
 
 @ApplyOptions<Utility.Options>({
 	name: "discord",
@@ -135,45 +135,6 @@ export class DiscordUtility extends Utility {
 	 * @param message Message object to check for permissions.
 	 * @param options Object containing the category and role to check for.
 	 * @returns Boolean indicating whether the user has the required permissions.
-	 *
-	 * @deprecated Use `hasPermissionByRole` instead.
-	 *
-	 * @example
-	 * ```ts
-	 * await this.container.utilities.discord.hasPermission(message, {
-	 *   category: 'SECTOR',
-	 *   checkFor: 'SISTEMA',
-	 * });
-	 * ```
-	 */
-	public hasPermission<T extends Category>(
-		options: DiscordHasPermissionOptions<T>,
-		member: GuildMember,
-	) {
-		const exactRole = Object.values(ROLES_ORDER[options.category]).find(
-			(x) => x.id === options.checkFor,
-		);
-
-		if (!exactRole) {
-			throw new Error(
-				`[Utilities/DiscordUtility] Invalid role "${options.checkFor}" for category "${options.category}".`,
-			);
-		}
-
-		const higherRoles = Object.values(ROLES_ORDER[options.category]).filter(
-			(x) => x.index >= (exactRole.index ?? 0),
-		);
-
-		return options.exact
-			? member.roles.cache.has(exactRole.id)
-			: higherRoles.some((x) => member.roles.cache.has(x.id));
-	}
-
-	/**
-	 * Checks if the user has the required permissions.
-	 * @param message Message object to check for permissions.
-	 * @param options Object containing the category and role to check for.
-	 * @returns Boolean indicating whether the user has the required permissions.
 	 */
 	public hasPermissionByRole<T extends Category>(
 		options: DiscordHasPermissionOptions<T> & {
@@ -181,23 +142,23 @@ export class DiscordUtility extends Utility {
 			roles: GuildMemberRoleManager;
 		},
 	) {
-		const exactRole = Object.values(ROLES_ORDER[options.category]).find(
-			(x) => x.id === options.checkFor,
+		const exactRole: { id: string; index: number } =
+			// @ts-ignore
+			ROLES_ORDER[options.category]?.[options.checkFor];
+
+		if (!exactRole) return false;
+
+		const foundExactRole = options.roles.cache.some(
+			(x) => x.id === exactRole.id,
 		);
 
-		if (!exactRole) {
-			throw new Error(
-				`[Utilities/DiscordUtility] Invalid role "${options.checkFor}" for category "${options.category}".`,
-			);
-		}
+		if (foundExactRole) return foundExactRole;
 
-		const higherRoles = Object.values(ROLES_ORDER[options.category]).filter(
-			(x) => x.index >= (exactRole.index ?? 0),
-		);
+		const higherRoles = Object.values(
+			ROLES_ORDER[options.category] ?? {},
+		).filter((x) => x.index >= (exactRole.index ?? 0) && x.id !== exactRole.id);
 
-		return options.exact
-			? options.roles.cache.has(exactRole.id)
-			: higherRoles.some((x) => options.roles.cache.has(x.id));
+		return higherRoles.some((x) => options.roles.cache.has(x.id));
 	}
 
 	/**

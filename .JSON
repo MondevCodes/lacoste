@@ -1,0 +1,11 @@
+{
+  "SISTEMA": { "id": "1222220238746292274", "index": 8 },
+  "EXCLUSIVOS": { "id": "1222220239463514163", "index": 7 },
+  "FEDERAÇÃO": { "id": "1222220241300492378", "index": 6 },
+  "PRESIDÊNCIA": { "id": "1222220242516967506", "index": 5 },
+  "DIRETORIA": { "id": "1222220244139905195", "index": 4 },
+  "ADMINISTRATIVO": { "id": "1222220245457178777", "index": 3 },
+  "PROMOCIONAL": { "id": "1222220246979710976", "index": 2 },
+  "AVALIATIVO": { "id": "1222220248158310522", "index": 1 },
+  "INICIAL": { "id": "1222220249626312814", "index": 0 }
+}

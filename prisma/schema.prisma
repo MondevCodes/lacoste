@@ -16,6 +16,11 @@ model User {
   habboId   String @unique
   discordId String @unique
 
+  latestPromotionDate   DateTime?
+  latestPromotionRoleId String?
+
+  pendingPromotionRoleId String?
+
   SentTransactions     Transaction[] @relation(name: "URST")
   ReceivedTransactions Transaction[] @relation(name: "URRT")
 }

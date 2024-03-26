@@ -65,12 +65,9 @@ function readFilesRecursively(
 export default class CustomSapphireClient extends SapphireClient {
 	constructor(options: ClientOptions) {
 		super(options);
-		asyncConstructor.call(this);
 
-		async function asyncConstructor(this: CustomSapphireClient) {
-			await this.loadApplicationCommandRegistriesSync();
-			await this.loadUtilitiesAsync();
-		}
+		this.loadUtilitiesAsync();
+		this.loadApplicationCommandRegistriesSync();
 	}
 
 	/**
@@ -92,7 +89,40 @@ export default class CustomSapphireClient extends SapphireClient {
 		);
 
 		for (const path of foldersWithAtLeastOneClassExport) {
-			this.stores.registerPath(path);
+			const splittedPath = path.split("/");
+
+			const pathType = splittedPath[splittedPath.length - 1] as
+				| "commands"
+				| "interactions"
+				| "listeners"
+				| "preconditions";
+
+			switch (pathType) {
+				case "commands":
+					this.stores.get("commands").registerPath(path);
+					break;
+
+				case "interactions":
+					this.stores.get("interaction-handlers").registerPath(path);
+					break;
+
+				case "listeners":
+					this.stores.get("listeners").registerPath(path);
+					break;
+
+				case "preconditions":
+					this.stores.get("preconditions").registerPath(path);
+					break;
+
+				default:
+					this.logger.warn(
+						`[CustomSapphireClient#loadApplicationCommandRegistriesSync] Unknown path type ${pathType} in path ${path}.`,
+					);
+			}
+
+			this.logger.info(
+				`[CustomSapphireClient#loadApplicationCommandRegistriesSync] ${pathType} ${path}`,
+			);
 		}
 	}
 
@@ -105,12 +135,15 @@ export default class CustomSapphireClient extends SapphireClient {
 	 * ```
 	 */
 	private async loadUtilitiesAsync(): Promise<void> {
-		const filesToRegister = readFilesRecursively(join(__dirname, "utilities"), [
-			...(await this.getFilesWithoutClassesExports(
-				join(__dirname, "lib", "utilities"),
-			)),
-			/.map$/i,
-		]);
+		const filesToRegister = readFilesRecursively(
+			join(__dirname, "lib", "utilities"),
+			[
+				...(await this.getFilesWithoutClassesExports(
+					join(__dirname, "lib", "utilities"),
+				)),
+				/.map$/i,
+			],
+		);
 
 		const foldersWithAtLeastOneClassExport = new Set<string>(
 			filesToRegister.map((file) => dirname(file)),
@@ -118,6 +151,7 @@ export default class CustomSapphireClient extends SapphireClient {
 
 		for (const folder of foldersWithAtLeastOneClassExport) {
 			this.stores.get("utilities").registerPath(folder);
+			this.logger.info(`[CustomSapphireClient#loadUtilitiesAsync] ${folder}`);
 		}
 	}
 
@@ -178,7 +212,7 @@ async function run(): Promise<void> {
 		loadApplicationCommandRegistriesStatusListeners: true,
 
 		hmr: { enabled: __DEV__ },
-		logger: { level: ENVIRONMENT.LOG_LEVEL },
+		logger: { level: ENVIRONMENT.LOG_LEVEL, depth: 32 },
 	});
 
 	container.prisma = new PrismaClient();

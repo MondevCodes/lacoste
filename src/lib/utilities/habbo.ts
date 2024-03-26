@@ -5,8 +5,8 @@ import { Result } from "@sapphire/result";
 
 import { Utility } from "@sapphire/plugin-utilities-store";
 
-const BASE_API_URL = "https://www.habbo.com/api/public/";
-const BASE_CDN_URL = "https://www.habbo.com/habbo-imaging/";
+const BASE_API_URL = "https://www.habbo.com.br/api/public/";
+const BASE_CDN_URL = "https://www.habbo.com.br/habbo-imaging/";
 
 const HabboAPI = axios.create({ baseURL: BASE_API_URL });
 const HabboCDN = axios.create({ baseURL: BASE_CDN_URL });
@@ -117,9 +117,10 @@ export class HabboUtility extends Utility {
 			data: { uniqueId },
 		} = await HabboAPI.get<HabboUser>(
 			`users?name=${encodeURIComponent(username)}`,
+			{ responseType: "json" },
 		);
 
-		if (status !== 404) {
+		if (status !== 200) {
 			return Result.err(new Error("User Not Found"));
 		}
 

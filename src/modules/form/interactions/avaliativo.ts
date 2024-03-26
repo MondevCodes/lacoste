@@ -6,7 +6,7 @@ import {
 
 import {
 	type ButtonInteraction,
-	type GuildMember,
+	GuildMember,
 	EmbedBuilder,
 	TextInputBuilder,
 	TextInputStyle,
@@ -33,10 +33,21 @@ type FeedbackInput = keyof typeof FeedbackInputIds;
 })
 export class EvaluationFormInteractionHandler extends InteractionHandler {
 	public override async parse(interaction: ButtonInteraction) {
-		const isAuthorized = await this.container.utilities.discord.hasPermission(
-			{ category: "SECTOR", checkFor: "AVALIATIVO" },
-			interaction.member as GuildMember,
-		);
+		if (!interaction.inGuild()) {
+			throw new Error("Cannot check permissions outside of a guild.");
+		}
+
+		const guild = await this.container.utilities.discord.getGuild();
+
+		const member = !(interaction.member instanceof GuildMember)
+			? await guild.members.fetch(interaction.member.user.id)
+			: interaction.member;
+
+		const isAuthorized = this.container.utilities.discord.hasPermissionByRole({
+			category: "SECTOR",
+			checkFor: "AVALIATIVO",
+			roles: member.roles,
+		});
 
 		if (!isAuthorized) {
 			return this.none();
@@ -54,8 +65,10 @@ export class EvaluationFormInteractionHandler extends InteractionHandler {
 				{
 					inputs: [
 						new TextInputBuilder()
-							.setLabel("Avaliado")
-							.setPlaceholder("Discord (@Nick) ou Habbo (Nick).")
+							.setLabel("Avaliado (Discord ou Habbo)")
+							.setPlaceholder(
+								"Informe ID do Discord (@Nick) ou do Habbo (Nick).",
+							)
 							.setCustomId(FeedbackInputIds.Target)
 							.setStyle(TextInputStyle.Short)
 							.setRequired(true),
@@ -69,7 +82,7 @@ export class EvaluationFormInteractionHandler extends InteractionHandler {
 
 						new TextInputBuilder()
 							.setLabel("Desempenho em Sede")
-							.setPlaceholder("01/12/2024")
+							.setPlaceholder("Descreva o desempenho do(a) avaliado(a).")
 							.setCustomId(FeedbackInputIds.Performance)
 							.setStyle(TextInputStyle.Paragraph)
 							.setRequired(true),
@@ -77,14 +90,14 @@ export class EvaluationFormInteractionHandler extends InteractionHandler {
 						new TextInputBuilder()
 							.setLabel("Ortografia")
 							.setPlaceholder("Descreva a ortografia do(a) avaliado(a).")
-							.setCustomId(FeedbackInputIds.OrthographyRate)
+							.setCustomId(FeedbackInputIds.Orthography)
 							.setStyle(TextInputStyle.Paragraph)
 							.setRequired(false),
 
 						new TextInputBuilder()
 							.setLabel("Promovido Em")
 							.setPlaceholder("01/12/2024")
-							.setCustomId(FeedbackInputIds.Position)
+							.setCustomId(FeedbackInputIds.Promotion)
 							.setStyle(TextInputStyle.Short)
 							.setRequired(false),
 					],
@@ -98,7 +111,7 @@ export class EvaluationFormInteractionHandler extends InteractionHandler {
 		);
 
 		if (habboProfileResult.isErr()) {
-			await i.reply({
+			await i.followUp({
 				ephemeral: true,
 				content: `Não foi possível encontrar o perfil do(a) avaliado(a) "${result.Target}", verifique o nome e tente novamente.`,
 			});
@@ -108,24 +121,28 @@ export class EvaluationFormInteractionHandler extends InteractionHandler {
 
 		const habboProfile = habboProfileResult.unwrap();
 
-		const performanceRate =
+		const [performanceRate] =
 			await this.container.utilities.inquirer.awaitSelectMenu(i, {
-				choices: Array.from({ length: 5 }, (_, i) => ({
-					id: String(i + 1),
-					label: String(i + 1),
-					value: String(i + 1),
-				})),
+				choices: [
+					{ id: "1", label: "Muito Ruim", value: "1", emoji: "1️⃣" },
+					{ id: "2", label: "Ruim", value: "2", emoji: "2️⃣" },
+					{ id: "3", label: "Regular", value: "3", emoji: "3️⃣" },
+					{ id: "4", label: "Bom", value: "4", emoji: "4️⃣" },
+					{ id: "5", label: "Excelente", value: "5", emoji: "5️⃣" },
+				],
 				question: "Nota para o desempenho do(a) avaliado(a)",
 				placeholder: "Selecione uma opção (1-5)",
 			});
 
-		const orthographyRate =
+		const [orthographyRate] =
 			await this.container.utilities.inquirer.awaitSelectMenu(i, {
-				choices: Array.from({ length: 5 }, (_, i) => ({
-					id: String(i + 1),
-					label: String(i + 1),
-					value: String(i + 1),
-				})),
+				choices: [
+					{ id: "1", label: "Muito Ruim", value: "1", emoji: "1️⃣" },
+					{ id: "2", label: "Ruim", value: "2", emoji: "2️⃣" },
+					{ id: "3", label: "Regular", value: "3", emoji: "3️⃣" },
+					{ id: "4", label: "Bom", value: "4", emoji: "4️⃣" },
+					{ id: "5", label: "Excelente", value: "5", emoji: "5️⃣" },
+				],
 				question: "Nota para a ortografia do(a) avaliado(a)",
 				placeholder: "Selecione uma opção (1-5)",
 			});
@@ -136,31 +153,21 @@ export class EvaluationFormInteractionHandler extends InteractionHandler {
 		const embed = new EmbedBuilder()
 			.setTitle("Avaliação")
 			.setThumbnail(
-				`https://www.habbo.com/habbo-imaging/${habboProfile.user.figureString}`,
+				`https://www.habbo.com/habbo-imaging/avatarimage?figure=${habboProfile.user.figureString}&size=b`,
 			)
 			.addFields([
-				{ name: "Avaliado(a)", value: result.Target, inline: true },
-				{ name: "Posição (Sede)", value: result.Position, inline: true },
-				{ name: "Promovido (Data)", value: result.Promotion, inline: false },
-				{
-					name: "🎛️ Desempenho",
-					value: result.Performance,
-					inline: true,
-				},
-				{
-					name: "📝 Ortografia",
-					value: result.Orthography,
-					inline: false,
-				},
+				{ name: "Avaliado(a)", value: result.Target },
+				{ name: "Posição (Sede)", value: result.Position },
+				{ name: "Promovido (Data)", value: result.Promotion },
+				{ name: "Desempenho", value: result.Performance },
+				{ name: "Ortografia", value: result.Orthography },
 				{
 					name: "Desempenho (Nota)",
 					value: "⭐".repeat(Number.parseInt(performanceRate)),
-					inline: true,
 				},
 				{
 					name: "Ortografia (Nota)",
 					value: "⭐".repeat(Number.parseInt(performanceRate)),
-					inline: true,
 				},
 			])
 			.setAuthor({
@@ -189,5 +196,7 @@ export class EvaluationFormInteractionHandler extends InteractionHandler {
 		await channel.send({
 			embeds: [embed],
 		});
+
+		await i.deleteReply();
 	}
 }

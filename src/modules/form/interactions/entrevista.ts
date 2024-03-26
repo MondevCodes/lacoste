@@ -6,7 +6,7 @@ import {
 
 import {
 	type ButtonInteraction,
-	type GuildMember,
+	GuildMember,
 	EmbedBuilder,
 	TextInputBuilder,
 	TextInputStyle,
@@ -21,9 +21,8 @@ enum FeedbackInputIds {
 	Target = "Target",
 	Clarification = "Clarification",
 	Functionality = "Functionality",
-	Compliment = "Compliment",
-	Complaint = "Complaint",
 	Additional = "Additional",
+	Feedback = "Feedback",
 }
 
 type FeedbackInput = keyof typeof FeedbackInputIds;
@@ -33,10 +32,21 @@ type FeedbackInput = keyof typeof FeedbackInputIds;
 })
 export class InterviewFormInteractionHandler extends InteractionHandler {
 	public override async parse(interaction: ButtonInteraction) {
-		const isAuthorized = await this.container.utilities.discord.hasPermission(
-			{ category: "SECTOR", checkFor: "AVALIATIVO" },
-			interaction.member as GuildMember,
-		);
+		if (!interaction.inGuild()) {
+			throw new Error("Cannot check permissions outside of a guild.");
+		}
+
+		const guild = await this.container.utilities.discord.getGuild();
+
+		const member = !(interaction.member instanceof GuildMember)
+			? await guild.members.fetch(interaction.member.user.id)
+			: interaction.member;
+
+		const isAuthorized = this.container.utilities.discord.hasPermissionByRole({
+			category: "SECTOR",
+			checkFor: "AVALIATIVO",
+			roles: member.roles,
+		});
 
 		if (!isAuthorized) {
 			return this.none();
@@ -54,57 +64,44 @@ export class InterviewFormInteractionHandler extends InteractionHandler {
 				{
 					inputs: [
 						new TextInputBuilder()
-							.setLabel("Avaliado")
-							.setPlaceholder("Discord (@Nick) ou Habbo (Nick).")
+							.setLabel("Identificador (Discord ou Habbo)")
+							.setPlaceholder(
+								"Informe seu ID no Discord (@Nick) ou no Habbo (Nick).",
+							)
 							.setCustomId(FeedbackInputIds.Target)
 							.setStyle(TextInputStyle.Short)
 							.setRequired(true),
 
 						new TextInputBuilder()
-							.setLabel(
-								"As informações sobre o novo cargo ficaram claras para você?",
-							)
-							.setPlaceholder("Responda com 'Sim' ou 'Não'.")
+							.setLabel("Suas novas funções estão claras?")
 							.setCustomId(FeedbackInputIds.Clarification)
 							.setStyle(TextInputStyle.Short)
 							.setRequired(true),
 
 						new TextInputBuilder()
-							.setLabel("Você gostava da sua função anterior?")
-							.setPlaceholder("Responda com 'Sim' ou 'Não'.")
-							.setCustomId(FeedbackInputIds.Clarification)
+							.setLabel("Gostava de sua função anterior?")
+							.setCustomId(FeedbackInputIds.Functionality)
 							.setStyle(TextInputStyle.Short)
 							.setRequired(true),
 
 						new TextInputBuilder()
-							.setLabel(
-								"Gostaria de fazer algum elogio a respeito de sua promoção?",
-							)
-							.setPlaceholder("Responda com 'Sim' ou 'Não'.")
-							.setCustomId(FeedbackInputIds.Compliment)
+							.setLabel("Elogio ou reclamação sobre a promoção")
+							.setCustomId(FeedbackInputIds.Feedback)
 							.setStyle(TextInputStyle.Paragraph)
 							.setRequired(false),
 
 						new TextInputBuilder()
-							.setLabel(
-								"Gostaria de fazer alguma reclamação a respeito de sua promoção?",
-							)
-							.setPlaceholder("Responda com 'Sim' ou 'Não'.")
-							.setCustomId(FeedbackInputIds.Complaint)
-							.setStyle(TextInputStyle.Paragraph)
-							.setRequired(false),
-
-						new TextInputBuilder()
-							.setLabel("Deseja acrescentar algo mais?")
-							.setPlaceholder("Responda com 'Sim' ou 'Não'.")
-							.setCustomId(FeedbackInputIds.Complaint)
+							.setLabel("Informações adicionais")
+							.setCustomId(FeedbackInputIds.Additional)
 							.setStyle(TextInputStyle.Paragraph)
 							.setRequired(false),
 					],
 					listenInteraction: true,
-					title: "Avaliação",
+					title: "Entrevista",
 				},
 			);
+
+		await i.deleteReply();
 
 		const habboProfileResult = await this.container.utilities.habbo.getProfile(
 			result.Target,
@@ -124,28 +121,28 @@ export class InterviewFormInteractionHandler extends InteractionHandler {
 		const embed = new EmbedBuilder()
 			.setTitle("Avaliação")
 			.setThumbnail(
-				`https://www.habbo.com/habbo-imaging/${habboProfile.user.figureString}`,
+				`https://www.habbo.com/habbo-imaging/avatarimage?figure=${habboProfile.user.figureString}&size=b`,
 			)
 			.addFields([
 				{
-					name: "As informações sobre o novo cargo ficaram claras para você?",
+					name: "Identificador",
+					value: result.Target,
+				},
+				{
+					name: "Suas novas funções estão claras?",
 					value: result.Clarification,
 				},
 				{
-					name: "Você gostava da sua função anterior?",
+					name: "Gostava de sua função anterior?",
 					value: result.Functionality,
 				},
 				{
-					name: "Gostaria de fazer algum elogio a respeito de sua promoção?",
-					value: result.Compliment ?? "N/A",
+					name: "Elogio ou reclamação sobre a promoção",
+					value: result.Feedback,
 				},
 				{
-					name: "Gostaria de fazer alguma reclamação a respeito de sua promoção?",
-					value: result.Complaint ?? "N/A",
-				},
-				{
-					name: "Deseja acrescentar algo mais?",
-					value: result.Additional ?? "N/A",
+					name: "Informações adicionais",
+					value: result.Additional,
 				},
 			])
 			.setAuthor({

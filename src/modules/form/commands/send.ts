@@ -17,7 +17,7 @@ import {
 	generateDashLessAliases: true,
 	generateUnderscoreLessAliases: true,
 })
-export class FormSendCommand extends Command {
+export default class FormSendCommand extends Command {
 	public override async messageRun(message: Message, args: Args) {
 		if (!message.inGuild()) {
 			throw new Error("Cannot check permissions outside of a guild.");
@@ -26,19 +26,23 @@ export class FormSendCommand extends Command {
 		const memberToCheck =
 			message.member ?? (await message.guild?.members.fetch(message.author.id));
 
-		const isAuthorized = await this.container.utilities.discord.hasPermission(
-			{ category: "SECTOR", checkFor: "FEDERAÇÃO" },
-			memberToCheck,
-		);
+		const isAuthorized = this.container.utilities.discord.hasPermissionByRole({
+			category: "SECTOR",
+			checkFor: "FEDERAÇÃO",
+			roles: memberToCheck.roles,
+		});
 
 		if (!isAuthorized) {
+			this.container.logger.debug(
+				`[FormSendCommand#messageRun] ${message.author.tag} tried to send a form without the proper permissions.`,
+			);
+
 			return;
 		}
 
-		const evaluationFlag = args.getFlags("avaliação", "av");
-		const organizationalFlag = args.getFlags("organizacional", "org");
+		const type = await args.pick("string");
 
-		if (evaluationFlag && !organizationalFlag) {
+		if (type === "aval") {
 			await message.channel.send({
 				embeds: [
 					new EmbedBuilder()
@@ -66,7 +70,7 @@ export class FormSendCommand extends Command {
 			return;
 		}
 
-		if (organizationalFlag && !evaluationFlag) {
+		if (type === "org") {
 			await message.channel.send({
 				embeds: [
 					new EmbedBuilder()

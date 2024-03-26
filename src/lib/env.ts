@@ -10,6 +10,7 @@ import {
 	Snowflake,
 	Committees,
 	NotificationChannels,
+	Jobs,
 } from "$lib/constants/schemas";
 
 const OrderedSnowflake = z.object({
@@ -20,7 +21,7 @@ const OrderedSnowflake = z.object({
 export type OrderedSnowflake = z.infer<typeof OrderedSnowflake>;
 
 export const EnvironmentSchema = z.object({
-	NODE_ENV: z.string().regex(TokenRegex),
+	NODE_ENV: z.enum(["development", "production"]),
 	DISCORD_TOKEN: z.string().regex(TokenRegex),
 
 	LOG_LEVEL: z
@@ -28,10 +29,25 @@ export const EnvironmentSchema = z.object({
 		.transform((value) => LogLevel[value]),
 
 	GUILD_ID: Snowflake,
-	DEFAULT_ROLES: z.array(Snowflake),
+
+	JOBS_ROLES: typedRecord(Jobs, OrderedSnowflake),
 	SECTORS_ROLES: typedRecord(Sectors, OrderedSnowflake),
 	SYSTEMS_ROLES: typedRecord(Systems, OrderedSnowflake),
 	COMMITTEES_ROLES: typedRecord(Committees, OrderedSnowflake),
+
+	DEFAULT_ROLES: z
+		.string()
+		.transform((value) => JSON.parse(value))
+		.refine(
+			(value): value is string[] =>
+				Array.isArray(value) &&
+				value.length > 0 &&
+				value.every((role) => typeof role === "string"),
+			{
+				message: "Must have at least one role.",
+			},
+		),
+
 	NOTIFICATION_CHANNELS: typedRecord(NotificationChannels, Snowflake),
 });
 

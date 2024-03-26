@@ -152,6 +152,12 @@ export interface SelectMenuInquirerOptions
 	/** Select menu's placeholder text. */
 	placeholder: string;
 
+	/** Select menu's minimum number of values. */
+	minValues?: number;
+
+	/** Select menu's maximum number of values. */
+	maxValues?: number;
+
 	/** @todo Update select menu types to newer versions. */
 	type?: SelectMenuOptionType;
 
@@ -371,13 +377,21 @@ export class InquirerUtility extends Utility {
 			throw new Error("Cannot send message to non-text channel.");
 		}
 
-		if (interaction.inGuild() && !interaction.deferred) {
-			await interaction.deferReply({ ephemeral: true });
-		}
+		options.listenInteraction ??= false;
 
 		let modalSubmit: ModalSubmitInteraction<CacheType>;
 
+		const modal = new ModalBuilder().setCustomId(uuid).setTitle(options.title);
+
+		modal.addComponents(
+			options.inputs.map((input) =>
+				new ActionRowBuilder<TextInputBuilder>().addComponents(input),
+			),
+		);
+
 		if (options.listenInteraction && interaction.isButton()) {
+			await interaction.showModal(modal);
+
 			modalSubmit = await interaction.awaitModalSubmit({
 				time: options.timeout ?? 1000 * 60,
 				filter: (component) => component.user.id === interaction.user.id,
@@ -411,16 +425,6 @@ export class InquirerUtility extends Utility {
 				time: options.timeout ?? 1000 * 30,
 			});
 
-			const modal = new ModalBuilder()
-				.setCustomId(uuid)
-				.setTitle(options.title);
-
-			modal.addComponents(
-				options.inputs.map((input) =>
-					new ActionRowBuilder<TextInputBuilder>().addComponents(input),
-				),
-			);
-
 			await collectedButton.showModal(modal);
 
 			modalSubmit = await collectedButton.awaitModalSubmit({
@@ -452,7 +456,7 @@ export class InquirerUtility extends Utility {
 	public async awaitSelectMenu<T extends SelectMenuInquirerOptions>(
 		interaction: Interaction,
 		options: T,
-	): Promise<T["choices"][number]["id"]> {
+	): Promise<T["choices"][number]["id"][]> {
 		if (!interaction.isRepliable()) {
 			throw new Error("The interaction must be repliable.");
 		}
@@ -491,7 +495,9 @@ export class InquirerUtility extends Utility {
 		const selectMenu = new SelectMenuBuilder()
 			.setPlaceholder(options.placeholder)
 			.setCustomId(uuid)
-			.setOptions(opts);
+			.setOptions(opts)
+			.setMinValues(options.minValues ?? 1)
+			.setMaxValues(options.maxValues ?? 1);
 
 		const selectMenuActionRow =
 			new ActionRowBuilder<SelectMenuBuilder>().addComponents(selectMenu);
@@ -562,7 +568,7 @@ export class InquirerUtility extends Utility {
 			throw new Error("No choice found for selected value.");
 		}
 
-		return choice.id as T["choices"][number]["id"];
+		return answer.values as T["choices"][number]["id"][];
 	}
 
 	/**

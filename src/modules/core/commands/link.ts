@@ -18,10 +18,11 @@ export class LinkCommand extends Command {
 		const memberToCheck =
 			message.member ?? (await message.guild?.members.fetch(message.author.id));
 
-		const isAuthorized = await this.container.utilities.discord.hasPermission(
-			{ category: "SECTOR", checkFor: "PROMOCIONAL" },
-			memberToCheck,
-		);
+		const isAuthorized = this.container.utilities.discord.hasPermissionByRole({
+			category: "SECTOR",
+			checkFor: "PROMOCIONAL",
+			roles: memberToCheck.roles,
+		});
 
 		if (!isAuthorized) {
 			return;
