@@ -45,7 +45,7 @@ const MODAL_INPUTS_OBJ = {
 
 	Reason: new TextInputBuilder()
 		.setStyle(TextInputStyle.Paragraph)
-		.setLabel("Motivo da demissão do(a) avaliado(a)")
+		.setLabel("Motivo da demissão")
 		.setPlaceholder("Ex.: Inatividade")
 		.setCustomId("Reason")
 		.setRequired(false),
@@ -134,7 +134,7 @@ export class FireInteractionHandler extends InteractionHandler {
 					{
 						listenInteraction: true,
 						inputs: MODAL_INPUTS,
-						title: "Anotação",
+						title: "Demissão",
 					},
 				);
 
@@ -160,6 +160,7 @@ export class FireInteractionHandler extends InteractionHandler {
 				where: { habboId: uniqueId },
 				select: {
 					id: true,
+					discordId: true,
 					latestPromotionDate: true,
 					latestPromotionRoleId: true,
 				},
@@ -175,7 +176,9 @@ export class FireInteractionHandler extends InteractionHandler {
 				return;
 			}
 
-			const targetUser = await cachedGuild.members.fetch(targetUserDb.id);
+			const targetUser = await cachedGuild.members.fetch(
+				targetUserDb.discordId,
+			);
 
 			if (!targetUser) {
 				await modalInteraction.reply({
@@ -184,11 +187,6 @@ export class FireInteractionHandler extends InteractionHandler {
 					ephemeral: true,
 				});
 			}
-
-			const currentJobRoleIndex =
-				Object.values(ENVIRONMENT.JOBS_ROLES).find(
-					(role) => role.id === targetUserDb.latestPromotionRoleId,
-				)?.index ?? 0;
 
 			const currentJobRole = await cachedGuild.roles.fetch(
 				targetUserDb.latestPromotionRoleId ?? "",
@@ -203,29 +201,6 @@ export class FireInteractionHandler extends InteractionHandler {
 
 				return;
 			}
-
-			const jobRolesIds = new Set(
-				Object.values(ENVIRONMENT.JOBS_ROLES)
-					.filter((role) => role.index > currentJobRoleIndex)
-					.map((role) => role.id),
-			);
-
-			if (jobRolesIds.size === 0) {
-				await modalInteraction.reply({
-					content:
-						"Este colaborador não pode ser contratado pois já é o cargo mais alto.",
-					ephemeral: true,
-				});
-
-				return;
-			}
-
-			const jobsRoles = modalInteraction.guild?.roles.cache.filter((role) =>
-				jobRolesIds.has(role.id),
-			);
-
-			if (!jobsRoles)
-				throw new Error("Failed to get job roles, cache may be empty.");
 
 			const confirmationEmbed = new EmbedBuilder()
 				.setThumbnail(
@@ -248,13 +223,11 @@ export class FireInteractionHandler extends InteractionHandler {
 						{
 							id: "True" as const,
 							style: ButtonStyle.Success,
-							emoji: "✅",
 							label: "Sim",
 						},
 						{
 							id: "False" as const,
 							style: ButtonStyle.Danger,
-							emoji: "❌",
 							label: "Não",
 						},
 					],
@@ -284,6 +257,9 @@ export class FireInteractionHandler extends InteractionHandler {
 					name: interaction.user.tag,
 					iconURL: interaction.user.displayAvatarURL(),
 				})
+				.setFooter({
+					text: targetUserDb.id,
+				})
 				.addFields([
 					{
 						name: "Membro",
@@ -295,7 +271,7 @@ export class FireInteractionHandler extends InteractionHandler {
 					},
 					{
 						name: "Motivo",
-						value: result.Reason,
+						value: result.Reason.length > 0 ? result.Reason : "Nenhum",
 					},
 				])
 				.setThumbnail(
@@ -305,8 +281,10 @@ export class FireInteractionHandler extends InteractionHandler {
 			await approvalChannel.send({
 				embeds: [approvalEmbed],
 				components: [this.#APPROVAL_ROW],
-				content: `<@&${ENVIRONMENT.SECTORS_ROLES.PRESIDÊNCIA}>`,
+				content: `<@&${ENVIRONMENT.SECTORS_ROLES.PRESIDÊNCIA.id}>`,
 			});
+
+			await modalInteraction.deleteReply();
 
 			return;
 		}
@@ -314,6 +292,17 @@ export class FireInteractionHandler extends InteractionHandler {
 		// ---------------------
 		// -  Handle Approval  -
 		// ---------------------
+
+		const targetUserId = interaction.message.embeds[0].footer?.text;
+
+		if (!targetUserId) {
+			await interaction.reply({
+				content: "||305|| Ocorreu um erro, contate o desenvolvedor.",
+				ephemeral: true,
+			});
+
+			return;
+		}
 
 		if (action === "Reject") {
 			await interaction.editReply({
@@ -323,11 +312,6 @@ export class FireInteractionHandler extends InteractionHandler {
 						.setTitle("Solicitação Rejeitada")
 						.setColor(EmbedColors.Error),
 				],
-			});
-
-			await interaction.followUp({
-				content: "Rejeitada.",
-				ephemeral: true,
 			});
 
 			return;
@@ -343,14 +327,13 @@ export class FireInteractionHandler extends InteractionHandler {
 
 		const targetUser = await this.container.prisma.user.findUnique({
 			where: {
-				discordId: interaction.user.id,
-				pendingPromotionRoleId: { not: null },
+				id: targetUserId,
 			},
 		});
 
 		if (!targetUser) {
-			await interaction.followUp({
-				content: "Ocorreu um erro, contate o desenvolvedor.",
+			await interaction.reply({
+				content: "||342|| Ocorreu um erro, contate o desenvolvedor.",
 				ephemeral: true,
 			});
 
@@ -361,52 +344,22 @@ export class FireInteractionHandler extends InteractionHandler {
 			interaction.guild ??
 			(await interaction.client.guilds.fetch(interaction.guildId));
 
-		if (
-			!targetUser.pendingPromotionRoleId ||
-			!targetUser.latestPromotionRoleId
-		) {
-			await interaction.followUp({
-				content: "Ocorreu um erro, contate o desenvolvedor.",
-				ephemeral: true,
-			});
-
-			return;
-		}
-
-		const pendingPromotionRole = await guild.roles.fetch(
-			targetUser.pendingPromotionRoleId,
-		);
-
-		if (!pendingPromotionRole) {
-			await interaction.followUp({
-				content:
-					"Não consegui encontrar o cargo pendente, contate o desenvolvedor.",
-				ephemeral: true,
-			});
-
-			return;
-		}
-
-		await guild.members.removeRole({
-			role: pendingPromotionRole,
-			user: interaction.user.id,
-			reason: "Contratação",
-		});
-
-		const latestPromotionRole = await guild.roles.fetch(
-			targetUser.latestPromotionRoleId,
-		);
+		const latestPromotionRole =
+			targetUser.latestPromotionRoleId &&
+			(await guild.roles.fetch(targetUser.latestPromotionRoleId));
 
 		if (latestPromotionRole) {
 			await guild.members.removeRole({
 				role: latestPromotionRole,
-				user: interaction.user.id,
-				reason: "Contratação",
+				user: targetUser.discordId,
+				reason: "Demissão",
 			});
 		}
 
 		await this.container.prisma.user.update({
-			where: { discordId: interaction.user.id },
+			where: {
+				id: targetUserId,
+			},
 			data: {
 				latestPromotionDate: new Date(),
 				latestPromotionRoleId: null,
@@ -417,17 +370,17 @@ export class FireInteractionHandler extends InteractionHandler {
 		await notificationChannel.send({
 			embeds: [
 				EmbedBuilder.from(interaction.message.embeds[0])
-					.setTitle(`Contratação de ${interaction.user.tag}`)
+					.setTitle(`Demissão de ${interaction.user.tag}`)
 					.addFields([{ name: "Autorizado Por", value: interaction.user.tag }])
 					.setColor(EmbedColors.Default),
 			],
 		});
 
-		await interaction.editReply({
+		await interaction.message.edit({
 			components: [],
 			embeds: [
 				EmbedBuilder.from(interaction.message.embeds[0])
-					.setTitle("Contratação Aprovada")
+					.setTitle("Demissão Aprovada")
 					.setColor(EmbedColors.Success),
 			],
 		});

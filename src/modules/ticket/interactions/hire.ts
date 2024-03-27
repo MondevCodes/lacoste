@@ -134,7 +134,7 @@ export class HireInteractionHandler extends InteractionHandler {
 					{
 						listenInteraction: true,
 						inputs: MODAL_INPUTS,
-						title: "Anotação",
+						title: "Contratação",
 					},
 				);
 
@@ -160,6 +160,7 @@ export class HireInteractionHandler extends InteractionHandler {
 				where: { habboId: uniqueId },
 				select: {
 					id: true,
+					discordId: true,
 					latestPromotionDate: true,
 					latestPromotionRoleId: true,
 				},
@@ -175,7 +176,9 @@ export class HireInteractionHandler extends InteractionHandler {
 				return;
 			}
 
-			const targetUser = await cachedGuild.members.fetch(targetUserDb.id);
+			const targetUser = await cachedGuild.members.fetch(
+				targetUserDb.discordId,
+			);
 
 			if (!targetUser) {
 				await modalInteraction.reply({
@@ -241,10 +244,11 @@ export class HireInteractionHandler extends InteractionHandler {
 				.setFooter({
 					text: uniqueId,
 				})
-				.setTitle("Você tem certeza que deseja contratá-lo(a)?")
+				.setTitle("Você tem certeza?")
 				.setDescription(
-					`Você está contratando-o(a) para o cargo <@&${selectedJob.id}>.`,
-				);
+					`Você está contratando <@${targetUserDb.discordId}> como <@&${selectedJob.id}>.`,
+				)
+				.setColor(EmbedColors.Default);
 
 			const { result: isConfirmed } =
 				await this.container.utilities.inquirer.awaitButtons(modalInteraction, {
@@ -255,13 +259,11 @@ export class HireInteractionHandler extends InteractionHandler {
 						{
 							id: "True" as const,
 							style: ButtonStyle.Success,
-							emoji: "✅",
 							label: "Sim",
 						},
 						{
 							id: "False" as const,
 							style: ButtonStyle.Danger,
-							emoji: "❌",
 							label: "Não",
 						},
 					],
@@ -293,6 +295,9 @@ export class HireInteractionHandler extends InteractionHandler {
 					name: interaction.user.tag,
 					iconURL: interaction.user.displayAvatarURL(),
 				})
+				.setFooter({
+					text: targetUserDb.id,
+				})
 				.addFields([
 					{
 						name: "Membro",
@@ -304,22 +309,22 @@ export class HireInteractionHandler extends InteractionHandler {
 					},
 					{
 						name: "Observação Adicional",
-						value: result.Additional,
+						value: result.Additional === "" ? "N/A" : result.Additional,
 					},
 					{
-						name: "Data da última promoção",
+						name: "Última Promoção",
 						value:
 							targetUserDb.latestPromotionDate?.toLocaleString("pt-BR") ??
-							"Inexistente",
+							"N/A",
 						inline: true,
 					},
 					{
-						name: "Data desta promoção",
+						name: "Promoção Atual",
 						value: new Date().toLocaleString("pt-BR"),
 						inline: true,
 					},
 				])
-				.setThumbnail(`https://www.habbo.com/habbo-imaging/${figureString}`);
+				.setImage(`https://www.habbo.com/habbo-imaging/${figureString}`);
 
 			await this.container.prisma.user.update({
 				where: { id: targetUserDb.id },
@@ -329,8 +334,10 @@ export class HireInteractionHandler extends InteractionHandler {
 			await approvalChannel.send({
 				embeds: [approvalEmbed],
 				components: [this.#APPROVAL_ROW],
-				content: `<@&${ENVIRONMENT.SECTORS_ROLES.PRESIDÊNCIA}>`,
+				content: `<@&${ENVIRONMENT.SECTORS_ROLES.PRESIDÊNCIA.id}>`,
 			});
+
+			await modalInteraction.deleteReply();
 
 			return;
 		}
@@ -339,19 +346,30 @@ export class HireInteractionHandler extends InteractionHandler {
 		// -  Handle Approval  -
 		// ---------------------
 
+		const targetUserId = interaction.message.embeds[0].footer?.text;
+
+		if (!targetUserId) {
+			await interaction.followUp({
+				content: "Ocorreu um erro, contate o desenvolvedor.",
+				ephemeral: true,
+			});
+
+			return;
+		}
+
 		if (action === "Reject") {
-			await interaction.editReply({
+			await interaction.message.edit({
 				components: [],
 				embeds: [
 					EmbedBuilder.from(interaction.message.embeds[0])
-						.setTitle("Solicitação Rejeitada")
+						.setTitle(`Solicitação Rejeitada por ${interaction.user.tag}`)
 						.setColor(EmbedColors.Error),
 				],
 			});
 
-			await interaction.followUp({
-				content: "Rejeitada.",
-				ephemeral: true,
+			await this.container.prisma.user.update({
+				where: { id: targetUserId },
+				data: { pendingPromotionRoleId: null },
 			});
 
 			return;
@@ -367,13 +385,13 @@ export class HireInteractionHandler extends InteractionHandler {
 
 		const targetUser = await this.container.prisma.user.findUnique({
 			where: {
-				discordId: interaction.user.id,
+				id: targetUserId,
 				pendingPromotionRoleId: { not: null },
 			},
 		});
 
 		if (!targetUser) {
-			await interaction.followUp({
+			await interaction.reply({
 				content: "Ocorreu um erro, contate o desenvolvedor.",
 				ephemeral: true,
 			});
@@ -385,11 +403,8 @@ export class HireInteractionHandler extends InteractionHandler {
 			interaction.guild ??
 			(await interaction.client.guilds.fetch(interaction.guildId));
 
-		if (
-			!targetUser.pendingPromotionRoleId ||
-			!targetUser.latestPromotionRoleId
-		) {
-			await interaction.followUp({
+		if (!targetUser.pendingPromotionRoleId) {
+			await interaction.reply({
 				content: "Ocorreu um erro, contate o desenvolvedor.",
 				ephemeral: true,
 			});
@@ -402,7 +417,7 @@ export class HireInteractionHandler extends InteractionHandler {
 		);
 
 		if (!pendingPromotionRole) {
-			await interaction.followUp({
+			await interaction.reply({
 				content:
 					"Não consegui encontrar o cargo pendente, contate o desenvolvedor.",
 				ephemeral: true,
@@ -413,24 +428,24 @@ export class HireInteractionHandler extends InteractionHandler {
 
 		await guild.members.addRole({
 			role: pendingPromotionRole,
-			user: interaction.user.id,
+			user: targetUser.discordId,
 			reason: "Contratação",
 		});
 
-		const latestPromotionRole = await guild.roles.fetch(
-			targetUser.latestPromotionRoleId,
-		);
+		const latestPromotionRole =
+			targetUser.latestPromotionRoleId &&
+			(await guild.roles.fetch(targetUser.latestPromotionRoleId));
 
 		if (latestPromotionRole) {
 			await guild.members.removeRole({
+				user: targetUser.discordId,
 				role: latestPromotionRole,
-				user: interaction.user.id,
 				reason: "Contratação",
 			});
 		}
 
 		await this.container.prisma.user.update({
-			where: { discordId: interaction.user.id },
+			where: { id: targetUserId },
 			data: {
 				latestPromotionDate: new Date(),
 				latestPromotionRoleId: targetUser.pendingPromotionRoleId,
@@ -438,20 +453,26 @@ export class HireInteractionHandler extends InteractionHandler {
 			},
 		});
 
+		const habboProfile = (
+			await this.container.utilities.habbo.getProfile(targetUser.habboId)
+		).unwrapOr(null);
+
 		await notificationChannel.send({
 			embeds: [
 				EmbedBuilder.from(interaction.message.embeds[0])
-					.setTitle(`Contratação de ${interaction.user.tag}`)
+					.setTitle(
+						`Contratação de ${habboProfile?.user.name ?? targetUser.habboId}`,
+					)
 					.addFields([{ name: "Autorizado Por", value: interaction.user.tag }])
 					.setColor(EmbedColors.Default),
 			],
 		});
 
-		await interaction.editReply({
+		await interaction.message.edit({
 			components: [],
 			embeds: [
 				EmbedBuilder.from(interaction.message.embeds[0])
-					.setTitle("Contratação Aprovada")
+					.setTitle(`Contratação Aprovada por ${interaction.user.tag}`)
 					.setColor(EmbedColors.Success),
 			],
 		});

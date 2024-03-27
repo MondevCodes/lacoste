@@ -112,16 +112,19 @@ export class HabboUtility extends Utility {
 	public async getProfile(
 		username: string,
 	): Promise<Result<HabboProfile, Error>> {
-		const {
-			status,
-			data: { uniqueId },
-		} = await HabboAPI.get<HabboUser>(
-			`users?name=${encodeURIComponent(username)}`,
-			{ responseType: "json" },
-		);
+		let uniqueId: string = username;
 
-		if (status !== 200) {
-			return Result.err(new Error("User Not Found"));
+		if (!username.startsWith("hhbr-")) {
+			const { status, data } = await HabboAPI.get<HabboUser>(
+				`users?name=${encodeURIComponent(username)}`,
+				{ responseType: "json" },
+			);
+
+			if (status !== 200) {
+				return Result.err(new Error("User Not Found"));
+			}
+
+			uniqueId = data.uniqueId;
 		}
 
 		const getResult = await Result.fromAsync(
