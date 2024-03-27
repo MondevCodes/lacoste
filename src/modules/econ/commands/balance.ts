@@ -11,12 +11,12 @@ const MONETARY_INTL = new Intl.NumberFormat("pt-BR", {
 @ApplyOptions<Command.Options>({ name: "saldo" })
 export class BallanceCommand extends Command {
 	public override async messageRun(message: Message, args: Args) {
-		const user = (await args.pickResult("user")).unwrapOr(message.author);
+		const user = (await args.pickResult("member")).unwrapOr(message.author);
 
 		const {
 			_sum: { amount },
 		} = await this.container.prisma.transaction.aggregate({
-			where: { author: { discordId: user.id } },
+			where: { user: { discordId: user.id } },
 			_sum: { amount: true },
 		});
 

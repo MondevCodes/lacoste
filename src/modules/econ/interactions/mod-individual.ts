@@ -68,27 +68,31 @@ export class ModIndividualInteractionHandler extends InteractionHandler {
 			return;
 		}
 
-		const { result } = await this.container.utilities.inquirer.awaitModal<
-			"Target" | "Amount"
-		>(interaction, {
-			inputs: [
-				new TextInputBuilder()
-					.setCustomId("Target")
-					.setLabel("Avaliado (Discord ou Habbo)")
-					.setPlaceholder("Informe ID do Discord (@Nick) ou do Habbo (Nick).")
-					.setStyle(TextInputStyle.Short)
-					.setRequired(true),
+		const { result, interaction: i } =
+			await this.container.utilities.inquirer.awaitModal<"Target" | "Amount">(
+				interaction,
+				{
+					inputs: [
+						new TextInputBuilder()
+							.setCustomId("Target")
+							.setLabel("Membro (Discord ou Habbo)")
+							.setPlaceholder(
+								"Informe ID do Discord (@Nick) ou do Habbo (Nick).",
+							)
+							.setStyle(TextInputStyle.Short)
+							.setRequired(true),
 
-				new TextInputBuilder()
-					.setCustomId("Amount")
-					.setLabel("Quantidade de Câmbios")
-					.setPlaceholder("A quantia de câmbios a ser adicionada")
-					.setStyle(TextInputStyle.Short)
-					.setRequired(true),
-			],
-			title: "Adicionar Saldo Individual",
-			listenInteraction: true,
-		});
+						new TextInputBuilder()
+							.setCustomId("Amount")
+							.setLabel("Quantidade de Câmbios")
+							.setPlaceholder("A quantia de câmbios a ser adicionada")
+							.setStyle(TextInputStyle.Short)
+							.setRequired(true),
+					],
+					title: "Adicionar Saldo Individual",
+					listenInteraction: true,
+				},
+			);
 
 		const amount = Number(result.Amount);
 
@@ -97,9 +101,8 @@ export class ModIndividualInteractionHandler extends InteractionHandler {
 				`[HireInteractionHandler#run] ${interaction.user.tag} tried to perform an action in a DM.`,
 			);
 
-			await interaction.followUp({
+			await i.editReply({
 				content: "Quantia inválida, tente novamente apenas números",
-				ephemeral: true,
 			});
 		}
 
@@ -130,7 +133,7 @@ export class ModIndividualInteractionHandler extends InteractionHandler {
 
 		const authorUser = await this.container.prisma.user.findUnique({
 			where: {
-				id: interaction.user.id,
+				discordId: interaction.user.id,
 			},
 			select: {
 				id: true,
@@ -141,6 +144,11 @@ export class ModIndividualInteractionHandler extends InteractionHandler {
 			this.container.logger.warn(
 				"[HireInteractionHandler#run] Author or target user was not found in database.",
 			);
+
+			await i.editReply({
+				content:
+					"Usuário (você ou o perfil do membro) não encontrado no banco de dados, use `vincular`.",
+			});
 
 			return;
 		}
@@ -160,9 +168,10 @@ export class ModIndividualInteractionHandler extends InteractionHandler {
 			},
 		});
 
-		await interaction.followUp({
-			content: `Adicionado **${amount}** Câmbios ao perfil de ${habboProfile.user.name}!`,
-			ephemeral: true,
+		await i.editReply({
+			content: `${
+				data.action === "Add" ? "Adicionado" : "Removido"
+			} **${amount}** Câmbios ao perfil de ${habboProfile.user.name}!`,
 		});
 
 		const notificationChannel = await cachedGuild.channels.fetch(

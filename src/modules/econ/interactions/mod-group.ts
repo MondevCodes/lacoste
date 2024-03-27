@@ -15,10 +15,11 @@ import { ENVIRONMENT } from "$lib/env";
 
 import type { ButtonInteraction } from "discord.js";
 import { closest } from "fastest-levenshtein";
+import { EmbedColors } from "$lib/constants/discord";
 
 export type Action = "Add" | "Del";
 
-export const BASE_BUTTON_ID = "LCST::ModIndividualInteractionHandler";
+export const BASE_BUTTON_ID = "LCST::ModGroupInteractionHandler";
 export const BASE_BUTTON_ID_REGEX = new RegExp(`^${BASE_BUTTON_ID}/`);
 
 /** @internal @see {@link decodeButtonId} */
@@ -36,7 +37,7 @@ type ParsedData = { action: Action };
 @ApplyOptions<InteractionHandler.Options>({
 	interactionHandlerType: InteractionHandlerTypes.Button,
 })
-export class ModIndividualInteractionHandler extends InteractionHandler {
+export class ModGroupInteractionHandler extends InteractionHandler {
 	async #isAuthorized(interaction: ButtonInteraction) {
 		if (!interaction.inCachedGuild()) {
 			this.container.logger.warn(
@@ -67,7 +68,7 @@ export class ModIndividualInteractionHandler extends InteractionHandler {
 	public override async run(interaction: ButtonInteraction, data: ParsedData) {
 		if (!interaction.inGuild()) {
 			this.container.logger.warn(
-				`[HireInteractionHandler#run] ${interaction.user.tag} tried to perform an action in a DM.`,
+				`[ModGroupInteractionHandler#run] ${interaction.user.tag} tried to perform an action in a DM.`,
 			);
 
 			return;
@@ -91,18 +92,29 @@ export class ModIndividualInteractionHandler extends InteractionHandler {
 						.setPlaceholder("Ex. @Usuário (Discord) ou Usuário (Habbo)")
 						.setStyle(TextInputStyle.Short)
 						.setRequired(true),
+
+					new TextInputBuilder()
+						.setCustomId("Amount")
+						.setLabel("Quantidade de Câmbios")
+						.setPlaceholder("A quantia de câmbios a ser adicionada")
+						.setStyle(TextInputStyle.Short)
+						.setRequired(false),
 				],
-				title: "Adicionar Saldo Individual",
+				title: "Adicionar Saldo Grupo",
 				listenInteraction: true,
 			});
 
+		const rawAmount = Number(result.Amount);
+
 		const amount =
-			ENVIRONMENT.JOBS_PAYMENT[
-				closest(
-					result.TargetRole,
-					Object.keys(ENVIRONMENT.JOBS_PAYMENT),
-				) as keyof typeof ENVIRONMENT.JOBS_PAYMENT
-			];
+			rawAmount > 0
+				? rawAmount
+				: ENVIRONMENT.JOBS_PAYMENT[
+						closest(
+							result.TargetRole,
+							Object.keys(ENVIRONMENT.JOBS_PAYMENT),
+						) as keyof typeof ENVIRONMENT.JOBS_PAYMENT
+				  ];
 
 		const targets = result.Targets.split(/\s+/).filter((x) => x.length > 0);
 
@@ -144,20 +156,25 @@ export class ModIndividualInteractionHandler extends InteractionHandler {
 									name: "Usuários",
 									value: `- ${targets.join("\n- ")}`,
 								},
-							]),
+							])
+							.setFooter({
+								text: closest(
+									result.TargetRole,
+									Object.keys(ENVIRONMENT.JOBS_PAYMENT),
+								),
+							})
+							.setColor(EmbedColors.Default),
 					],
 				},
 				choices: [
 					{
 						id: "True" as const,
 						style: ButtonStyle.Success,
-						emoji: "✅",
 						label: "Sim",
 					},
 					{
 						id: "False" as const,
 						style: ButtonStyle.Danger,
-						emoji: "❌",
 						label: "Não",
 					},
 				],
@@ -186,7 +203,9 @@ export class ModIndividualInteractionHandler extends InteractionHandler {
 			}
 
 			const targetUser = await this.container.prisma.user.findUnique({
-				where: { habboId: habboProfile.user.uniqueId },
+				where: {
+					habboId: habboProfile.user.uniqueId,
+				},
 				select: {
 					id: true,
 					latestPromotionDate: true,
@@ -201,6 +220,10 @@ export class ModIndividualInteractionHandler extends InteractionHandler {
 
 				return;
 			}
+
+			this.container.logger.info(
+				`[ModGroupInteractionHandler#run] Adding ${amount} to ${target} in group.`,
+			);
 
 			await this.container.prisma.user.update({
 				where: {

@@ -90,9 +90,15 @@ export class LinkCommand extends Command {
 			role: ENVIRONMENT.JOBS_ROLES.ESTAGIÁRIO.id,
 		});
 
-		await cachedGuild.members.edit(member, {
-			nick: `· ${profile.user.name}`,
-		});
+		await cachedGuild.members
+			.edit(member, {
+				nick: `· ${profile.user.name}`,
+			})
+			.catch(() => {
+				this.container.logger.warn(
+					"[LinkCommand#messageRun] Failed to edit user nick.",
+				);
+			});
 
 		await this.container.prisma.user.create({
 			data: { habboId: profile.user.uniqueId, discordId: member.id },
@@ -123,5 +129,7 @@ export class LinkCommand extends Command {
 		await notificationChannel.send({
 			embeds: [embed],
 		});
+
+		await message.react("✅");
 	}
 }
