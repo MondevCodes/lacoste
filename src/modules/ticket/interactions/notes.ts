@@ -37,13 +37,17 @@ type ParsedData = { action: Action };
 
 const MODAL_INPUTS_OBJ = {
 	Target: new TextInputBuilder()
+		.setLabel("Avaliado (Discord ou Habbo)")
+		.setPlaceholder("Informe ID do Discord (@Nick) ou do Habbo (Nick).")
 		.setStyle(TextInputStyle.Short)
-		.setLabel("Nick do Colaborador")
+		.setCustomId("Target")
 		.setRequired(true),
 
 	Content: new TextInputBuilder()
 		.setStyle(TextInputStyle.Paragraph)
 		.setLabel("Descrição da Anotação")
+		.setPlaceholder("Ex.: Tarefa feita no dia 29/09/2022")
+		.setCustomId("Content")
 		.setRequired(true),
 } satisfies Record<string, TextInputBuilder | "GENERATED">;
 

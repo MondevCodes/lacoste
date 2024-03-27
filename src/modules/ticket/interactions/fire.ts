@@ -40,12 +40,14 @@ const MODAL_INPUTS_OBJ = {
 		.setLabel("Avaliado (Discord ou Habbo)")
 		.setPlaceholder("Informe ID do Discord (@Nick) ou do Habbo (Nick).")
 		.setStyle(TextInputStyle.Short)
+		.setCustomId("Target")
 		.setRequired(true),
 
 	Reason: new TextInputBuilder()
 		.setStyle(TextInputStyle.Paragraph)
 		.setLabel("Motivo da demissão do(a) avaliado(a)")
 		.setPlaceholder("Ex.: Inatividade")
+		.setCustomId("Reason")
 		.setRequired(false),
 } satisfies Record<string, TextInputBuilder | "GENERATED">;
 

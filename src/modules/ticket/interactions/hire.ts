@@ -40,12 +40,14 @@ const MODAL_INPUTS_OBJ = {
 		.setLabel("Avaliado (Discord ou Habbo)")
 		.setPlaceholder("Informe ID do Discord (@Nick) ou do Habbo (Nick).")
 		.setStyle(TextInputStyle.Short)
+		.setCustomId("Target")
 		.setRequired(true),
 
 	Additional: new TextInputBuilder()
 		.setStyle(TextInputStyle.Paragraph)
 		.setLabel("Deseja adicionar alguma observação?")
 		.setPlaceholder("Se desejar, adicione informações extras aqui.")
+		.setCustomId("Additional")
 		.setRequired(false),
 } satisfies Record<string, TextInputBuilder | "GENERATED">;
 
