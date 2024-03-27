@@ -75,6 +75,10 @@ export class LinkCommand extends Command {
 			data: { habboId: profile.user.uniqueId, discordId: member.id },
 		});
 
+		await memberToCheck.edit({
+			nick: `· ${profile.user.name}`,
+		});
+
 		const notificationChannel = await member.guild.channels.fetch(
 			ENVIRONMENT.NOTIFICATION_CHANNELS.HABBO_USERNAME_ADDED,
 		);
