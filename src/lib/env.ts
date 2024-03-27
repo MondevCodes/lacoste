@@ -31,6 +31,8 @@ export const EnvironmentSchema = z.object({
 	GUILD_ID: Snowflake,
 
 	JOBS_ROLES: typedRecord(Jobs, OrderedSnowflake),
+	JOBS_PAYMENT: typedRecord(Jobs, z.number().default(0)),
+
 	SECTORS_ROLES: typedRecord(Sectors, OrderedSnowflake),
 	SYSTEMS_ROLES: typedRecord(Systems, OrderedSnowflake),
 	COMMITTEES_ROLES: typedRecord(Committees, OrderedSnowflake),

@@ -13,6 +13,7 @@ export const Sectors = z.enum([
 	"SISTEMA",
 	"EXCLUSIVOS",
 	"FEDERAÇÃO",
+	"FUNDAÇÃO",
 	"PRESIDÊNCIA",
 	"DIRETORIA",
 	"ADMINISTRATIVO",
@@ -67,6 +68,7 @@ export const Jobs = z.enum([
 export type Job = z.infer<typeof Jobs>;
 
 export const NotificationChannels = z.enum([
+	"CMB_LOGS",
 	"APPROVAL_REQUEST",
 
 	"FORM_FIRE",
