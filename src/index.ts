@@ -197,6 +197,7 @@ async function run(): Promise<void> {
 	const sapphireClient = new CustomSapphireClient({
 		intents: [
 			IntentsBitField.Flags.Guilds,
+			IntentsBitField.Flags.GuildMembers,
 			IntentsBitField.Flags.GuildMessages,
 			IntentsBitField.Flags.MessageContent,
 		],
@@ -212,7 +213,7 @@ async function run(): Promise<void> {
 		loadApplicationCommandRegistriesStatusListeners: true,
 
 		hmr: { enabled: __DEV__ },
-		logger: { level: ENVIRONMENT.LOG_LEVEL, depth: 32 },
+		logger: { level: ENVIRONMENT.LOG_LEVEL },
 	});
 
 	container.prisma = new PrismaClient();

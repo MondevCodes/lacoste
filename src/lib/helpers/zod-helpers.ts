@@ -15,7 +15,12 @@ export function typedRecord<K extends string, T extends z.ZodType>(
 
 			for (const item of Object.values(value)) {
 				const isValid = type.safeParse(item).success;
-				if (!isValid) return z.NEVER;
+
+				if (!isValid) {
+					console.error("[Zod] Invalid item:", item);
+
+					process.exit(1);
+				}
 			}
 
 			return key._def.values.reduce(

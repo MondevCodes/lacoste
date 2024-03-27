@@ -124,13 +124,21 @@ export class HabboUtility extends Utility {
 			return Result.err(new Error("User Not Found"));
 		}
 
-		return Result.ok(
-			(
-				await HabboAPI.get<HabboProfile>(
-					`users/${encodeURIComponent(uniqueId)}/profile`,
-				)
-			).data,
+		const getResult = await Result.fromAsync(
+			HabboAPI.get<HabboProfile>(
+				`users/${encodeURIComponent(uniqueId)}/profile`,
+			),
 		);
+
+		if (getResult.isErr()) {
+			this.container.logger.error({
+				cause: getResult.unwrapErr(),
+			});
+
+			return Result.err(new Error("User Not Found"));
+		}
+
+		return Result.ok(getResult.unwrap().data);
 	}
 
 	public async downloadFigure(figureString: string): Promise<Buffer> {
