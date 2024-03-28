@@ -4,5 +4,6 @@ export enum FormIds {
 	Advertir = "LCST::Form/Advertir",
 	Avaliação = "LCST::Form/Avaliação",
 	Entrevista = "LCST::Form/Entrevista",
+	Acompanhamento = "LCST::Form/Acompanhamento",
 	Organizacional = "LCST::Form/Organizacional",
 }
