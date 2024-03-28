@@ -18,12 +18,9 @@ import { ENVIRONMENT } from "$lib/env";
 
 enum FeedbackInputIds {
 	Target = "Target",
-	Position = "Position",
-	Promotion = "Promotion",
+	Promoted = "Promoted",
 	Performance = "Performance",
-	Orthography = "Orthography",
 	PerformanceRate = "PerformanceRate",
-	OrthographyRate = "OrthographyRate",
 }
 
 type FeedbackInput = keyof typeof FeedbackInputIds;
@@ -74,21 +71,21 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
 						new TextInputBuilder()
 							.setLabel("Promovidos")
 							.setPlaceholder("Lista de @Nicks ou Nicks separados por virgula.")
-							.setCustomId(FeedbackInputIds.Target)
+							.setCustomId(FeedbackInputIds.Promoted)
 							.setStyle(TextInputStyle.Short)
 							.setRequired(true),
 
 						new TextInputBuilder()
 							.setLabel("Nota de Desempenho")
 							.setPlaceholder("Ex.: 1, 2, 3, 4 ou 5")
-							.setCustomId(FeedbackInputIds.Target)
+							.setCustomId(FeedbackInputIds.PerformanceRate)
 							.setStyle(TextInputStyle.Short)
 							.setRequired(true),
 
 						new TextInputBuilder()
 							.setLabel("Motivo da Nota")
 							.setPlaceholder("Ex.: Muito bom")
-							.setCustomId(FeedbackInputIds.Target)
+							.setCustomId(FeedbackInputIds.Performance)
 							.setStyle(TextInputStyle.Short)
 							.setRequired(true),
 					],

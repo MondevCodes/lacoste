@@ -90,5 +90,26 @@ export default class FormSendCommand extends Command {
 				],
 			});
 		}
+
+		if (type === "acon") {
+			await message.channel.send({
+				embeds: [
+					new EmbedBuilder()
+						.setColor(EmbedColors.Default)
+						.setTitle("Acompanhamento")
+						.setDescription(
+							"Clique no botão abaixo para abrir o questionário que, ao finalizar, será enviado para o canal de acompanhamentos.",
+						),
+				],
+				components: [
+					new ActionRowBuilder<ButtonBuilder>().addComponents(
+						new ButtonBuilder()
+							.setLabel("Acompanhamento")
+							.setStyle(ButtonStyle.Success)
+							.setCustomId(FormIds.Acompanhamento),
+					),
+				],
+			});
+		}
 	}
 }
