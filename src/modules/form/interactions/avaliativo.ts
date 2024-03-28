@@ -106,20 +106,19 @@ export class EvaluationFormInteractionHandler extends InteractionHandler {
 				},
 			);
 
-		const habboProfileResult = await this.container.utilities.habbo.getProfile(
-			result.Target,
-		);
+		const { member: targetMember, habbo: targetHabbo } =
+			await this.container.utilities.habbo.inferTargetGuildMember(
+				result.Target,
+			);
 
-		if (habboProfileResult.isErr()) {
-			await i.followUp({
+		if (!targetMember) {
+			await i.reply({
 				ephemeral: true,
-				content: `Não foi possível encontrar o perfil do(a) avaliado(a) "${result.Target}", verifique o nome e tente novamente.`,
+				content: "Não foi possível encontrar o usuário informado.",
 			});
 
 			return;
 		}
-
-		const habboProfile = habboProfileResult.unwrap();
 
 		const [performanceRate] =
 			await this.container.utilities.inquirer.awaitSelectMenu(i, {
@@ -153,7 +152,7 @@ export class EvaluationFormInteractionHandler extends InteractionHandler {
 		const embed = new EmbedBuilder()
 			.setTitle("Avaliação")
 			.setThumbnail(
-				`https://www.habbo.com/habbo-imaging/avatarimage?figure=${habboProfile.user.figureString}&size=b`,
+				`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.user.figureString}&size=b`,
 			)
 			.addFields([
 				{
