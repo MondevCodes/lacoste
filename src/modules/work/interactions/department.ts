@@ -394,19 +394,48 @@ export class DepartmentInteractionHandler extends InteractionHandler {
 
 	public override onLoad() {
 		/**
-		 * Schedules a cron job to run every 30 minutes.
+		 * Schedules a cron job to run every 15 minutes.
 		 * @summary Applies demotions to users who have pending renewals.
 		 */
-		schedule("*/30 * * * *", () => {
-			throw new Error("Not implemented");
-		});
+		schedule("*/15 * * * *", async () => {
+			const users = await this.container.prisma.user.findMany({
+				where: { activeRenewal: { not: null } },
+			});
 
-		/**
-		 * Schedules a cron job to run every 7.5 minutes.
-		 * @summary Notifies users that their renewal is about to expire.
-		 */
-		schedule("*/7.5 * * * *", () => {
-			throw new Error("Not implemented");
+			for await (const user of users) {
+				const hasPendingRenewal = await this.#hasPendingRenewal(user.discordId);
+
+				if (hasPendingRenewal) {
+					const renewalPeriodInMilliseconds =
+						user.activeRenewal === "Leave15Days"
+							? 1000 * 60 * 60 * 24 * 15
+							: 1000 * 60 * 60 * 24 * 30;
+
+					const renewalPeriod = new Date(
+						Date.now() + renewalPeriodInMilliseconds,
+					);
+
+					if (renewalPeriod < new Date())
+						return await this.#demote(user.discordId);
+
+					// if between 1 and 3 days send dm
+					if (renewalPeriod < new Date(Date.now() + 1000 * 60 * 60 * 24 * 3)) {
+						const targetMember = await this.container.client.users.fetch(
+							user.discordId,
+						);
+						if (!targetMember || !user.activeRenewalMessageId) return;
+
+						await targetMember.send({
+							content:
+								"Seu afastamento está perto de expirar, por favor, renove-o ou retorne.",
+							reply: {
+								failIfNotExists: false,
+								messageReference: user.activeRenewalMessageId,
+							},
+						});
+					}
+				}
+			}
 		});
 	}
 
