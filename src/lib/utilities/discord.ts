@@ -11,6 +11,7 @@ import type {
 	MessageEditOptions,
 	MessagePayload,
 	MessageReplyOptions,
+	Role,
 } from "discord.js";
 
 import type { Committee, Sector, System } from "$lib/constants/schemas";
@@ -128,6 +129,27 @@ export class DiscordUtility extends Utility {
 
 			return currentIndex > highestIndex ? current : highest;
 		});
+	}
+
+	/**
+	 * Infer the next sector role from a list of roles, given a current role.
+	 * @param currentRole The current role.
+	 * @param roles The list of roles to search through.
+	 * @returns The next sector role greater than the current role, or `null` if none exists.
+	 */
+	public inferNextSectorRole(currentRole: Role, roles: GuildMemberRoleManager) {
+		const currentRoleIndex =
+			Object.values(ENVIRONMENT.SECTORS_ROLES).find(
+				(r) => r.id === currentRole.id,
+			)?.index ?? 0;
+
+		if (!currentRoleIndex) return null;
+
+		const nextRole = Object.values(ENVIRONMENT.SECTORS_ROLES)
+			.sort((a, b) => a.index - b.index)
+			.find((role) => role.index > currentRoleIndex);
+
+		return nextRole ? roles.cache.find((r) => r.id === nextRole.id) : null;
 	}
 
 	/**
