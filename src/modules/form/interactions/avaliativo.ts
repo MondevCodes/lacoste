@@ -156,11 +156,37 @@ export class EvaluationFormInteractionHandler extends InteractionHandler {
 				`https://www.habbo.com/habbo-imaging/avatarimage?figure=${habboProfile.user.figureString}&size=b`,
 			)
 			.addFields([
-				{ name: "Avaliado(a)", value: result.Target },
-				{ name: "Posição (Sede)", value: result.Position },
-				{ name: "Promovido (Data)", value: result.Promotion },
-				{ name: "Desempenho", value: result.Performance },
-				{ name: "Ortografia", value: result.Orthography },
+				{
+					name: "Avaliado(a)",
+					value:
+						result.Target.length > 0 ? result.Target : "Nenhuma informação",
+				},
+				{
+					name: "Posição (Sede)",
+					value:
+						result.Position.length > 0 ? result.Position : "Nenhuma informação",
+				},
+				{
+					name: "Promovido (Data)",
+					value:
+						result.Promotion.length > 0
+							? result.Promotion
+							: "Nenhuma informação",
+				},
+				{
+					name: "Desempenho",
+					value:
+						result.Performance.length > 0
+							? result.Performance
+							: "Nenhuma informação",
+				},
+				{
+					name: "Ortografia",
+					value:
+						result.Orthography.length > 0
+							? result.Orthography
+							: "Nenhuma informação",
+				},
 				{
 					name: "Desempenho (Nota)",
 					value: "⭐".repeat(Number.parseInt(performanceRate)),

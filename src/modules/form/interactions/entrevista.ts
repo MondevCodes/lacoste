@@ -138,11 +138,11 @@ export class InterviewFormInteractionHandler extends InteractionHandler {
 				},
 				{
 					name: "Elogio ou reclamação sobre a promoção",
-					value: result.Feedback,
+					value: result.Feedback.length > 0 ? result.Feedback : "N/A",
 				},
 				{
 					name: "Informações adicionais",
-					value: result.Additional,
+					value: result.Additional.length > 0 ? result.Additional : "N/A",
 				},
 			])
 			.setAuthor({
