@@ -70,6 +70,7 @@ export type Job = z.infer<typeof Jobs>;
 export const NotificationChannels = z.enum([
 	"CMB_LOGS",
 	"APPROVAL_REQUEST",
+	"DEPARTMENT_DEMOTION",
 
 	"FORM_FIRE",
 	"FORM_HIRE",

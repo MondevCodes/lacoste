@@ -7,6 +7,13 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum RenewalPeriod {
+  Leave15Days
+  Leave30Days
+  Renew15Days
+  Renew30Days
+}
+
 model User {
   id String @id @default(auto()) @map("_id") @db.ObjectId
 
@@ -15,6 +22,10 @@ model User {
 
   habboId   String @unique
   discordId String @unique
+
+  activeRenewal          RenewalPeriod?
+  activeRenewalStartedAt DateTime?
+  activeRenewalMessageId String?
 
   latestPromotionDate   DateTime?
   latestPromotionRoleId String?

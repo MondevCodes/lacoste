@@ -1,9 +1,11 @@
 import axios from "axios";
 
-import { ApplyOptions } from "@sapphire/decorators";
 import { Result } from "@sapphire/result";
-
+import { ApplyOptions } from "@sapphire/decorators";
 import { Utility } from "@sapphire/plugin-utilities-store";
+
+import { GuildMember } from "discord.js";
+import { ENVIRONMENT } from "$lib/env";
 
 const BASE_API_URL = "https://www.habbo.com.br/api/public/";
 const BASE_CDN_URL = "https://www.habbo.com.br/habbo-imaging/";
@@ -153,5 +155,40 @@ export class HabboUtility extends Utility {
 			).data,
 			"binary",
 		);
+	}
+
+	/** Infers the target guild member from the target (Discord or Habbo). */
+	public async inferTargetGuildMember(target: string) {
+		const guild = await this.container.client.guilds.fetch(
+			ENVIRONMENT.GUILD_ID,
+		);
+
+		let habbo: HabboProfile | undefined;
+		let member: GuildMember | undefined;
+
+		if (target.startsWith("<@")) {
+			member = (
+				await guild.members.search({
+					query: target,
+					limit: 1,
+				})
+			).first();
+		} else {
+			habbo = (
+				await this.container.utilities.habbo.getProfile(target)
+			).unwrapOr(undefined);
+
+			if (!habbo) return { member, habbo };
+
+			const databaseUser = await this.container.prisma.user.findUnique({
+				where: { habboId: habbo.user.uniqueId },
+				select: { discordId: true },
+			});
+
+			if (!databaseUser) return { member, habbo };
+			member = await guild.members.fetch(databaseUser.discordId);
+		}
+
+		return { member, habbo };
 	}
 }
