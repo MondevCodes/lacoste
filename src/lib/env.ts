@@ -29,6 +29,7 @@ export const EnvironmentSchema = z.object({
 		.transform((value) => LogLevel[value]),
 
 	GUILD_ID: Snowflake,
+	TICKETS_CATEGORY: Snowflake,
 
 	JOBS_ROLES: typedRecord(
 		Jobs,
