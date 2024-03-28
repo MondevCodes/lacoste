@@ -78,7 +78,7 @@ export default class TicketSendCommand extends Command {
 				embeds: [
 					new EmbedBuilder()
 						.setColor(EmbedColors.Default)
-						.setTitle("Anotação / Avisos")
+						.setTitle("Anotações / Advertências")
 						.setDescription(
 							"Selecione o tipo de anotação que deseja e responda o questionário que será aberto. Ao finalizar, sua anotação será enviada para a equipe de anotação.",
 						),
@@ -91,7 +91,7 @@ export default class TicketSendCommand extends Command {
 							.setCustomId(encodeNoteButtonId("Request")),
 
 						new ButtonBuilder()
-							.setLabel("Avisar")
+							.setLabel("Advertir")
 							.setStyle(ButtonStyle.Danger)
 							.setCustomId(encodeWarnButtonId("Request")),
 					),
