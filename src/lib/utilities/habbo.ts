@@ -166,13 +166,27 @@ export class HabboUtility extends Utility {
 		let habbo: HabboProfile | undefined;
 		let member: GuildMember | undefined;
 
-		if (target.startsWith("<@")) {
+		if (target.startsWith("@")) {
 			member = (
 				await guild.members.search({
-					query: target,
+					query: target.replace(/@/g, ""),
 					limit: 1,
 				})
 			).first();
+
+			if (member) {
+				const databaseUser = await this.container.prisma.user.findUnique({
+					where: { discordId: member.id },
+					select: { habboId: true },
+				});
+
+				if (databaseUser?.habboId)
+					habbo = (
+						await this.container.utilities.habbo.getProfile(
+							databaseUser?.habboId,
+						)
+					).unwrapOr(undefined);
+			}
 		} else {
 			habbo = (
 				await this.container.utilities.habbo.getProfile(target)

@@ -101,7 +101,8 @@ export class ModIndividualInteractionHandler extends InteractionHandler {
 				`[HireInteractionHandler#run] ${interaction.user.tag} tried to perform an action in a DM.`,
 			);
 
-			await i.editReply({
+			await interaction.reply({
+				ephemeral: true,
 				content: "Quantia inválida, tente novamente apenas números",
 			});
 		}
@@ -110,20 +111,21 @@ export class ModIndividualInteractionHandler extends InteractionHandler {
 			interaction.guild ??
 			(await this.container.client.guilds.fetch(interaction.guildId));
 
-		const habboProfile = (
-			await this.container.utilities.habbo.getProfile(result.Target)
-		).unwrapOr(null);
-
-		if (!habboProfile) {
-			this.container.logger.warn(
-				`[HireInteractionHandler#run] ${interaction.user.tag} tried to perform an action in a DM.`,
+		const { member: targetMember, habbo: targetHabbo } =
+			await this.container.utilities.habbo.inferTargetGuildMember(
+				result.Target,
 			);
+
+		if (!targetMember) {
+			await i.editReply({
+				content: "Não foi possível encontrar o usuário informado.",
+			});
 
 			return;
 		}
 
 		const targetUser = await this.container.prisma.user.findUnique({
-			where: { habboId: habboProfile.user.uniqueId },
+			where: { discordId: targetMember.user.id },
 			select: {
 				id: true,
 				latestPromotionDate: true,
@@ -171,7 +173,9 @@ export class ModIndividualInteractionHandler extends InteractionHandler {
 		await i.editReply({
 			content: `${
 				data.action === "Add" ? "Adicionado" : "Removido"
-			} **${amount}** Câmbios ao perfil de ${habboProfile.user.name}!`,
+			} **${amount}** Câmbios ao perfil de ${
+				targetHabbo?.user.name || targetMember.user.tag
+			}!`,
 		});
 
 		const notificationChannel = await cachedGuild.channels.fetch(
@@ -190,10 +194,10 @@ export class ModIndividualInteractionHandler extends InteractionHandler {
 						iconURL: interaction.user.displayAvatarURL(),
 					})
 					.setThumbnail(
-						`https://www.habbo.com/habbo-imaging/avatarimage?figure=${habboProfile.user.figureString}&size=b`,
+						`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.user.figureString}&size=b`,
 					)
 					.setDescription(
-						`**${amount} Câmbios** adicionado individualmente por ${interaction.user.tag} para ${habboProfile.user.name}`,
+						`**${amount} Câmbios** adicionado individualmente por ${interaction.user} para ${targetMember}`,
 					)
 					.setColor(EmbedColors.Success),
 			],

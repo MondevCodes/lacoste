@@ -13,14 +13,18 @@ import {
 
 import { ENVIRONMENT } from "$lib/env";
 
-import type { ButtonInteraction } from "discord.js";
-import { closest } from "fastest-levenshtein";
+import type { ButtonInteraction, GuildMember } from "discord.js";
 import { EmbedColors } from "$lib/constants/discord";
 
 export type Action = "Add" | "Del";
 
 export const BASE_BUTTON_ID = "LCST::ModGroupInteractionHandler";
 export const BASE_BUTTON_ID_REGEX = new RegExp(`^${BASE_BUTTON_ID}/`);
+
+const MONETARY_INTL = new Intl.NumberFormat("pt-BR", {
+	style: "currency",
+	currency: "CAM",
+});
 
 /** @internal @see {@link decodeButtonId} */
 export function encodeButtonId(action: Action) {
@@ -75,34 +79,59 @@ export class ModGroupInteractionHandler extends InteractionHandler {
 		}
 
 		const { result, interaction: i } =
-			await this.container.utilities.inquirer.awaitModal<
-				"TargetRole" | "Targets" | "Amount"
-			>(interaction, {
-				inputs: [
-					new TextInputBuilder()
-						.setLabel("Cargo")
-						.setCustomId("TargetRole")
-						.setPlaceholder("Ex. Estagiário")
-						.setStyle(TextInputStyle.Short)
-						.setRequired(true),
+			await this.container.utilities.inquirer.awaitModal<"Targets" | "Amount">(
+				interaction,
+				{
+					inputs: [
+						new TextInputBuilder()
+							.setLabel("Usuários")
+							.setCustomId("Targets")
+							.setPlaceholder("Ex. @Usuário (Discord) ou Usuário (Habbo)")
+							.setStyle(TextInputStyle.Short)
+							.setRequired(true),
 
-					new TextInputBuilder()
-						.setLabel("Usuários")
-						.setCustomId("Targets")
-						.setPlaceholder("Ex. @Usuário (Discord) ou Usuário (Habbo)")
-						.setStyle(TextInputStyle.Short)
-						.setRequired(true),
+						new TextInputBuilder()
+							.setCustomId("Amount")
+							.setLabel("Quantidade de Câmbios")
+							.setPlaceholder("A quantia de câmbios a ser adicionada")
+							.setStyle(TextInputStyle.Short)
+							.setRequired(false),
+					],
+					title: "Adicionar Saldo Grupo",
+					listenInteraction: true,
+				},
+			);
 
-					new TextInputBuilder()
-						.setCustomId("Amount")
-						.setLabel("Quantidade de Câmbios")
-						.setPlaceholder("A quantia de câmbios a ser adicionada")
-						.setStyle(TextInputStyle.Short)
-						.setRequired(false),
-				],
-				title: "Adicionar Saldo Grupo",
-				listenInteraction: true,
+		const guild =
+			interaction.guild ??
+			(await interaction.client.guilds.fetch(interaction.guildId));
+
+		const [targetRoleId] =
+			await this.container.utilities.inquirer.awaitSelectMenu(i, {
+				choices: await Promise.all(
+					Object.values(ENVIRONMENT.JOBS_ROLES).map(async (x) => ({
+						id: x.id,
+						label:
+							guild.roles.cache.get(x.id)?.name ??
+							(await guild.roles.fetch(x.id))?.name ??
+							"Unknown",
+					})),
+				),
+				placeholder: "Selecionar",
+				question: "Escolha o cargo no qual deseja.",
 			});
+
+		if (!targetRoleId) {
+			this.container.logger.warn(
+				`[HireInteractionHandler#run] ${interaction.user.tag} tried to perform an action in a DM.`,
+			);
+
+			await i.editReply({
+				content: "Nenhum cargo selecionado.",
+			});
+
+			return;
+		}
 
 		const rawAmount = Number(result.Amount);
 
@@ -110,18 +139,21 @@ export class ModGroupInteractionHandler extends InteractionHandler {
 			rawAmount > 0
 				? rawAmount
 				: ENVIRONMENT.JOBS_PAYMENT[
-						closest(
-							result.TargetRole,
-							Object.keys(ENVIRONMENT.JOBS_PAYMENT),
+						Object.keys(ENVIRONMENT.JOBS_PAYMENT).find(
+							(key) =>
+								ENVIRONMENT.JOBS_ROLES[
+									key as keyof typeof ENVIRONMENT.JOBS_ROLES
+								].id === targetRoleId,
 						) as keyof typeof ENVIRONMENT.JOBS_PAYMENT
 				  ];
 
-		const targets = result.Targets.split(/\s+/).filter((x) => x.length > 0);
+		const targets = result.Targets.split(",")
+			.filter((x) => x.length > 0)
+			.map((x) => x.trim());
 
 		if (targets.length < 1) {
-			await interaction.followUp({
+			await i.editReply({
 				content: "Nenhum usuário informado ou todos estão inválidos.",
-				ephemeral: true,
 			});
 
 			return;
@@ -132,79 +164,32 @@ export class ModGroupInteractionHandler extends InteractionHandler {
 				`[HireInteractionHandler#run] ${interaction.user.tag} tried to perform an action in a DM.`,
 			);
 
-			await interaction.followUp({
+			await i.editReply({
 				content: `O salário deste cargo (${amount}) é inválido, contate o desenvolvedor.`,
-				ephemeral: true,
-			});
-		}
-
-		const { result: isConfirmed } =
-			await this.container.utilities.inquirer.awaitButtons(i, {
-				question: {
-					embeds: [
-						new EmbedBuilder()
-							.setTitle("Confirmação")
-							.setDescription(
-								`Tem certeza que deseja executar a ação de ${
-									data.action
-								} para ${targets.length} ${
-									targets.length === 1 ? "usuário" : "usuários"
-								}?`,
-							)
-							.setFields([
-								{
-									name: "Usuários",
-									value: `- ${targets.join("\n- ")}`,
-								},
-							])
-							.setFooter({
-								text: closest(
-									result.TargetRole,
-									Object.keys(ENVIRONMENT.JOBS_PAYMENT),
-								),
-							})
-							.setColor(EmbedColors.Default),
-					],
-				},
-				choices: [
-					{
-						id: "True" as const,
-						style: ButtonStyle.Success,
-						label: "Sim",
-					},
-					{
-						id: "False" as const,
-						style: ButtonStyle.Danger,
-						label: "Não",
-					},
-				],
-			});
-
-		if (!isConfirmed) {
-			await interaction.followUp({
-				content: "Operação cancelada pelo usuário.",
-				ephemeral: true,
 			});
 
 			return;
 		}
 
-		for await (const target of targets) {
-			const habboProfile = (
-				await this.container.utilities.habbo.getProfile(target)
-			).unwrapOr(null);
+		const members: GuildMember[] = [];
 
-			if (!habboProfile) {
-				this.container.logger.warn(
-					`[HireInteractionHandler#run] ${interaction.user.tag} tried to perform an action in a DM.`,
-				);
+		for await (const target of targets) {
+			const { member: targetMember } =
+				await this.container.utilities.habbo.inferTargetGuildMember(target);
+
+			if (!targetMember) {
+				await i.editReply({
+					content: "Não foi possível encontrar o usuário informado.",
+					components: [],
+					embeds: [],
+				});
 
 				return;
 			}
 
 			const targetUser = await this.container.prisma.user.findUnique({
 				where: {
-					habboId: habboProfile.user.uniqueId,
+					discordId: targetMember.user.id,
 				},
 				select: {
 					id: true,
@@ -225,9 +210,64 @@ export class ModGroupInteractionHandler extends InteractionHandler {
 				`[ModGroupInteractionHandler#run] Adding ${amount} to ${target} in group.`,
 			);
 
+			members.push(targetMember);
+		}
+
+		const { result: isConfirmed } =
+			await this.container.utilities.inquirer.awaitButtons(i, {
+				question: {
+					embeds: [
+						new EmbedBuilder()
+							.setTitle("Confirmação")
+							.setDescription(
+								`Tem certeza que deseja executar a ação de ${
+									data.action
+								} para ${targets.length} ${
+									targets.length === 1 ? "usuário" : "usuários"
+								}?`,
+							)
+							.setFields([
+								{
+									name: "Usuários",
+									value: `- ${members
+										.map((x) => x.user.toString())
+										.join("\n- ")}`,
+								},
+							])
+							.setFooter({
+								text: MONETARY_INTL.format(amount),
+							})
+							.setColor(EmbedColors.Default),
+					],
+				},
+				choices: [
+					{
+						id: "True" as const,
+						style: ButtonStyle.Success,
+						label: "Sim",
+					},
+					{
+						id: "False" as const,
+						style: ButtonStyle.Danger,
+						label: "Não",
+					},
+				],
+			});
+
+		if (!isConfirmed) {
+			await i.editReply({
+				content: "Operação cancelada pelo usuário.",
+				components: [],
+				embeds: [],
+			});
+
+			return;
+		}
+
+		for (const member of members)
 			await this.container.prisma.user.update({
 				where: {
-					id: targetUser.id,
+					discordId: member.user.id,
 				},
 				data: {
 					ReceivedTransactions: {
@@ -239,13 +279,13 @@ export class ModGroupInteractionHandler extends InteractionHandler {
 					},
 				},
 			});
-		}
 
-		await interaction.followUp({
-			content: `Operação concluída com sucesso! Todos os ${targets.length} ${
+		await i.editReply({
+			content: `Operação concluída com sucesso, todos os ${targets.length} ${
 				targets.length === 1 ? "usuário" : "usuários"
 			} receberão o valor de ${amount}.`,
-			ephemeral: true,
+			components: [],
+			embeds: [],
 		});
 	}
 }
