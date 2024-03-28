@@ -99,22 +99,22 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
 			.addFields([
 				{
 					name: "Promotor",
-					value: result.Target,
+					value: result.Target.length > 0 ? result.Target : "N/A",
 					inline: true,
 				},
 				{
 					name: "Promovidos",
-					value: result.Target,
+					value: result.Target.length > 0 ? result.Promoted : "N/A",
 					inline: true,
 				},
 				{
 					name: "Nota de Desempenho",
-					value: "⭐".repeat(Number(result.Target)),
+					value: "⭐".repeat(Number(result.Target)) || "N/A",
 					inline: true,
 				},
 				{
 					name: "Motivo da Nota",
-					value: result.Target,
+					value: result.Target.length > 0 ? result.Performance : "N/A",
 					inline: true,
 				},
 			])
@@ -132,7 +132,11 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
 			ENVIRONMENT.NOTIFICATION_CHANNELS.FORM_FOLLOWUP,
 		);
 
-		if (channel === null || !channel.isTextBased()) {
+		this.container.logger.info({
+			channel: JSON.stringify(channel),
+		});
+
+		if (!channel?.isTextBased()) {
 			throw new Error("Form followUp channel not found or not a text channel.");
 		}
 
