@@ -16,6 +16,7 @@ import { EmbedColors } from "$lib/constants/discord";
 import { FormIds } from "$lib/constants/forms";
 import { ENVIRONMENT } from "$lib/env";
 import { merge } from "remeda";
+import { schedule } from "node-cron";
 
 enum OrganizationalFormInputIds {
 	Time = "Time",
@@ -221,6 +222,62 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 			embeds: [embed],
 		});
 
-		await i.deleteReply();
+		const authorExists = await this.container.prisma.user.findUnique({
+			where: { discordId: interaction.user.id },
+		});
+
+		if (!authorExists)
+			await i.editReply({
+				content:
+					"O formulário foi enviado, mas você não foi registrado, use `vincular` em si mesmo(a) para registrar.",
+			});
+		else await i.deleteReply();
+
+		await this.container.prisma.user.update({
+			where: { discordId: interaction.user.id },
+			data: { reportsHistory: { push: new Date() } },
+		});
+	}
+
+	public override onLoad() {
+		schedule(
+			"30 15 1,15 * *",
+			async () => {
+				const users = await this.container.prisma.user.findMany({
+					where: { activeRenewal: null },
+				});
+
+				const filteredUsers = users.filter((user) => {
+					return user.reportsHistory.every((report) => {
+						const reportDate = new Date(report).getTime();
+						const fifteenDaysAgo = Date.now() - 15 * 24 * 60 * 60 * 1000;
+
+						return reportDate < fifteenDaysAgo;
+					});
+				});
+
+				const notificationChannel = await this.container.client.channels.fetch(
+					ENVIRONMENT.NOTIFICATION_CHANNELS.FORM_ORGANIZATIONAL,
+				);
+
+				if (notificationChannel?.isTextBased()) {
+					await notificationChannel.send({
+						embeds: [
+							new EmbedBuilder()
+								.setColor(EmbedColors.Default)
+								.setTitle("Relatório Organizacional - 15 dias")
+								.setDescription(
+									`**${
+										filteredUsers.length
+									}** usuários que tiveram o relatório pendente.\n\n${filteredUsers
+										.map((user) => `- <@${user.discordId}>`)
+										.join("\n")}`,
+								),
+						],
+					});
+				}
+			},
+			{ recoverMissedExecutions: true },
+		);
 	}
 }

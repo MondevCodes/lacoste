@@ -30,6 +30,7 @@ model User {
   latestPromotionDate   DateTime?
   latestPromotionRoleId String?
 
+  reportsHistory         DateTime[]
   pendingPromotionRoleId String?
 
   SentTransactions     Transaction[] @relation(name: "URST")
