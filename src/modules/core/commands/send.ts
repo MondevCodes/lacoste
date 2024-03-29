@@ -44,7 +44,27 @@ export default class SendCommand extends Command {
 		if (!isAuthorized) return;
 		const type = await args.pick("string");
 
-		// type: economia, avaliativo, acompanhamento, organizacional, contratação, anotação, ouvidoria, promoção, afastamento
+		if (
+			![
+				"economia",
+				"avaliativo",
+				"acompanhamento",
+				"organizacional",
+				"contratação",
+				"anotação",
+				"ouvidoria",
+				"promoção",
+				"afastamento",
+				"renomear",
+			].includes(type)
+		) {
+			await message.channel.send({
+				content:
+					"O tipo de comando enviado não existe, por favor verifique e tente novamente. (Tipos disponíveis: economia, avaliativo, acompanhamento, organizacional, contratação, anotação, ouvidoria, promoção, afastamento, renomear)",
+			});
+
+			return;
+		}
 
 		if (type === "economia") {
 			await message.channel.send({
@@ -98,12 +118,12 @@ export default class SendCommand extends Command {
 					new ActionRowBuilder<ButtonBuilder>().addComponents(
 						new ButtonBuilder()
 							.setLabel("Avaliar")
-							.setStyle(ButtonStyle.Success)
+							.setStyle(ButtonStyle.Primary)
 							.setCustomId(FormIds.Avaliação),
 
 						new ButtonBuilder()
 							.setLabel("Entrevistar")
-							.setStyle(ButtonStyle.Primary)
+							.setStyle(ButtonStyle.Secondary)
 							.setCustomId(FormIds.Entrevista),
 					),
 				],
@@ -166,12 +186,12 @@ export default class SendCommand extends Command {
 					new ActionRowBuilder<ButtonBuilder>().addComponents(
 						new ButtonBuilder()
 							.setLabel("Contratar")
-							.setStyle(ButtonStyle.Success)
+							.setStyle(ButtonStyle.Primary)
 							.setCustomId(encodeHireButtonId("Request")),
 
 						new ButtonBuilder()
 							.setLabel("Demitir")
-							.setStyle(ButtonStyle.Danger)
+							.setStyle(ButtonStyle.Secondary)
 							.setCustomId(encodeFireButtonId("Request")),
 					),
 				],
@@ -192,12 +212,12 @@ export default class SendCommand extends Command {
 					new ActionRowBuilder<ButtonBuilder>().addComponents(
 						new ButtonBuilder()
 							.setLabel("Anotar")
-							.setStyle(ButtonStyle.Success)
+							.setStyle(ButtonStyle.Primary)
 							.setCustomId(encodeNoteButtonId("Request")),
 
 						new ButtonBuilder()
 							.setLabel("Advertir")
-							.setStyle(ButtonStyle.Danger)
+							.setStyle(ButtonStyle.Secondary)
 							.setCustomId(encodeWarnButtonId("Request")),
 					),
 				],
@@ -244,7 +264,7 @@ export default class SendCommand extends Command {
 					new ActionRowBuilder<ButtonBuilder>().addComponents(
 						new ButtonBuilder()
 							.setLabel("Promover")
-							.setStyle(ButtonStyle.Primary)
+							.setStyle(ButtonStyle.Success)
 							.setCustomId("LCST::PromotionInteractionHandler"),
 					),
 				],
@@ -265,7 +285,7 @@ export default class SendCommand extends Command {
 					new ActionRowBuilder<ButtonBuilder>().addComponents(
 						new ButtonBuilder()
 							.setLabel("Afastar")
-							.setStyle(ButtonStyle.Success)
+							.setStyle(ButtonStyle.Primary)
 							.setCustomId(
 								encodeDepartmentButtonId({ action: "AdminRequestLeave" }),
 							),
@@ -276,6 +296,27 @@ export default class SendCommand extends Command {
 							.setCustomId(
 								encodeDepartmentButtonId({ action: "SelfRequestReturn" }),
 							),
+					),
+				],
+			});
+		}
+
+		if (type === "renomear") {
+			await message.channel.send({
+				embeds: [
+					new EmbedBuilder()
+						.setColor(EmbedColors.Default)
+						.setTitle("Renomear")
+						.setDescription(
+							"Mudou seu apelido no Habbo? Clique no botão abaixo para automaticamente atualizar o seu perfil.",
+						),
+				],
+				components: [
+					new ActionRowBuilder<ButtonBuilder>().addComponents(
+						new ButtonBuilder()
+							.setLabel("Renomear")
+							.setStyle(ButtonStyle.Success)
+							.setCustomId(FormIds.Renome),
 					),
 				],
 			});
