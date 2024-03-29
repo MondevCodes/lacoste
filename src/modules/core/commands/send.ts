@@ -53,14 +53,14 @@ export default class SendCommand extends Command {
 				"contratação",
 				"anotação",
 				"ouvidoria",
-				"promoção",
+				"promo",
 				"afastamento",
 				"renomear",
 			].includes(type)
 		) {
 			await message.channel.send({
 				content:
-					"O tipo de comando enviado não existe, por favor verifique e tente novamente. (Tipos disponíveis: economia, avaliativo, acompanhamento, organizacional, contratação, anotação, ouvidoria, promoção, afastamento, renomear)",
+					"O tipo de comando enviado não existe, por favor verifique e tente novamente. (Tipos disponíveis: economia, avaliativo, acompanhamento, organizacional, contratação, anotação, ouvidoria, promo, afastamento, renomear)",
 			});
 
 			return;
@@ -250,7 +250,7 @@ export default class SendCommand extends Command {
 			});
 		}
 
-		if (type === "ticket") {
+		if (type === "promo") {
 			await message.channel.send({
 				embeds: [
 					new EmbedBuilder()

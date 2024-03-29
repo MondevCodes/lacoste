@@ -4,6 +4,8 @@ import {
 	ButtonInteraction,
 	ButtonStyle,
 	EmbedBuilder,
+	GuildMemberRoleManager,
+	Role,
 	TextInputBuilder,
 	TextInputStyle,
 	time,
@@ -105,9 +107,8 @@ export class DepartmentInteractionHandler extends InteractionHandler {
 		// ----------------
 
 		if (
-			(data.action === "SelfRequestRenew" ||
-				data.action === "SelfRequestReturn") &&
-			data.id
+			data.action === "SelfRequestRenew" ||
+			data.action === "SelfRequestReturn"
 		) {
 			if (data.action === "SelfRequestRenew") {
 				// Renewal Period
@@ -311,56 +312,6 @@ export class DepartmentInteractionHandler extends InteractionHandler {
 				? 1000 * 60 * 60 * 24 * 15
 				: 1000 * 60 * 60 * 24 * 30;
 
-		const dmMsg = await dmChannel.send({
-			embeds: [
-				new EmbedBuilder()
-					.setColor(EmbedColors.Default)
-					.setTitle("Afastamento Temporário")
-					.setDescription(
-						`Você foi afastado até ${time(
-							new Date(Date.now() + renewalPeriodInMilliseconds),
-							"f",
-						)}.`,
-					)
-					.setFooter({
-						text: interaction.user.tag,
-						iconURL: interaction.user.displayAvatarURL(),
-					})
-					.setThumbnail(
-						`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.user.figureString}&size=b`,
-					),
-			],
-			components: [
-				new ActionRowBuilder<ButtonBuilder>().addComponents(
-					new ButtonBuilder()
-						.setStyle(ButtonStyle.Primary)
-						.setLabel("Retornar")
-						.setCustomId(
-							encodeButtonId({
-								action: "SelfRequestReturn",
-								id,
-							}),
-						),
-
-					new ButtonBuilder()
-						.setStyle(ButtonStyle.Primary)
-						.setLabel("Renovar")
-						.setDisabled(true)
-						.setCustomId(
-							encodeButtonId({
-								action: "SelfRequestRenew",
-								id,
-							}),
-						),
-				),
-			],
-		});
-
-		await this.container.prisma.user.update({
-			where: { id },
-			data: { activeRenewalMessageId: dmMsg.id },
-		});
-
 		await interactionFromModal.editReply({
 			content: `O usuário <@${targetMember.user.id}> foi afastado com sucesso!`,
 			components: [],
@@ -388,6 +339,56 @@ export class DepartmentInteractionHandler extends InteractionHandler {
 							`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.user.figureString}&size=b`,
 						),
 				],
+			});
+
+			const dmMsg = await dmChannel.send({
+				embeds: [
+					new EmbedBuilder()
+						.setColor(EmbedColors.Default)
+						.setTitle("Afastamento Temporário")
+						.setDescription(
+							`Você foi afastado até ${time(
+								new Date(Date.now() + renewalPeriodInMilliseconds),
+								"f",
+							)}.`,
+						)
+						.setFooter({
+							text: interaction.user.tag,
+							iconURL: interaction.user.displayAvatarURL(),
+						})
+						.setThumbnail(
+							`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.user.figureString}&size=b`,
+						),
+				],
+				components: [
+					new ActionRowBuilder<ButtonBuilder>().addComponents(
+						new ButtonBuilder()
+							.setStyle(ButtonStyle.Primary)
+							.setLabel("Retornar")
+							.setCustomId(
+								encodeButtonId({
+									action: "SelfRequestReturn",
+									id,
+								}),
+							),
+
+						new ButtonBuilder()
+							.setStyle(ButtonStyle.Primary)
+							.setLabel("Renovar")
+							.setDisabled(true)
+							.setCustomId(
+								encodeButtonId({
+									action: "SelfRequestRenew",
+									id,
+								}),
+							),
+					),
+				],
+			});
+
+			await this.container.prisma.user.update({
+				where: { id },
+				data: { activeRenewalMessageId: dmMsg.id },
 			});
 		}
 	}
@@ -471,10 +472,9 @@ export class DepartmentInteractionHandler extends InteractionHandler {
 			.fetch(ENVIRONMENT.GUILD_ID)
 			.then((guild) => guild.members.fetch(id));
 
-		const currentSector =
-			this.container.utilities.discord.inferHighestSectorRole(member.roles);
+		const currentJob = this.#inferHighestJobRole(member.roles);
 
-		if (!currentSector) {
+		if (!currentJob) {
 			await interaction?.reply({
 				content: "[||E412||] Você não está em um setor.",
 				ephemeral: true,
@@ -483,41 +483,19 @@ export class DepartmentInteractionHandler extends InteractionHandler {
 			return;
 		}
 
-		const currentSectorIndex =
-			Object.values(ENVIRONMENT.SECTORS_ROLES).find(
-				(r) => r.id === currentSector.id,
-			)?.index ?? 0;
+		const previousJob = this.#inferPreviousJobRole(member.roles, currentJob);
 
-		const previousSectorRoleId = Object.values(ENVIRONMENT.SECTORS_ROLES)
-			.filter((r) => r.index < currentSectorIndex)
-			.sort((a, b) => b.index - a.index)[0]?.id;
-
-		if (!previousSectorRoleId) {
+		if (!previousJob) {
 			await interaction?.reply({
-				content: "[||E812||] Houve um erro ao rebaixar este usuário.",
+				content: "[||E812||] Não foi possível encontrar um cargo anterior.",
 				ephemeral: true,
 			});
 
 			return;
 		}
 
-		const guild = await this.container.client.guilds.fetch(
-			ENVIRONMENT.GUILD_ID,
-		);
-
-		const previousSector = await guild.roles.fetch(previousSectorRoleId);
-
-		if (!previousSector) {
-			await interaction?.reply({
-				content: "[||E157||] Houve um erro ao rebaixar este usuário.",
-				ephemeral: true,
-			});
-
-			return;
-		}
-
-		await member.roles.remove(currentSector);
-		await member.roles.add(previousSector);
+		await member.roles.remove(currentJob);
+		await member.roles.add(previousJob);
 
 		await this.container.prisma.user.update({
 			where: {
@@ -525,8 +503,46 @@ export class DepartmentInteractionHandler extends InteractionHandler {
 			},
 			data: {
 				latestPromotionDate: new Date(),
-				latestPromotionRoleId: currentSector.id,
+				latestPromotionRoleId: currentJob.id,
 			},
 		});
+	}
+
+	#inferHighestJobRole(roles: GuildMemberRoleManager) {
+		const jobRoles = roles.cache.filter((role) =>
+			Object.values(ENVIRONMENT.JOBS_ROLES).some((r) => r.id === role.id),
+		);
+
+		if (jobRoles.size === 0) return null;
+
+		return jobRoles.reduce((highest, current) => {
+			const currentIndex =
+				Object.values(ENVIRONMENT.JOBS_ROLES).find((r) => r.id === current.id)
+					?.index ?? 0;
+
+			const highestIndex =
+				Object.values(ENVIRONMENT.JOBS_ROLES).find((r) => r.id === highest.id)
+					?.index ?? 0;
+
+			if (!currentIndex || !highestIndex) {
+				return current;
+			}
+
+			return currentIndex > highestIndex ? current : highest;
+		});
+	}
+
+	#inferPreviousJobRole(roles: GuildMemberRoleManager, currentRole: Role) {
+		const currentRoleIndex =
+			Object.values(ENVIRONMENT.JOBS_ROLES).find((r) => r.id === currentRole.id)
+				?.index ?? 0;
+
+		if (!currentRoleIndex) return null;
+
+		const nextRole = Object.values(ENVIRONMENT.JOBS_ROLES)
+			.sort((a, b) => a.index - b.index)
+			.find((role) => role.index < currentRoleIndex);
+
+		return nextRole ? roles.cache.find((r) => r.id === nextRole.id) : null;
 	}
 }

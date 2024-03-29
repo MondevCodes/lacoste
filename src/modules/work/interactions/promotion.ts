@@ -173,6 +173,11 @@ export class PromotionInteractionHandler extends InteractionHandler {
 				guild.roles.cache.get(nextTargetJobId) ??
 				(await guild.roles.fetch(nextTargetJobId));
 
+		console.log({
+			nextTargetJob,
+			nextTargetJobId,
+		});
+
 		if (!nextTargetJob) {
 			await interactionFromModal.editReply({
 				content:
