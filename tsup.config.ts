@@ -5,7 +5,7 @@ export default defineConfig({
 	splitting: false,
 	sourcemap: true,
 	keepNames: true,
-	// minify: true,
+	minify: true,
 
 	format: ["cjs"],
 
