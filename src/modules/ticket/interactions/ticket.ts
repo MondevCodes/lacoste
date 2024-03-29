@@ -25,10 +25,10 @@ import { EmbedColors } from "$lib/constants/discord";
 const ActionData = z.object({
 	id: z
 		.string()
-		.optional()
 		.refine((value) => value && /^[a-f\d]{24}$/i.test(value), {
 			message: "Invalid ObjectId",
-		}),
+		})
+		.optional(),
 
 	action: z.enum(["OpenDefault", "OpenPraise", "End"]),
 });
@@ -126,7 +126,7 @@ export class OmbudsmanInteractionHandler extends InteractionHandler {
 			const closeTicketButton = new ButtonBuilder()
 				.setCustomId(encodeButtonId({ id: ticket.id, action: "End" }))
 				.setStyle(ButtonStyle.Danger)
-				.setLabel("Approve");
+				.setLabel("Fechar Ticket");
 
 			const actionRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
 				closeTicketButton,
@@ -135,10 +135,9 @@ export class OmbudsmanInteractionHandler extends InteractionHandler {
 			const ticketEmbed = new EmbedBuilder()
 				.setColor(EmbedColors.Default)
 				.setTitle("Ouvidoria")
-				.setAuthor({
-					name: interaction.user.tag,
-					iconURL: interaction.user.displayAvatarURL(),
-				})
+				.setDescription(
+					`Olá, <@${interaction.user.id}>! Um diretor irá respondê-lo em alguns instantes.`,
+				)
 				.setFooter({
 					text: ticket.id,
 				});
@@ -221,6 +220,14 @@ export class OmbudsmanInteractionHandler extends InteractionHandler {
 			ENVIRONMENT.NOTIFICATION_CHANNELS.TICKETS,
 		);
 
+		const participants = Array.from(
+			new Set(
+				ticketMessages
+					.map((message) => message.author)
+					.filter((user) => user.id !== interaction.user.id),
+			),
+		);
+
 		if (notificationChannel?.isTextBased()) {
 			await notificationChannel.send({
 				embeds: [
@@ -233,9 +240,10 @@ export class OmbudsmanInteractionHandler extends InteractionHandler {
 						.addFields([
 							{
 								name: "Participantes",
-								value: [
-									...new Set(ticketMessages.map((message) => message.author)),
-								].join("\n"),
+								value:
+									participants.length >= 1
+										? participants.join(", ")
+										: "Sem participantes",
 							},
 							{
 								name: "Criado Em",
@@ -243,12 +251,17 @@ export class OmbudsmanInteractionHandler extends InteractionHandler {
 							},
 						]),
 				],
-				files: [
-					new AttachmentBuilder(
-						Buffer.from(formattedTicketHistory, "utf-8").toString("base64"),
-					).setName("history.txt"),
-				],
+
+				...(formattedTicketHistory.length > 0 && {
+					files: [
+						new AttachmentBuilder(Buffer.from(formattedTicketHistory), {
+							name: "messages.txt",
+						}),
+					],
+				}),
 			});
 		}
+
+		await ticketChannel.delete();
 	}
 }

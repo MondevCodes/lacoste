@@ -138,27 +138,22 @@ export class NotesInteractionHandler extends InteractionHandler {
 					},
 				);
 
-			const profileResult = await this.container.utilities.habbo.getProfile(
-				result.Target,
-			);
+			const { member: targetMember, habbo: targetHabbo } =
+				await this.container.utilities.habbo.inferTargetGuildMember(
+					result.Target,
+				);
 
-			if (profileResult.isErr()) {
-				await modalInteraction.reply({
-					content:
-						"Ocorreu um erro ao tentar encontrar o perfil do colaborador, tem certeza que o nome está correto?",
-					ephemeral: true,
+			if (!targetMember) {
+				await modalInteraction.editReply({
+					content: "Não foi possível encontrar o usuário informado.",
 				});
 
 				return;
 			}
 
-			const {
-				user: { uniqueId, figureString, name },
-			} = profileResult.unwrap();
-
 			const targetUserId = await this.container.prisma.user.findUnique({
-				where: { habboId: uniqueId },
-				select: { id: true },
+				where: { discordId: targetMember.id },
+				select: { id: true, discordId: true },
 			});
 
 			if (!targetUserId) {
@@ -171,7 +166,9 @@ export class NotesInteractionHandler extends InteractionHandler {
 				return;
 			}
 
-			const targetUser = await cachedGuild.members.fetch(targetUserId.id);
+			const targetUser = await cachedGuild.members.fetch(
+				targetUserId.discordId,
+			);
 
 			if (!targetUser) {
 				await modalInteraction.reply({
@@ -190,7 +187,7 @@ export class NotesInteractionHandler extends InteractionHandler {
 			}
 
 			const approvalEmbed = new EmbedBuilder()
-				.setTitle(`Solicitação de Anotação para ${name}`)
+				.setTitle(`Solicitação de Anotação para @${targetMember.user.tag}`)
 				.setColor(EmbedColors.Default)
 				.setAuthor({
 					name: interaction.user.tag,
@@ -213,12 +210,18 @@ export class NotesInteractionHandler extends InteractionHandler {
 						value: result.Content,
 					},
 				])
-				.setThumbnail(`https://www.habbo.com/habbo-imaging/${figureString}`);
+				.setThumbnail(
+					`https://www.habbo.com/habbo-imaging/${targetHabbo?.user.figureString}`,
+				);
 
 			await approvalChannel.send({
 				embeds: [approvalEmbed],
 				components: [this.#APPROVAL_ROW],
-				content: `<@&${ENVIRONMENT.SECTORS_ROLES.PRESIDÊNCIA}>`,
+				content: `<@&${ENVIRONMENT.SECTORS_ROLES.PRESIDÊNCIA.id}>`,
+			});
+
+			await modalInteraction.editReply({
+				content: "Solicitação enviada.",
 			});
 
 			return;
@@ -229,7 +232,7 @@ export class NotesInteractionHandler extends InteractionHandler {
 		// ---------------------
 
 		if (action === "Reject") {
-			await interaction.editReply({
+			await interaction.message.edit({
 				components: [],
 				embeds: [
 					EmbedBuilder.from(interaction.message.embeds[0])
@@ -263,13 +266,18 @@ export class NotesInteractionHandler extends InteractionHandler {
 			],
 		});
 
-		await interaction.editReply({
+		await interaction.message.edit({
 			components: [],
 			embeds: [
 				EmbedBuilder.from(interaction.message.embeds[0])
 					.setTitle("Solicitação Aprovada")
 					.setColor(EmbedColors.Success),
 			],
+		});
+
+		await interaction.reply({
+			content: "Operação concluída.",
+			ephemeral: true,
 		});
 
 		return;

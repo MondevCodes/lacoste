@@ -32,10 +32,10 @@ const ActionData = z.object({
 
 	id: z
 		.string()
-		.optional()
 		.refine((value) => value && /^[a-f\d]{24}$/i.test(value), {
 			message: "Invalid ObjectId",
-		}),
+		})
+		.optional(),
 });
 
 type ActionData = z.infer<typeof ActionData>;
