@@ -138,26 +138,23 @@ export class HireInteractionHandler extends InteractionHandler {
 					},
 				);
 
-			const profileResult = await this.container.utilities.habbo.getProfile(
-				result.Target,
-			);
+			const { member: targetMember, habbo: targetHabbo } =
+				await this.container.utilities.habbo.inferTargetGuildMember(
+					result.Target,
+				);
 
-			if (profileResult.isErr()) {
-				await modalInteraction.reply({
-					content:
-						"Ocorreu um erro ao tentar encontrar o perfil do colaborador, tem certeza que o nome está correto?",
-					ephemeral: true,
+			if (!targetMember) {
+				await modalInteraction.editReply({
+					content: "Não foi possível encontrar o usuário informado.",
 				});
 
 				return;
 			}
 
-			const {
-				user: { uniqueId, figureString, name },
-			} = profileResult.unwrap();
-
 			const targetUserDb = await this.container.prisma.user.findUnique({
-				where: { habboId: uniqueId },
+				where: {
+					discordId: targetMember.id,
+				},
 				select: {
 					id: true,
 					discordId: true,
@@ -236,13 +233,13 @@ export class HireInteractionHandler extends InteractionHandler {
 
 			const confirmationEmbed = new EmbedBuilder()
 				.setThumbnail(
-					`https://www.habbo.com/habbo-imaging/avatarimage?figure=${figureString}`,
+					`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.user.figureString}`,
 				)
-				.setAuthor({
-					name: name,
-				})
 				.setFooter({
-					text: uniqueId,
+					text: `@${targetMember.user.tag} | ${
+						targetHabbo?.user.uniqueId ?? "N/D"
+					}`,
+					iconURL: targetMember.displayAvatarURL(),
 				})
 				.setTitle("Você tem certeza?")
 				.setDescription(
@@ -288,7 +285,7 @@ export class HireInteractionHandler extends InteractionHandler {
 
 			const approvalEmbed = new EmbedBuilder()
 				.setTitle(
-					`Solicitação de Contratação para ${name} como ${selectedJob.name}`,
+					`Solicitação de Contratação para @${targetUser.user.tag} como ${selectedJob.name}`,
 				)
 				.setColor(EmbedColors.Default)
 				.setAuthor({
@@ -301,7 +298,9 @@ export class HireInteractionHandler extends InteractionHandler {
 				.addFields([
 					{
 						name: "Membro",
-						value: result.Target,
+						value: `@${targetMember.user.tag} | ${
+							targetHabbo?.user.uniqueId ?? "N/D"
+						}`,
 					},
 					{
 						name: "Novo Cargo",
@@ -324,7 +323,9 @@ export class HireInteractionHandler extends InteractionHandler {
 						inline: true,
 					},
 				])
-				.setImage(`https://www.habbo.com/habbo-imaging/${figureString}`);
+				.setImage(
+					`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.user.figureString}&size=b`,
+				);
 
 			await this.container.prisma.user.update({
 				where: { id: targetUserDb.id },

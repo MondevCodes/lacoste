@@ -11,6 +11,7 @@ import {
 	TextInputBuilder,
 	TextInputStyle,
 	type ButtonInteraction,
+	GuildMemberRoleManager,
 } from "discord.js";
 
 import { ApplyOptions } from "@sapphire/decorators";
@@ -138,26 +139,23 @@ export class FireInteractionHandler extends InteractionHandler {
 					},
 				);
 
-			const profileResult = await this.container.utilities.habbo.getProfile(
-				result.Target,
-			);
+			const { member: targetMember, habbo: targetHabbo } =
+				await this.container.utilities.habbo.inferTargetGuildMember(
+					result.Target,
+				);
 
-			if (profileResult.isErr()) {
-				await modalInteraction.reply({
-					content:
-						"Ocorreu um erro ao tentar encontrar o perfil do colaborador, tem certeza que o nome está correto?",
-					ephemeral: true,
+			if (!targetMember) {
+				await modalInteraction.editReply({
+					content: "Não foi possível encontrar o usuário informado.",
 				});
 
 				return;
 			}
 
-			const {
-				user: { uniqueId, figureString, name },
-			} = profileResult.unwrap();
-
 			const targetUserDb = await this.container.prisma.user.findUnique({
-				where: { habboId: uniqueId },
+				where: {
+					discordId: targetMember.id,
+				},
 				select: {
 					id: true,
 					discordId: true,
@@ -188,9 +186,7 @@ export class FireInteractionHandler extends InteractionHandler {
 				});
 			}
 
-			const currentJobRole = await cachedGuild.roles.fetch(
-				targetUserDb.latestPromotionRoleId ?? "",
-			);
+			const currentJobRole = this.#inferHighestJobRole(targetUser.roles);
 
 			if (!currentJobRole) {
 				await modalInteraction.reply({
@@ -204,13 +200,13 @@ export class FireInteractionHandler extends InteractionHandler {
 
 			const confirmationEmbed = new EmbedBuilder()
 				.setThumbnail(
-					`https://www.habbo.com/habbo-imaging/avatarimage?figure=${figureString}`,
+					`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.user.figureString}`,
 				)
-				.setAuthor({
-					name: name,
-				})
 				.setFooter({
-					text: uniqueId,
+					text: `@${targetMember.user.tag} | ${
+						targetHabbo?.user.uniqueId ?? "N/D"
+					}`,
+					iconURL: targetMember.displayAvatarURL(),
 				})
 				.setTitle("Você tem certeza que deseja demiti-lo(a)?");
 
@@ -263,19 +259,21 @@ export class FireInteractionHandler extends InteractionHandler {
 				.addFields([
 					{
 						name: "Membro",
-						value: result.Target,
+						value: `@${targetMember.user.tag} | ${
+							targetHabbo?.user.uniqueId ?? "N/D"
+						}`,
 					},
 					{
 						name: "Cargo",
-						value: currentJobRole.name,
+						value: currentJobRole.name ?? "N/D",
 					},
 					{
 						name: "Motivo",
-						value: result.Reason.length > 0 ? result.Reason : "Nenhum",
+						value: result.Reason.length > 0 ? result.Reason : "N/D",
 					},
 				])
 				.setThumbnail(
-					`https://www.habbo.com/habbo-imaging/avatarimage?figure=${figureString}&size=b`,
+					`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.user.figureString}&size=b`,
 				);
 
 			await approvalChannel.send({
@@ -344,13 +342,12 @@ export class FireInteractionHandler extends InteractionHandler {
 			interaction.guild ??
 			(await interaction.client.guilds.fetch(interaction.guildId));
 
-		const latestPromotionRole =
-			targetUser.latestPromotionRoleId &&
-			(await guild.roles.fetch(targetUser.latestPromotionRoleId));
+		const targetMember = await guild.members.fetch(targetUser.discordId);
+		const currentJobRole = this.#inferHighestJobRole(targetMember.roles);
 
-		if (latestPromotionRole) {
+		if (currentJobRole) {
 			await guild.members.removeRole({
-				role: latestPromotionRole,
+				role: currentJobRole,
 				user: targetUser.discordId,
 				reason: "Demissão",
 			});
@@ -386,5 +383,29 @@ export class FireInteractionHandler extends InteractionHandler {
 		});
 
 		return;
+	}
+
+	#inferHighestJobRole(roles: GuildMemberRoleManager) {
+		const jobRoles = roles.cache.filter((role) =>
+			Object.values(ENVIRONMENT.JOBS_ROLES).some((r) => r.id === role.id),
+		);
+
+		if (jobRoles.size === 0) return null;
+
+		return jobRoles.reduce((highest, current) => {
+			const currentIndex =
+				Object.values(ENVIRONMENT.JOBS_ROLES).find((r) => r.id === current.id)
+					?.index ?? 0;
+
+			const highestIndex =
+				Object.values(ENVIRONMENT.JOBS_ROLES).find((r) => r.id === highest.id)
+					?.index ?? 0;
+
+			if (!currentIndex || !highestIndex) {
+				return current;
+			}
+
+			return currentIndex > highestIndex ? current : highest;
+		});
 	}
 }
