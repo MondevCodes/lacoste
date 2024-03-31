@@ -186,12 +186,12 @@ export class HireInteractionHandler extends InteractionHandler {
 			}
 
 			const currentJobRoleIndex =
-				Object.values(ENVIRONMENT.JOBS_ROLES).find(
+				Object.values(ENVIRONMENT.SECTORS_ROLES).find(
 					(role) => role.id === targetUserDb.latestPromotionRoleId,
 				)?.index ?? 0;
 
 			const jobRolesIds = new Set(
-				Object.values(ENVIRONMENT.JOBS_ROLES)
+				Object.values(ENVIRONMENT.SECTORS_ROLES)
 					.filter((role) => role.index > currentJobRoleIndex)
 					.map((role) => role.id),
 			);
