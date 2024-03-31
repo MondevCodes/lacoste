@@ -193,11 +193,14 @@ export class ModIndividualInteractionHandler extends InteractionHandler {
 						name: interaction.user.tag,
 						iconURL: interaction.user.displayAvatarURL(),
 					})
+					.setTitle("Alteração de Saldo (Individual)")
 					.setThumbnail(
 						`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.user.figureString}&size=b`,
 					)
 					.setDescription(
-						`**${amount} Câmbios** adicionado individualmente por ${interaction.user} para ${targetMember}`,
+						`**${amount} Câmbios** ${
+							data.action === "Add" ? "adicionado" : "removido"
+						} individualmente por ${interaction.user} para ${targetMember}`,
 					)
 					.setColor(EmbedColors.Success),
 			],

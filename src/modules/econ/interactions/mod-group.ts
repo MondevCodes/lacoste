@@ -145,7 +145,7 @@ export class ModGroupInteractionHandler extends InteractionHandler {
 									key as keyof typeof ENVIRONMENT.JOBS_ROLES
 								].id === targetRoleId,
 						) as keyof typeof ENVIRONMENT.JOBS_PAYMENT
-				  ];
+					];
 
 		const targets = result.Targets.split(",")
 			.filter((x) => x.length > 0)
@@ -286,6 +286,41 @@ export class ModGroupInteractionHandler extends InteractionHandler {
 			} receberão o valor de ${amount}.`,
 			components: [],
 			embeds: [],
+		});
+
+		const notificationChannel = await guild.channels.fetch(
+			ENVIRONMENT.NOTIFICATION_CHANNELS.CMB_LOGS,
+		);
+
+		if (!notificationChannel?.isTextBased()) {
+			throw new Error("Can't send message to non-text channel.");
+		}
+
+		await notificationChannel.send({
+			embeds: [
+				new EmbedBuilder()
+					.setAuthor({
+						name: interaction.user.tag,
+						iconURL: interaction.user.displayAvatarURL(),
+					})
+					.setTitle("Alteração de Saldo (Grupo)")
+					.setDescription(
+						data.action === "Add"
+							? `Adicionado ${amount} Câmbios em ${targets.length} ${
+									targets.length === 1 ? "usuário" : "usuários"
+								}`
+							: `Removido ${amount} Câmbios em ${targets.length} ${
+									targets.length === 1 ? "usuário" : "usuários"
+								}`,
+					)
+					.setFields([
+						{
+							name: "Usuários",
+							value: `- ${members.map((x) => x.user.toString()).join("\n- ")}`,
+						},
+					])
+					.setColor(EmbedColors.Success),
+			],
 		});
 	}
 }
