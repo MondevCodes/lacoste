@@ -164,6 +164,17 @@ export class OmbudsmanInteractionHandler extends InteractionHandler {
 	}
 
 	async #end(interaction: ButtonInteraction, id: string) {
+		const guild = await this.container.utilities.discord.getGuild();
+		const member = await guild.members.fetch(interaction.user.id);
+
+		const hasPermission = this.container.utilities.discord.hasPermissionByRole({
+			category: "SECTOR",
+			checkFor: "FUNDAÇÃO",
+			roles: member.roles,
+		});
+
+		if (!hasPermission) return;
+
 		const ticket = await this.container.prisma.ticket.findUnique({
 			where: { id },
 		});

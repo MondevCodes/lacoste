@@ -487,7 +487,8 @@ export class DepartmentInteractionHandler extends InteractionHandler {
 
 		if (!previousJob) {
 			await interaction?.reply({
-				content: "[||E812||] Não foi possível encontrar um cargo anterior.",
+				content:
+					"[||E812||] O usuário informado não tem um cargo anterior/antecedente, ele está no primeiro cargo da hierarquia, talvez você queira demiti-lo?",
 				ephemeral: true,
 			});
 

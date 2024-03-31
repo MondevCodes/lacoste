@@ -45,6 +45,16 @@ export const Systems = z.enum([
 export type System = z.infer<typeof Systems>;
 
 export const Jobs = z.enum([
+	"PRESIDENTE",
+	"VICE_PRESIDENTE",
+	"LÍDER_DE_DIRETORIA",
+	"DIRETOR_DE_DESIGN",
+	"DIRETOR_GERAL",
+	"DIRETOR_DE_RH",
+	"APRENDIZ_DE_DIRETOR",
+	"SUPERINTENDENTE",
+	"INTENDENTE",
+
 	"ADMINISTRADOR",
 	"ADMINISTRADOR_EM_OBS",
 	"GERENTE",
