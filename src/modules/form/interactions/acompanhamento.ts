@@ -21,6 +21,7 @@ enum FeedbackInputIds {
 	Promoted = "Promoted",
 	Performance = "Performance",
 	PerformanceRate = "PerformanceRate",
+	NeedsMoreFollowUp = "NeedsMoreFollowUp",
 }
 
 type FeedbackInput = keyof typeof FeedbackInputIds;
@@ -76,16 +77,23 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
 							.setRequired(true),
 
 						new TextInputBuilder()
-							.setLabel("Nota de Desempenho")
+							.setLabel("Nota de desempenho")
 							.setPlaceholder("Ex.: 1, 2, 3, 4 ou 5")
 							.setCustomId(FeedbackInputIds.PerformanceRate)
 							.setStyle(TextInputStyle.Short)
 							.setRequired(true),
 
 						new TextInputBuilder()
-							.setLabel("Motivo da Nota")
+							.setLabel("Motivo da nota")
 							.setPlaceholder("Ex.: Muito bom")
 							.setCustomId(FeedbackInputIds.Performance)
+							.setStyle(TextInputStyle.Short)
+							.setRequired(true),
+
+						new TextInputBuilder()
+							.setLabel("Precisa de mais acompanhamento?")
+							.setPlaceholder("Ex.: Sim ou Não")
+							.setCustomId(FeedbackInputIds.NeedsMoreFollowUp)
 							.setStyle(TextInputStyle.Short)
 							.setRequired(true),
 					],
@@ -115,6 +123,11 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
 				{
 					name: "Motivo da Nota",
 					value: result.Target.length > 0 ? result.Performance : "N/A",
+					inline: true,
+				},
+				{
+					name: "Precisa de mais acompanhamento?",
+					value: result.Target.length > 0 ? result.NeedsMoreFollowUp : "N/A",
 					inline: true,
 				},
 			])
