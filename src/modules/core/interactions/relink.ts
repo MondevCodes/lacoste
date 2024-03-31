@@ -1,10 +1,10 @@
-import { ApplyOptions } from "@sapphire/decorators";
 import {
 	InteractionHandler,
 	InteractionHandlerTypes,
 } from "@sapphire/framework";
 
-import { GuildMember, type ButtonInteraction } from "discord.js";
+import { ApplyOptions } from "@sapphire/decorators";
+import { ButtonInteraction } from "discord.js";
 
 import { FormIds } from "$lib/constants/forms";
 
@@ -35,11 +35,12 @@ export class EvaluationFormInteractionHandler extends InteractionHandler {
 			return;
 		}
 
-		const habbo = (
-			await this.container.utilities.habbo.getProfile(existingUser.habboId)
-		).unwrapOr(null);
+		const { habbo, member } =
+			await this.container.utilities.habbo.inferTargetGuildMember(
+				existingUser.habboId,
+			);
 
-		if (!habbo) {
+		if (!habbo?.user.name) {
 			await interaction.reply({
 				content:
 					"Não consegui encontrar o perfil do usuário, talvez sua conta esteja deletada?",
@@ -49,27 +50,10 @@ export class EvaluationFormInteractionHandler extends InteractionHandler {
 			return;
 		}
 
-		const username =
-			interaction.member instanceof GuildMember
-				? interaction.member.displayName
-				: (await interaction.guild?.members.fetch(interaction.user.id))
-						?.displayName;
-
-		if (username?.replace("· ", "") === habbo.user.name) {
-			await interaction.guild?.members.edit(interaction.user, {
-				nick: `· ${habbo.user.name}`,
-			});
-
-			await interaction.reply({
-				content: "Seu perfil foi renomeado.",
-				ephemeral: true,
-			});
-
-			return;
-		}
+		await member?.setNickname(`· ${habbo.user.name}`);
 
 		await interaction.reply({
-			content: "Seu perfil não foi renomeado pois o nome não mudou.",
+			content: "Seu perfil foi renomeado.",
 			ephemeral: true,
 		});
 	}
