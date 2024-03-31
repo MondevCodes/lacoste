@@ -5,18 +5,19 @@ import {
 } from "@sapphire/framework";
 
 import {
-	type ButtonInteraction,
-	GuildMember,
 	EmbedBuilder,
+	GuildMember,
 	TextInputBuilder,
 	TextInputStyle,
+	type ButtonInteraction,
 } from "discord.js";
+
+import { schedule } from "node-cron";
+import { merge, pick } from "remeda";
 
 import { EmbedColors } from "$lib/constants/discord";
 import { FormIds } from "$lib/constants/forms";
 import { ENVIRONMENT } from "$lib/env";
-import { merge } from "remeda";
-import { schedule } from "node-cron";
 
 enum OrganizationalFormInputIds {
 	Time = "Time",
@@ -64,7 +65,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 	}
 
 	public override async run(interaction: ButtonInteraction) {
-		const { result: resultPartial, interaction: i } =
+		const { result: resultPartial, interaction: interactionFromModal } =
 			await this.container.utilities.inquirer.awaitModal<OrganizationalFormInput>(
 				interaction,
 				{
@@ -89,72 +90,137 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 							.setCustomId(OrganizationalFormInputIds.Total)
 							.setStyle(TextInputStyle.Short)
 							.setRequired(true),
+
+						new TextInputBuilder()
+							.setLabel("Auxílio do Comando")
+							.setPlaceholder("Auxílio do Comando")
+							.setCustomId(OrganizationalFormInputIds.CommandAssistance)
+							.setRequired(false),
+
+						new TextInputBuilder()
+							.setLabel("Comando Geral")
+							.setPlaceholder("Comando Geral")
+							.setCustomId(OrganizationalFormInputIds.GeneralCommand)
+							.setRequired(false),
 					],
 					listenInteraction: true,
 					title: "Formulário Organizacional",
 				},
 			);
 
-		const choices = await this.container.utilities.inquirer.awaitSelectMenu(i, {
-			minValues: 1,
-			maxValues: 7,
-			choices: [
+		const { result: resultPartial2 } =
+			await this.container.utilities.inquirer.awaitModal<OrganizationalFormInput>(
+				interactionFromModal,
 				{
-					id: OrganizationalFormInputIds.CommandAssistance,
-					label: "Auxilio do Comando",
-					emoji: "👥",
-				},
-				{
-					id: OrganizationalFormInputIds.GeneralCommand,
-					label: "Comando Geral",
-					emoji: "🏢",
-				},
-				{
-					id: OrganizationalFormInputIds.Ombudsman,
-					label: "Ouvidoria",
-					emoji: "📣",
-				},
-				{
-					id: OrganizationalFormInputIds.Stage,
-					label: "Palco",
-					emoji: "🎤",
-				},
-				{
-					id: OrganizationalFormInputIds.Hall1,
-					label: "Hall 1",
-					emoji: "🏛️",
-				},
-				{
-					id: OrganizationalFormInputIds.Hall2,
-					label: "Hall 2",
-					emoji: "🏛️",
-				},
-				{
-					id: OrganizationalFormInputIds.Hall3,
-					label: "Hall 3",
-					emoji: "🏛️",
-				},
-			],
-			placeholder: "Selecione os Locais",
-			question: "Em quais áreas você marcou presença?",
-		});
+					inputs: [
+						new TextInputBuilder()
+							.setLabel("Palco")
+							.setPlaceholder("Palco")
+							.setCustomId(OrganizationalFormInputIds.Stage)
+							.setStyle(TextInputStyle.Short)
+							.setRequired(false),
 
-		const result = merge(
-			resultPartial,
-			(
-				Object.keys(
-					OrganizationalFormInputIds,
-				) as (keyof typeof OrganizationalFormInputIds)[]
-			).reduce(
-				(acc, key) =>
-					merge(acc, {
-						[key]: choices.find((c) => c === OrganizationalFormInputIds[key])
-							? "Sim"
-							: "Não",
-					}),
-				{},
-			),
-		);
+						new TextInputBuilder()
+							.setLabel("Ouvidoria")
+							.setPlaceholder("Ouvidoria")
+							.setCustomId(OrganizationalFormInputIds.Ombudsman)
+							.setStyle(TextInputStyle.Short)
+							.setRequired(false),
+
+						new TextInputBuilder()
+							.setLabel("Hall 1")
+							.setPlaceholder("Hall 1")
+							.setCustomId(OrganizationalFormInputIds.Hall1)
+							.setStyle(TextInputStyle.Short)
+							.setRequired(false),
+
+						new TextInputBuilder()
+							.setLabel("Hall 2")
+							.setPlaceholder("Hall 2")
+							.setCustomId(OrganizationalFormInputIds.Hall2)
+							.setStyle(TextInputStyle.Short)
+							.setRequired(false),
+
+						new TextInputBuilder()
+							.setLabel("Hall 3")
+							.setPlaceholder("Hall 3")
+							.setCustomId(OrganizationalFormInputIds.Hall3)
+							.setStyle(TextInputStyle.Short)
+							.setRequired(false),
+					],
+					title: "Formulário Organizacional",
+					startButtonLabel: "Continuar",
+				},
+			);
+
+		const result = merge(resultPartial, resultPartial2);
+
+		for (const [key, value] of Object.entries(result) as [
+			OrganizationalFormInput,
+			string,
+		][]) {
+			if (value === "" || !value || value === null) {
+				result[key] = "N/A";
+			}
+		}
+
+		const targets = pick(result, [
+			"CommandAssistance",
+			"GeneralCommand",
+			"Ombudsman",
+			"Stage",
+			"Hall1",
+			"Hall2",
+			"Hall3",
+		]);
+
+		const members: Record<
+			Exclude<OrganizationalFormInput, "Time" | "TopPosition">,
+			GuildMember[]
+		> = {
+			CommandAssistance: [],
+			GeneralCommand: [],
+			Ombudsman: [],
+			Hall1: [],
+			Hall2: [],
+			Hall3: [],
+			Stage: [],
+			Total: [],
+		};
+
+		for await (const [group, target] of Object.entries(targets) as [
+			Exclude<OrganizationalFormInput, "Time" | "TopPosition">,
+			string,
+		][]) {
+			const { member: targetMember } =
+				await this.container.utilities.habbo.inferTargetGuildMember(target);
+
+			if (!targetMember) {
+				await interactionFromModal.editReply({
+					content: `O usuário informado (${target}) não foi encontrado, você tem certeza que o nome é correto?`,
+					components: [],
+					embeds: [],
+				});
+
+				return;
+			}
+
+			const targetUser = await this.container.prisma.user.findUnique({
+				where: { discordId: targetMember.user.id },
+				select: { id: true },
+			});
+
+			if (!targetUser) {
+				this.container.logger.warn(
+					"[OrganizationalFormInteractionHandler#run] Author or target user was not found in database.",
+				);
+
+				return;
+			}
+
+			members[group] ||= [];
+			members[group].push(targetMember);
+		}
 
 		const embed = new EmbedBuilder()
 			.setTitle("Formulário Organizacional")
@@ -177,31 +243,37 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 				},
 				{
 					name: "👥 Auxílio do Comando",
-					value: result[OrganizationalFormInputIds.CommandAssistance],
+					value: this.#joinList(
+						members.CommandAssistance.map((x) => x.user.toString()),
+					),
 				},
 				{
 					name: "🏢 Comando Geral",
-					value: result[OrganizationalFormInputIds.GeneralCommand],
+					value: this.#joinList(
+						members.GeneralCommand.map((x) => x.user.toString()),
+					),
 				},
 				{
 					name: "📣 Ouvidoria",
-					value: result[OrganizationalFormInputIds.Ombudsman],
+					value: this.#joinList(
+						members.Ombudsman.map((x) => x.user.toString()),
+					),
 				},
 				{
 					name: "🎤 Palco",
-					value: result[OrganizationalFormInputIds.Stage],
+					value: this.#joinList(members.Stage.map((x) => x.user.toString())),
 				},
 				{
 					name: "🏛️ Hall 1",
-					value: result[OrganizationalFormInputIds.Hall1],
+					value: this.#joinList(members.Hall1.map((x) => x.user.toString())),
 				},
 				{
 					name: "🏛️ Hall 2",
-					value: result[OrganizationalFormInputIds.Hall2],
+					value: this.#joinList(members.Hall2.map((x) => x.user.toString())),
 				},
 				{
 					name: "🏛️ Hall 3",
-					value: result[OrganizationalFormInputIds.Hall3],
+					value: this.#joinList(members.Hall3.map((x) => x.user.toString())),
 				},
 			)
 			.setColor(EmbedColors.Default);
@@ -227,11 +299,11 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 		});
 
 		if (!authorExists)
-			await i.editReply({
+			await interactionFromModal.editReply({
 				content:
-					"O formulário foi enviado, mas você não foi registrado, use `vincular` em si mesmo(a) para registrar.",
+					"O formulário foi enviado, mas você não foi registrado, use `vincular` em si mesmo(a) para registrar-se.",
 			});
-		else await i.deleteReply();
+		else await interactionFromModal.deleteReply();
 
 		await this.container.prisma.user.update({
 			where: { discordId: interaction.user.id },
@@ -279,5 +351,13 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 			},
 			{ recoverMissedExecutions: true },
 		);
+	}
+
+	#joinList(list: string[]) {
+		if (list.length === 0) {
+			return "N/D";
+		}
+
+		return `- ${list.join("\n- ")}`;
 	}
 }
