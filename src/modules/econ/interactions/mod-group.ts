@@ -213,6 +213,10 @@ export class ModGroupInteractionHandler extends InteractionHandler {
 			members.push(targetMember);
 		}
 
+		const disqualifiedMembers = members.filter(
+			(x) => !x.roles.cache.has(targetRoleId),
+		);
+
 		members = members.filter((x) => x.roles.cache.has(targetRoleId));
 
 		if (members.length < 1) {
@@ -223,33 +227,38 @@ export class ModGroupInteractionHandler extends InteractionHandler {
 			return;
 		}
 
+		const confirmationEmbed = new EmbedBuilder()
+			.setTitle("Confirmação")
+			.setDescription(
+				`Tem certeza que deseja executar a ação de ${data.action} para ${
+					members.length
+				} ${members.length === 1 ? "usuário" : "usuários"}?`,
+			)
+			.addFields([
+				{
+					name: "Usuários",
+					value: `- ${members.map((x) => x.user.toString()).join("\n- ")}`,
+				},
+			])
+			.setFooter({
+				text: MONETARY_INTL.format(amount),
+			})
+			.setColor(EmbedColors.Default);
+
+		if (disqualifiedMembers.length > 0) {
+			confirmationEmbed.addFields([
+				{
+					name: "Usuários Desqualificados",
+					value: `- ${disqualifiedMembers
+						.map((x) => `~~${x.user.toString()}~~`)
+						.join("\n- ")}`,
+				},
+			]);
+		}
+
 		const { result: isConfirmed } =
 			await this.container.utilities.inquirer.awaitButtons(i, {
-				question: {
-					embeds: [
-						new EmbedBuilder()
-							.setTitle("Confirmação")
-							.setDescription(
-								`Tem certeza que deseja executar a ação de ${
-									data.action
-								} para ${targets.length} ${
-									targets.length === 1 ? "usuário" : "usuários"
-								}?`,
-							)
-							.setFields([
-								{
-									name: "Usuários",
-									value: `- ${members
-										.map((x) => x.user.toString())
-										.join("\n- ")}`,
-								},
-							])
-							.setFooter({
-								text: MONETARY_INTL.format(amount),
-							})
-							.setColor(EmbedColors.Default),
-					],
-				},
+				question: { embeds: [confirmationEmbed] },
 				choices: [
 					{
 						id: "True" as const,
