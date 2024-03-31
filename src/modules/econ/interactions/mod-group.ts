@@ -171,7 +171,7 @@ export class ModGroupInteractionHandler extends InteractionHandler {
 			return;
 		}
 
-		const members: GuildMember[] = [];
+		let members: GuildMember[] = [];
 
 		for await (const target of targets) {
 			const { member: targetMember } =
@@ -211,6 +211,16 @@ export class ModGroupInteractionHandler extends InteractionHandler {
 			);
 
 			members.push(targetMember);
+		}
+
+		members = members.filter((x) => x.roles.cache.has(targetRoleId));
+
+		if (members.length < 1) {
+			await i.editReply({
+				content: "Nenhum usuário encontrado no cargo informado.",
+			});
+
+			return;
 		}
 
 		const { result: isConfirmed } =
