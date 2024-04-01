@@ -339,19 +339,26 @@ export class PromotionInteractionHandler extends InteractionHandler {
 			ENVIRONMENT.NOTIFICATION_CHANNELS.DEPARTMENT_PROMOTIONS,
 		);
 
+		const { habbo: authorHabbo } =
+			await this.container.utilities.habbo.inferTargetGuildMember(
+				interaction.user.id,
+			);
+
 		if (notificationChannel?.isTextBased()) {
 			await notificationChannel.send({
 				embeds: [
 					new EmbedBuilder()
 						.setDescription(
-							`### Observações\n\n${
+							`### Promoção\n\n${
 								result.additional.length > 0
 									? result.additional
 									: "Nenhuma observação foi adicionada."
 							}`,
 						)
 						.setFooter({
-							text: `Promotor @${interaction.user.tag}`,
+							text: `Promotor ${
+								authorHabbo?.name ?? `@${interaction.user.tag}`
+							}`,
 							iconURL: interaction.user.displayAvatarURL(),
 						})
 						.addFields([

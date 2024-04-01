@@ -10,7 +10,7 @@ import { isNonNull } from "remeda";
 
 import { PrismaClient } from "@prisma/client";
 import { SapphireClient, container } from "@sapphire/framework";
-import { IntentsBitField, type ClientOptions } from "discord.js";
+import { IntentsBitField, type ClientOptions, Partials } from "discord.js";
 
 import { ENVIRONMENT, __DEV__ } from "$lib/env";
 
@@ -206,6 +206,8 @@ async function run(): Promise<void> {
 			IntentsBitField.Flags.DirectMessageTyping,
 			IntentsBitField.Flags.DirectMessageReactions,
 		],
+
+		partials: [Partials.Channel],
 
 		defaultPrefix: "-",
 		baseUserDirectory: null,

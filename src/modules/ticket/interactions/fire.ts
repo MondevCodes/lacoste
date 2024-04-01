@@ -307,14 +307,16 @@ export class FireInteractionHandler extends InteractionHandler {
 		}
 
 		if (action === "Reject") {
-			await interaction.editReply({
-				components: [],
-				embeds: [
-					EmbedBuilder.from(interaction.message.embeds[0])
-						.setTitle("Solicitação Rejeitada")
-						.setColor(EmbedColors.Error),
-				],
-			});
+			// await interaction.editReply({
+			// 	components: [],
+			// 	embeds: [
+			// 		EmbedBuilder.from(interaction.message.embeds[0])
+			// 			.setTitle("Solicitação Rejeitada")
+			// 			.setColor(EmbedColors.Error),
+			// 	],
+			// });
+
+			await interaction.message.delete();
 
 			return;
 		}
@@ -397,14 +399,16 @@ export class FireInteractionHandler extends InteractionHandler {
 			],
 		});
 
-		await interaction.message.edit({
-			components: [],
-			embeds: [
-				EmbedBuilder.from(interaction.message.embeds[0])
-					.setTitle("Demissão Aprovada")
-					.setColor(EmbedColors.Success),
-			],
-		});
+		// await interaction.message.edit({
+		// 	components: [],
+		// 	embeds: [
+		// 		EmbedBuilder.from(interaction.message.embeds[0])
+		// 			.setTitle("Demissão Aprovada")
+		// 			.setColor(EmbedColors.Success),
+		// 	],
+		// });
+
+		await interaction.message.delete();
 
 		return;
 	}

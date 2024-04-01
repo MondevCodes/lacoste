@@ -358,14 +358,16 @@ export class HireInteractionHandler extends InteractionHandler {
 		}
 
 		if (action === "Reject") {
-			await interaction.message.edit({
-				components: [],
-				embeds: [
-					EmbedBuilder.from(interaction.message.embeds[0])
-						.setTitle(`Solicitação Rejeitada por ${interaction.user.tag}`)
-						.setColor(EmbedColors.Error),
-				],
-			});
+			// await interaction.message.edit({
+			// 	components: [],
+			// 	embeds: [
+			// 		EmbedBuilder.from(interaction.message.embeds[0])
+			// 			.setTitle(`Solicitação Rejeitada por ${interaction.user.tag}`)
+			// 			.setColor(EmbedColors.Error),
+			// 	],
+			// });
+
+			await interaction.message.delete();
 
 			await this.container.prisma.user.update({
 				where: { id: targetUserId },
@@ -478,14 +480,16 @@ export class HireInteractionHandler extends InteractionHandler {
 			],
 		});
 
-		await interaction.message.edit({
-			components: [],
-			embeds: [
-				EmbedBuilder.from(interaction.message.embeds[0])
-					.setTitle(`Contratação Aprovada por ${interaction.user.tag}`)
-					.setColor(EmbedColors.Success),
-			],
-		});
+		// await interaction.message.edit({
+		// 	components: [],
+		// 	embeds: [
+		// 		EmbedBuilder.from(interaction.message.embeds[0])
+		// 			.setTitle(`Contratação Aprovada por ${interaction.user.tag}`)
+		// 			.setColor(EmbedColors.Success),
+		// 	],
+		// });
+
+		await interaction.message.delete();
 
 		return;
 	}
