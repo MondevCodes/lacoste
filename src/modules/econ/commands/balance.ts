@@ -9,7 +9,10 @@ export const MONETARY_INTL = new Intl.NumberFormat("pt-BR", {
 	minimumFractionDigits: 0,
 });
 
-@ApplyOptions<Command.Options>({ name: "saldo" })
+@ApplyOptions<Command.Options>({
+	name: "saldo",
+	aliases: ["balance", "saldos"],
+})
 export class BalanceCommand extends Command {
 	public override async messageRun(message: Message, args: Args) {
 		const user = (await args.pickResult("member")).unwrapOr(message.author);

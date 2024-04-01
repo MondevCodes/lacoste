@@ -1,6 +1,4 @@
 import {
-	ActionRowBuilder,
-	ButtonBuilder,
 	ButtonInteraction,
 	ButtonStyle,
 	EmbedBuilder,
@@ -23,6 +21,8 @@ import { ApplyOptions } from "@sapphire/decorators";
 
 import { EmbedColors } from "$lib/constants/discord";
 import { ENVIRONMENT } from "$lib/env";
+import { values } from "remeda";
+import { getJobSectorsById } from "$lib/constants/jobs";
 
 const ActionData = z.object({
 	action: z.enum([
@@ -61,46 +61,33 @@ export class DepartmentInteractionHandler extends InteractionHandler {
 			JSON.parse(interaction.customId.split("/")[1]),
 		);
 
-		if (action === "SelfRequestRenew" || action === "SelfRequestReturn") {
-			if (!(await this.#hasPendingRenewal(interaction.user.id))) {
-				return this.none();
-			}
-		}
-
-		if (!interaction.inGuild()) {
-			this.container.logger.warn(
-				`[DepartmentInteractionHandler#isAuthorized] ${interaction.user.tag} tried to perform an action in a DM.`,
-			);
-
-			return this.none();
-		}
-
-		const { members } =
-			interaction.guild ??
-			(await interaction.client.guilds.fetch(interaction.guildId));
-
-		const { roles } =
-			"toJSON" in interaction.member
-				? interaction.member
-				: await members.fetch(interaction.user.id);
-
 		let isAuthorized: boolean;
 
-		switch (action) {
-			case "AdminRequestLeave":
-				isAuthorized = this.container.utilities.discord.hasPermissionByRole({
-					checkFor: "PRESIDÊNCIA",
-					category: "SECTOR",
-					roles,
-				});
+		if (action === "SelfRequestRenew" || action === "SelfRequestReturn") {
+			isAuthorized = await this.#hasPendingRenewal(interaction.user.id);
+		} else {
+			if (!interaction.inGuild()) {
+				this.container.logger.warn(
+					`[DepartmentInteractionHandler#isAuthorized] ${interaction.user.tag} tried to perform an action in a DM.`,
+				);
 
-				break;
+				return this.none();
+			}
 
-			case "SelfRequestRenew":
-			case "SelfRequestReturn":
-				isAuthorized = await this.#hasPendingRenewal(interaction.user.id);
+			const { members } =
+				interaction.guild ??
+				(await interaction.client.guilds.fetch(interaction.guildId));
 
-				break;
+			const { roles } =
+				"toJSON" in interaction.member
+					? interaction.member
+					: await members.fetch(interaction.user.id);
+
+			isAuthorized = this.container.utilities.discord.hasPermissionByRole({
+				checkFor: "PRESIDÊNCIA",
+				category: "SECTOR",
+				roles,
+			});
 		}
 
 		return isAuthorized ? this.some({ action, id }) : this.none();
@@ -116,8 +103,6 @@ export class DepartmentInteractionHandler extends InteractionHandler {
 			data.action === "SelfRequestReturn"
 		) {
 			if (data.action === "SelfRequestRenew") {
-				// Renewal Period
-
 				const [renewalPeriod] =
 					await this.container.utilities.inquirer.awaitSelectMenu(interaction, {
 						placeholder: "Selecionar",
@@ -181,7 +166,8 @@ export class DepartmentInteractionHandler extends InteractionHandler {
 				return;
 			}
 
-			return await this.#demote(interaction.user.id, interaction);
+			if (data.action === "SelfRequestReturn")
+				return await this.#return(interaction.user.id, interaction);
 		}
 
 		// ---------------
@@ -365,30 +351,30 @@ export class DepartmentInteractionHandler extends InteractionHandler {
 							`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`,
 						),
 				],
-				components: [
-					new ActionRowBuilder<ButtonBuilder>().addComponents(
-						new ButtonBuilder()
-							.setStyle(ButtonStyle.Primary)
-							.setLabel("Retornar")
-							.setCustomId(
-								encodeButtonId({
-									action: "SelfRequestReturn",
-									id,
-								}),
-							),
+				// components: [
+				// 	new ActionRowBuilder<ButtonBuilder>().addComponents(
+				// 		new ButtonBuilder()
+				// 			.setStyle(ButtonStyle.Primary)
+				// 			.setLabel("Retornar")
+				// 			.setCustomId(
+				// 				encodeButtonId({
+				// 					action: "SelfRequestReturn",
+				// 					id,
+				// 				}),
+				// 			),
 
-						new ButtonBuilder()
-							.setStyle(ButtonStyle.Primary)
-							.setLabel("Renovar")
-							.setDisabled(true)
-							.setCustomId(
-								encodeButtonId({
-									action: "SelfRequestRenew",
-									id,
-								}),
-							),
-					),
-				],
+				// 		new ButtonBuilder()
+				// 			.setStyle(ButtonStyle.Primary)
+				// 			.setLabel("Renovar")
+				// 			.setDisabled(true)
+				// 			.setCustomId(
+				// 				encodeButtonId({
+				// 					action: "SelfRequestRenew",
+				// 					id,
+				// 				}),
+				// 			),
+				// 	),
+				// ],
 			});
 
 			await this.container.prisma.user.update({
@@ -501,18 +487,51 @@ export class DepartmentInteractionHandler extends InteractionHandler {
 		const previousJob =
 			previousJobId && (await member.guild.roles.fetch(previousJobId));
 
-		if (!previousJob) {
-			await interaction?.reply({
-				content:
-					"[||E812||] O usuário informado não tem um cargo anterior/antecedente, ele está no primeiro cargo da hierarquia, talvez você queira demiti-lo?",
-				ephemeral: true,
-			});
+		// if (!previousJob) {
+		// 	await interaction?.reply({
+		// 		content:
+		// 			"[||E812||] O usuário informado não tem um cargo anterior/antecedente, ele está no primeiro cargo da hierarquia, talvez você queira demiti-lo?",
+		// 		ephemeral: true,
+		// 	});
 
-			return;
+		// 	return;
+		// }
+
+		if (currentJobId) {
+			const sectorRoleKey = getJobSectorsById(currentJobId);
+
+			const sectorRole =
+				sectorRoleKey &&
+				(await member.guild.roles.fetch(
+					ENVIRONMENT.SECTORS_ROLES[sectorRoleKey].id,
+				));
+
+			if (sectorRole)
+				await member.guild.members.removeRole({
+					user: member.id,
+					role: sectorRole,
+				});
+		}
+
+		if (previousJob) {
+			await member.roles.add(previousJob);
+
+			const newSectorRoleKey = getJobSectorsById(previousJob.id);
+
+			const newSectorRole =
+				newSectorRoleKey &&
+				(await member.guild.roles.fetch(
+					ENVIRONMENT.SECTORS_ROLES[newSectorRoleKey].id,
+				));
+
+			if (newSectorRole)
+				await member.guild.members.addRole({
+					user: member.id,
+					role: newSectorRole,
+				});
 		}
 
 		await member.roles.remove(currentJob);
-		await member.roles.add(previousJob);
 
 		await this.container.prisma.user.update({
 			where: {
@@ -522,6 +541,49 @@ export class DepartmentInteractionHandler extends InteractionHandler {
 				latestPromotionDate: new Date(),
 				latestPromotionRoleId: currentJob.id,
 			},
+		});
+	}
+
+	async #return(id: string, interaction?: ButtonInteraction) {
+		const user = await this.container.prisma.user.findUnique({
+			where: { discordId: id },
+		});
+
+		if (!user) {
+			await interaction?.reply({
+				content: "[||E831||] Usuário não encontrado.",
+				ephemeral: true,
+			});
+
+			return;
+		}
+
+		const member = await this.container.client.guilds
+			.fetch(ENVIRONMENT.GUILD_ID)
+			.then((guild) => guild.members.fetch(id));
+
+		for await (const role of values(ENVIRONMENT.SYSTEMS_ROLES)) {
+			await member.roles.remove(role.id).catch(() => {
+				this.container.logger.warn(
+					`[Utilities/DiscordUtility] Could not remove role ${role.id} from user ${member.id}.`,
+				);
+			});
+		}
+
+		await this.container.prisma.user.update({
+			where: {
+				discordId: id,
+			},
+			data: {
+				activeRenewal: null,
+				activeRenewalMessageId: null,
+				activeRenewalStartedAt: null,
+			},
+		});
+
+		await interaction?.reply({
+			content: "Usuário retornado.",
+			ephemeral: true,
 		});
 	}
 

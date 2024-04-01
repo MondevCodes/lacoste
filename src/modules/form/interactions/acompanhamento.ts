@@ -102,22 +102,74 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
 				},
 			);
 
+		if (!i.deferred) await i.deferUpdate();
+
+		const { member: targetMember, habbo: targetHabbo } =
+			await this.container.utilities.habbo.inferTargetGuildMember(
+				result.Target,
+			);
+
+		if (!targetHabbo) {
+			await i.editReply({
+				content:
+					"Nenhum membro encontrado com esse nome, por favor tente novamente.",
+			});
+
+			return;
+		}
+
+		const targetJobId =
+			targetMember &&
+			this.container.utilities.discord.inferHighestJobRole(
+				targetMember.roles.cache.map((r) => r.id),
+			);
+
+		const targetJobRole =
+			targetJobId && (await targetMember.guild.roles.fetch(targetJobId));
+
+		if (!targetJobRole) {
+			await i.editReply({
+				content:
+					"Nenhum cargo de trabalho encontrado, por favor tente novamente.",
+			});
+
+			return;
+		}
+
+		const targets: string[] = [];
+
+		for (const target of result.Promoted.split(/,| /)) {
+			const { habbo } =
+				await this.container.utilities.habbo.inferTargetGuildMember(target);
+
+			const jobId =
+				targetMember &&
+				this.container.utilities.discord.inferHighestJobRole(
+					targetMember.roles.cache.map((r) => r.id),
+				);
+
+			const jobRole = jobId && (await targetMember.guild.roles.fetch(jobId));
+
+			if (habbo && jobRole)
+				targets.push(`${habbo?.name} // ${jobRole.toString()}`);
+		}
+
 		const embed = new EmbedBuilder()
 			.setTitle("Acompanhamento")
 			.addFields([
 				{
 					name: "Promotor",
-					value: result.Target.length > 0 ? result.Target : "N/A",
+					value: `${targetHabbo.name} // ${targetJobRole.toString()}`,
 					inline: true,
 				},
 				{
 					name: "Promovidos",
-					value: result.Target.length > 0 ? result.Promoted : "N/A",
+					value: this.#joinList(targets),
 					inline: true,
 				},
 				{
 					name: "Nota de Desempenho",
-					value: "⭐".repeat(Number(result.Target)) || "N/A",
+					value: result.PerformanceRate.replace(/[^0-9]/g, "") || "N/A",
 					inline: true,
 				},
 				{
@@ -129,6 +181,10 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
 					name: "Precisa de mais acompanhamento?",
 					value: result.Target.length > 0 ? result.NeedsMoreFollowUp : "N/A",
 					inline: true,
+				},
+				{
+					name: "Data",
+					value: new Date().toLocaleString("pt-BR"),
 				},
 			])
 			.setAuthor({
@@ -154,5 +210,13 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
 		});
 
 		await i.deleteReply();
+	}
+
+	#joinList(list: string[]) {
+		if (list.length === 0) {
+			return "N/D";
+		}
+
+		return `- ${list.join("\n- ")}`;
 	}
 }
