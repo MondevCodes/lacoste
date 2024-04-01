@@ -16,6 +16,7 @@ import {
 import { ApplyOptions } from "@sapphire/decorators";
 
 import { EmbedColors } from "$lib/constants/discord";
+import { getJobSectorsById } from "$lib/constants/jobs";
 import { ENVIRONMENT } from "$lib/env";
 
 export type Action = "Request" | "Approve" | "Reject";
@@ -186,12 +187,12 @@ export class HireInteractionHandler extends InteractionHandler {
 			}
 
 			const currentJobRoleIndex =
-				Object.values(ENVIRONMENT.SECTORS_ROLES).find(
+				Object.values(ENVIRONMENT.JOBS_ROLES).find(
 					(role) => role.id === targetUserDb.latestPromotionRoleId,
 				)?.index ?? 0;
 
 			const jobRolesIds = new Set(
-				Object.values(ENVIRONMENT.SECTORS_ROLES)
+				Object.values(ENVIRONMENT.JOBS_ROLES)
 					.filter((role) => role.index > currentJobRoleIndex)
 					.map((role) => role.id),
 			);
@@ -233,12 +234,10 @@ export class HireInteractionHandler extends InteractionHandler {
 
 			const confirmationEmbed = new EmbedBuilder()
 				.setThumbnail(
-					`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.user.figureString}`,
+					`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}`,
 				)
 				.setFooter({
-					text: `@${targetMember.user.tag} | ${
-						targetHabbo?.user.uniqueId ?? "N/D"
-					}`,
+					text: `@${targetMember.user.tag} | ${targetHabbo?.uniqueId ?? "N/D"}`,
 					iconURL: targetMember.displayAvatarURL(),
 				})
 				.setTitle("Você tem certeza?")
@@ -299,7 +298,7 @@ export class HireInteractionHandler extends InteractionHandler {
 					{
 						name: "Membro",
 						value: `@${targetMember.user.tag} | ${
-							targetHabbo?.user.uniqueId ?? "N/D"
+							targetHabbo?.uniqueId ?? "N/D"
 						}`,
 					},
 					{
@@ -324,7 +323,7 @@ export class HireInteractionHandler extends InteractionHandler {
 					},
 				])
 				.setImage(
-					`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.user.figureString}&size=b`,
+					`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`,
 				);
 
 			await this.container.prisma.user.update({
@@ -427,10 +426,21 @@ export class HireInteractionHandler extends InteractionHandler {
 			return;
 		}
 
+		const sectorRoleKey = getJobSectorsById(targetUser.pendingPromotionRoleId);
+
+		const sectorRole =
+			sectorRoleKey &&
+			(await guild.roles.fetch(ENVIRONMENT.SECTORS_ROLES[sectorRoleKey].id));
+
+		if (sectorRole)
+			await guild.members.addRole({
+				user: targetUser.discordId,
+				role: sectorRole,
+			});
+
 		await guild.members.addRole({
 			role: pendingPromotionRole,
 			user: targetUser.discordId,
-			reason: "Contratação",
 		});
 
 		const latestPromotionRole =
@@ -441,7 +451,6 @@ export class HireInteractionHandler extends InteractionHandler {
 			await guild.members.removeRole({
 				user: targetUser.discordId,
 				role: latestPromotionRole,
-				reason: "Contratação",
 			});
 		}
 
@@ -462,7 +471,7 @@ export class HireInteractionHandler extends InteractionHandler {
 			embeds: [
 				EmbedBuilder.from(interaction.message.embeds[0])
 					.setTitle(
-						`Contratação de ${habboProfile?.user.name ?? targetUser.habboId}`,
+						`Contratação de ${habboProfile?.name ?? targetUser.habboId}`,
 					)
 					.addFields([{ name: "Autorizado Por", value: interaction.user.tag }])
 					.setColor(EmbedColors.Default),

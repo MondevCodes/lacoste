@@ -2,6 +2,7 @@ import { ApplyOptions } from "@sapphire/decorators";
 import {
 	InteractionHandler,
 	InteractionHandlerTypes,
+	Result,
 } from "@sapphire/framework";
 
 import {
@@ -19,9 +20,9 @@ import { ENVIRONMENT } from "$lib/env";
 
 enum FeedbackInputIds {
 	Target = "Target",
+	Author = "Author",
 	Clarification = "Clarification",
 	Functionality = "Functionality",
-	Additional = "Additional",
 	Feedback = "Feedback",
 }
 
@@ -64,11 +65,16 @@ export class InterviewFormInteractionHandler extends InteractionHandler {
 				{
 					inputs: [
 						new TextInputBuilder()
-							.setLabel("Identificador (Discord ou Habbo)")
-							.setPlaceholder(
-								"Informe seu ID no Discord (@Nick) ou no Habbo (Nick).",
-							)
+							.setLabel("Entrevistado")
+							.setPlaceholder("Informe o nickname no Habbo.")
 							.setCustomId(FeedbackInputIds.Target)
+							.setStyle(TextInputStyle.Short)
+							.setRequired(true),
+
+						new TextInputBuilder()
+							.setLabel("Entrevistador")
+							.setPlaceholder("Informe o nickname no Habbo.")
+							.setCustomId(FeedbackInputIds.Author)
 							.setStyle(TextInputStyle.Short)
 							.setRequired(true),
 
@@ -89,12 +95,6 @@ export class InterviewFormInteractionHandler extends InteractionHandler {
 							.setCustomId(FeedbackInputIds.Feedback)
 							.setStyle(TextInputStyle.Paragraph)
 							.setRequired(false),
-
-						new TextInputBuilder()
-							.setLabel("Informações adicionais")
-							.setCustomId(FeedbackInputIds.Additional)
-							.setStyle(TextInputStyle.Paragraph)
-							.setRequired(false),
 					],
 					listenInteraction: true,
 					title: "Entrevista",
@@ -103,12 +103,52 @@ export class InterviewFormInteractionHandler extends InteractionHandler {
 
 		await i.deleteReply();
 
-		const { member: targetMember, habbo: targetHabbo } =
-			await this.container.utilities.habbo.inferTargetGuildMember(
-				result.Target,
-			);
+		const inferredTarget = await Result.fromAsync(
+			this.container.utilities.habbo.inferTargetGuildMember(
+				result.Target.replace("@", ""),
+			),
+		);
 
-		if (!targetMember) {
+		if (inferredTarget.isErr()) {
+			await i.reply({
+				ephemeral: true,
+				content: "Não foi possível encontrar o usuário informado.",
+			});
+
+			return;
+		}
+
+		const { habbo: targetHabbo } = inferredTarget.unwrapOr(null);
+
+		if (!targetHabbo) {
+			await i.reply({
+				ephemeral: true,
+				content: "Não foi possível encontrar o usuário informado.",
+			});
+
+			return;
+		}
+
+		// ---
+
+		const inferredAuthor = await Result.fromAsync(
+			this.container.utilities.habbo.inferTargetGuildMember(
+				result.Author.replace("@", ""),
+			),
+		);
+
+		if (inferredAuthor.isErr()) {
+			await i.reply({
+				ephemeral: true,
+				content: "Não foi possível encontrar o usuário informado.",
+			});
+
+			return;
+		}
+
+		const { habbo: authorHabbo } = inferredAuthor.unwrapOr(null);
+
+		if (!authorHabbo) {
 			await i.reply({
 				ephemeral: true,
 				content: "Não foi possível encontrar o usuário informado.",
@@ -118,14 +158,18 @@ export class InterviewFormInteractionHandler extends InteractionHandler {
 		}
 
 		const embed = new EmbedBuilder()
-			.setTitle("Avaliação")
+			.setTitle("Entrevista")
 			.setThumbnail(
-				`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.user.figureString}&size=b`,
+				`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`,
 			)
 			.addFields([
 				{
-					name: "Identificador",
-					value: result.Target,
+					name: "Entrevistado",
+					value: `${targetHabbo.name}`,
+				},
+				{
+					name: "Entrevistador",
+					value: `${authorHabbo.name}`,
 				},
 				{
 					name: "Suas novas funções estão claras?",
@@ -138,10 +182,6 @@ export class InterviewFormInteractionHandler extends InteractionHandler {
 				{
 					name: "Elogio ou reclamação sobre a promoção",
 					value: result.Feedback.length > 0 ? result.Feedback : "N/A",
-				},
-				{
-					name: "Informações adicionais",
-					value: result.Additional.length > 0 ? result.Additional : "N/A",
 				},
 			])
 			.setAuthor({

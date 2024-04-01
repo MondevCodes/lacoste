@@ -10,6 +10,7 @@ import { EmbedColors } from "$lib/constants/discord";
 import { ENVIRONMENT } from "$lib/env";
 
 import type { ButtonInteraction } from "discord.js";
+import { MONETARY_INTL } from "../commands/balance";
 
 export type Action = "Add" | "Del";
 
@@ -35,7 +36,7 @@ export class ModIndividualInteractionHandler extends InteractionHandler {
 	async #isAuthorized(interaction: ButtonInteraction) {
 		if (!interaction.inCachedGuild()) {
 			this.container.logger.warn(
-				`[HireInteractionHandler#isAuthorized] ${interaction.user.tag} tried to perform an action in a DM.`,
+				`[ModIndividualInteractionHandler#isAuthorized] ${interaction.user.tag} tried to perform an action in a DM.`,
 			);
 
 			return false;
@@ -155,6 +156,18 @@ export class ModIndividualInteractionHandler extends InteractionHandler {
 			return;
 		}
 
+		const {
+			_sum: { amount: totalAmount },
+		} = await this.container.prisma.transaction.aggregate({
+			where: { user: { id: targetUser.id } },
+			_sum: { amount: true },
+		});
+
+		const newTotalAmount =
+			data.action === "Add"
+				? (totalAmount ?? 0) + amount
+				: (totalAmount ?? 0) - Math.abs(amount);
+
 		await this.container.prisma.user.update({
 			where: {
 				id: targetUser.id,
@@ -174,7 +187,7 @@ export class ModIndividualInteractionHandler extends InteractionHandler {
 			content: `${
 				data.action === "Add" ? "Adicionado" : "Removido"
 			} **${amount}** Câmbios ao perfil de ${
-				targetHabbo?.user.name || targetMember.user.tag
+				targetHabbo?.name || targetMember.user.tag
 			}!`,
 		});
 
@@ -195,13 +208,23 @@ export class ModIndividualInteractionHandler extends InteractionHandler {
 					})
 					.setTitle("Alteração de Saldo (Individual)")
 					.setThumbnail(
-						`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.user.figureString}&size=b`,
+						`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`,
 					)
 					.setDescription(
 						`**${amount} Câmbios** ${
 							data.action === "Add" ? "adicionado" : "removido"
 						} individualmente por ${interaction.user} para ${targetMember}`,
 					)
+					.addFields([
+						{
+							name: "Saldo Anterior",
+							value: MONETARY_INTL.format(totalAmount ?? 0),
+						},
+						{
+							name: "Saldo Atual",
+							value: MONETARY_INTL.format(newTotalAmount),
+						},
+					])
 					.setColor(EmbedColors.Success),
 			],
 		});

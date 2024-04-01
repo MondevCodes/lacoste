@@ -11,13 +11,13 @@ import {
 	TextInputBuilder,
 	TextInputStyle,
 	type ButtonInteraction,
-	GuildMemberRoleManager,
 } from "discord.js";
 
 import { ApplyOptions } from "@sapphire/decorators";
 
 import { EmbedColors } from "$lib/constants/discord";
 import { ENVIRONMENT } from "$lib/env";
+import { getJobSectorsById } from "$lib/constants/jobs";
 
 export type Action = "Request" | "Approve" | "Reject";
 
@@ -186,7 +186,13 @@ export class FireInteractionHandler extends InteractionHandler {
 				});
 			}
 
-			const currentJobRole = this.#inferHighestJobRole(targetUser.roles);
+			const currentJobRoleId =
+				this.container.utilities.discord.inferHighestJobRole(
+					targetUser.roles.cache.map((x) => x.id),
+				);
+
+			const currentJobRole =
+				currentJobRoleId && (await cachedGuild.roles.fetch(currentJobRoleId));
 
 			if (!currentJobRole) {
 				await modalInteraction.reply({
@@ -200,12 +206,10 @@ export class FireInteractionHandler extends InteractionHandler {
 
 			const confirmationEmbed = new EmbedBuilder()
 				.setThumbnail(
-					`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.user.figureString}`,
+					`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}`,
 				)
 				.setFooter({
-					text: `@${targetMember.user.tag} | ${
-						targetHabbo?.user.uniqueId ?? "N/D"
-					}`,
+					text: `@${targetMember.user.tag} | ${targetHabbo?.uniqueId ?? "N/D"}`,
 					iconURL: targetMember.displayAvatarURL(),
 				})
 				.setTitle("Você tem certeza que deseja demiti-lo(a)?");
@@ -260,7 +264,7 @@ export class FireInteractionHandler extends InteractionHandler {
 					{
 						name: "Membro",
 						value: `@${targetMember.user.tag} | ${
-							targetHabbo?.user.uniqueId ?? "N/D"
+							targetHabbo?.uniqueId ?? "N/D"
 						}`,
 					},
 					{
@@ -273,7 +277,7 @@ export class FireInteractionHandler extends InteractionHandler {
 					},
 				])
 				.setThumbnail(
-					`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.user.figureString}&size=b`,
+					`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`,
 				);
 
 			await approvalChannel.send({
@@ -343,13 +347,33 @@ export class FireInteractionHandler extends InteractionHandler {
 			(await interaction.client.guilds.fetch(interaction.guildId));
 
 		const targetMember = await guild.members.fetch(targetUser.discordId);
-		const currentJobRole = this.#inferHighestJobRole(targetMember.roles);
+
+		const currentJobRoleId =
+			this.container.utilities.discord.inferHighestJobRole(
+				targetMember.roles.cache.map((x) => x.id),
+			);
+
+		const currentJobRole =
+			currentJobRoleId && (await guild.roles.fetch(currentJobRoleId));
+
+		if (currentJobRoleId) {
+			const sectorRoleKey = getJobSectorsById(currentJobRoleId);
+
+			const sectorRole =
+				sectorRoleKey &&
+				(await guild.roles.fetch(ENVIRONMENT.SECTORS_ROLES[sectorRoleKey].id));
+
+			if (sectorRole)
+				await guild.members.removeRole({
+					user: targetUser.discordId,
+					role: sectorRole,
+				});
+		}
 
 		if (currentJobRole) {
 			await guild.members.removeRole({
-				role: currentJobRole,
 				user: targetUser.discordId,
-				reason: "Demissão",
+				role: currentJobRole,
 			});
 		}
 
@@ -383,29 +407,5 @@ export class FireInteractionHandler extends InteractionHandler {
 		});
 
 		return;
-	}
-
-	#inferHighestJobRole(roles: GuildMemberRoleManager) {
-		const jobRoles = roles.cache.filter((role) =>
-			Object.values(ENVIRONMENT.JOBS_ROLES).some((r) => r.id === role.id),
-		);
-
-		if (jobRoles.size === 0) return null;
-
-		return jobRoles.reduce((highest, current) => {
-			const currentIndex =
-				Object.values(ENVIRONMENT.JOBS_ROLES).find((r) => r.id === current.id)
-					?.index ?? 0;
-
-			const highestIndex =
-				Object.values(ENVIRONMENT.JOBS_ROLES).find((r) => r.id === highest.id)
-					?.index ?? 0;
-
-			if (!currentIndex || !highestIndex) {
-				return current;
-			}
-
-			return currentIndex > highestIndex ? current : highest;
-		});
 	}
 }

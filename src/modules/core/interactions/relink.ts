@@ -40,7 +40,7 @@ export class EvaluationFormInteractionHandler extends InteractionHandler {
 				existingUser.habboId,
 			);
 
-		if (!habbo?.user.name) {
+		if (!habbo?.name) {
 			await interaction.reply({
 				content:
 					"Não consegui encontrar o perfil do usuário, talvez sua conta esteja deletada?",
@@ -50,7 +50,7 @@ export class EvaluationFormInteractionHandler extends InteractionHandler {
 			return;
 		}
 
-		await member?.setNickname(`· ${habbo.user.name}`);
+		await member?.setNickname(`· ${habbo.name}`).catch(() => null);
 
 		await interaction.reply({
 			content: "Seu perfil foi renomeado.",

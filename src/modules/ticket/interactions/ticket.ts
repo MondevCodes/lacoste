@@ -69,7 +69,7 @@ export class OmbudsmanInteractionHandler extends InteractionHandler {
 
 		if (!interaction.inGuild()) {
 			this.container.logger.warn(
-				`[HireInteractionHandler#isAuthorized] ${interaction.user.tag} tried to perform an action in a DM.`,
+				`[OmbudsmanInteractionHandler#isAuthorized] ${interaction.user.tag} tried to perform an action in a DM.`,
 			);
 
 			return this.none();
@@ -97,10 +97,32 @@ export class OmbudsmanInteractionHandler extends InteractionHandler {
 					.toString(36)
 					.substring(2, 6)}`,
 				permissionOverwrites: [
-					{ id: interaction.user.id, allow: READ_PERMISSIONS },
-					{ id: this.#ticketsCategory.guildId, deny: READ_PERMISSIONS },
+					{
+						id: interaction.user.id,
+						allow: READ_PERMISSIONS,
+					},
+					{
+						id: this.#ticketsCategory.guildId,
+						deny: READ_PERMISSIONS,
+					},
 					{
 						id: ENVIRONMENT.SECTORS_ROLES.DIRETORIA.id,
+						allow: READ_PERMISSIONS,
+					},
+					{
+						id: ENVIRONMENT.SECTORS_ROLES.PRESIDÊNCIA.id,
+						allow: READ_PERMISSIONS,
+					},
+					{
+						id: ENVIRONMENT.SECTORS_ROLES.FUNDAÇÃO.id,
+						allow: READ_PERMISSIONS,
+					},
+					{
+						id: ENVIRONMENT.SECTORS_ROLES.FEDERAÇÃO.id,
+						allow: READ_PERMISSIONS,
+					},
+					{
+						id: ENVIRONMENT.SECTORS_ROLES.SISTEMA.id,
 						allow: READ_PERMISSIONS,
 					},
 				],

@@ -186,6 +186,11 @@ export class WarningsInteractionHandler extends InteractionHandler {
 				throw new Error("Can't send message to non-text channel.");
 			}
 
+			const highestSectorRoleId =
+				this.container.utilities.discord.inferHighestSectorRole(
+					targetUser.roles.cache.map((r) => r.id),
+				);
+
 			const approvalEmbed = new EmbedBuilder()
 				.setTitle(`Solicitação de Advertência para @${targetMember.user.tag}`)
 				.setColor(EmbedColors.Default)
@@ -200,10 +205,10 @@ export class WarningsInteractionHandler extends InteractionHandler {
 					},
 					{
 						name: "Cargo do Colaborador",
-						value:
-							this.container.utilities.discord.inferHighestSectorRole(
-								targetUser.roles,
-							)?.name ?? "N/A",
+						value: highestSectorRoleId
+							? (await targetMember.guild.roles.fetch(highestSectorRoleId))
+									?.name ?? "N/A"
+							: "N/A",
 					},
 					{
 						name: "Advertência",
@@ -211,7 +216,7 @@ export class WarningsInteractionHandler extends InteractionHandler {
 					},
 				])
 				.setThumbnail(
-					`https://www.habbo.com/habbo-imaging/${targetHabbo?.user.figureString}`,
+					`https://www.habbo.com/habbo-imaging/${targetHabbo?.figureString}`,
 				);
 
 			await approvalChannel.send({

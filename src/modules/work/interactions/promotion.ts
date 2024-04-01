@@ -1,6 +1,7 @@
 import {
 	InteractionHandler,
 	InteractionHandlerTypes,
+	Result,
 } from "@sapphire/framework";
 
 import {
@@ -21,6 +22,7 @@ import { ApplyOptions } from "@sapphire/decorators";
 
 import { EmbedColors } from "$lib/constants/discord";
 import { ENVIRONMENT } from "$lib/env";
+import { getJobSectorsById } from "$lib/constants/jobs";
 
 type InGuild = "cached" | "raw";
 
@@ -82,10 +84,20 @@ export class PromotionInteractionHandler extends InteractionHandler {
 				],
 			});
 
+		const inferredTargetResult = await Result.fromAsync(
+			this.container.utilities.habbo.inferTargetGuildMember(result.target),
+		);
+
+		if (inferredTargetResult.isErr()) {
+			await interactionFromModal.editReply({
+				content: "Não foi possível encontrar o usuário informado.",
+			});
+
+			return;
+		}
+
 		const { member: targetMember, habbo: targetHabbo } =
-			await this.container.utilities.habbo.inferTargetGuildMember(
-				result.target,
-			);
+			inferredTargetResult.unwrap();
 
 		if (!targetMember) {
 			await interactionFromModal.editReply({
@@ -104,8 +116,10 @@ export class PromotionInteractionHandler extends InteractionHandler {
 
 		const jobRolesChoices = await Promise.all(
 			values(ENVIRONMENT.JOBS_ROLES).map(
-				async ({ id }) =>
-					guild.roles.cache.get(id) ?? (await guild.roles.fetch(id)),
+				async (value) =>
+					value.id &&
+					(guild.roles.cache.get(value.id) ??
+						(await guild.roles.fetch(value.id))),
 			),
 		);
 
@@ -269,7 +283,7 @@ export class PromotionInteractionHandler extends InteractionHandler {
 								`Promover <@${targetMember.user.id}> para ${nextTargetJob}?`,
 							)
 							.setThumbnail(
-								`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.user.figureString}&size=b`,
+								`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`,
 							)
 							.setColor(EmbedColors.Default),
 					],
@@ -288,9 +302,37 @@ export class PromotionInteractionHandler extends InteractionHandler {
 		// Promotion
 		// Promotion
 
+		const nextSectorRoleKey = getJobSectorsById(nextTargetJob.id);
+		const previousSectorRoleKey = getJobSectorsById(currentTargetJob.id);
+
+		const nextSectorRole =
+			nextSectorRoleKey &&
+			(await guild.roles.fetch(
+				ENVIRONMENT.SECTORS_ROLES[nextSectorRoleKey].id,
+			));
+
+		const previousSectorRole =
+			previousSectorRoleKey &&
+			(await guild.roles.fetch(
+				ENVIRONMENT.SECTORS_ROLES[previousSectorRoleKey].id,
+			));
+
 		await Promise.all([
 			targetMember.roles.add(nextTargetJob.id),
 			targetMember.roles.remove(currentTargetJob.id),
+
+			nextSectorRole &&
+				guild.members.addRole({
+					user: targetMember.id,
+					role: nextSectorRole,
+				}),
+
+			previousSectorRole?.id !== nextSectorRole?.id &&
+				previousSectorRole &&
+				guild.members.removeRole({
+					user: targetMember.id,
+					role: previousSectorRole,
+				}),
 		]);
 
 		const notificationChannel = await this.container.client.channels.fetch(
@@ -357,17 +399,21 @@ export class PromotionInteractionHandler extends InteractionHandler {
 		const author = await guild.members.fetch(interaction.user.id);
 
 		const targetJobRole =
-			this.container.utilities.discord.inferHighestSectorRole(target.roles);
+			this.container.utilities.discord.inferHighestSectorRole(
+				target.roles.cache.map((r) => r.id),
+			);
 
 		const authorJobRole =
-			this.container.utilities.discord.inferHighestSectorRole(author.roles);
+			this.container.utilities.discord.inferHighestSectorRole(
+				author.roles.cache.map((r) => r.id),
+			);
 
 		const targetJob = Object.values(ENVIRONMENT.JOBS_ROLES).find(
-			(job) => job.id === targetJobRole?.id,
+			(job) => job.id === targetJobRole,
 		);
 
 		const authorJob = Object.values(ENVIRONMENT.JOBS_ROLES).find(
-			(job) => job.id === authorJobRole?.id,
+			(job) => job.id === authorJobRole,
 		);
 
 		return (

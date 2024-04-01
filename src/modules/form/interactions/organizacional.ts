@@ -2,6 +2,7 @@ import { ApplyOptions } from "@sapphire/decorators";
 import {
 	InteractionHandler,
 	InteractionHandlerTypes,
+	Result,
 } from "@sapphire/framework";
 
 import {
@@ -95,12 +96,14 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 							.setLabel("Auxílio do Comando")
 							.setPlaceholder("Auxílio do Comando")
 							.setCustomId(OrganizationalFormInputIds.CommandAssistance)
+							.setStyle(TextInputStyle.Paragraph)
 							.setRequired(false),
 
 						new TextInputBuilder()
 							.setLabel("Comando Geral")
 							.setPlaceholder("Comando Geral")
 							.setCustomId(OrganizationalFormInputIds.GeneralCommand)
+							.setStyle(TextInputStyle.Paragraph)
 							.setRequired(false),
 					],
 					listenInteraction: true,
@@ -108,7 +111,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 				},
 			);
 
-		const { result: resultPartial2 } =
+		const { result: resultPartial2, interaction: i } =
 			await this.container.utilities.inquirer.awaitModal<OrganizationalFormInput>(
 				interactionFromModal,
 				{
@@ -117,35 +120,35 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 							.setLabel("Palco")
 							.setPlaceholder("Palco")
 							.setCustomId(OrganizationalFormInputIds.Stage)
-							.setStyle(TextInputStyle.Short)
+							.setStyle(TextInputStyle.Paragraph)
 							.setRequired(false),
 
 						new TextInputBuilder()
 							.setLabel("Ouvidoria")
 							.setPlaceholder("Ouvidoria")
 							.setCustomId(OrganizationalFormInputIds.Ombudsman)
-							.setStyle(TextInputStyle.Short)
+							.setStyle(TextInputStyle.Paragraph)
 							.setRequired(false),
 
 						new TextInputBuilder()
 							.setLabel("Hall 1")
 							.setPlaceholder("Hall 1")
 							.setCustomId(OrganizationalFormInputIds.Hall1)
-							.setStyle(TextInputStyle.Short)
+							.setStyle(TextInputStyle.Paragraph)
 							.setRequired(false),
 
 						new TextInputBuilder()
 							.setLabel("Hall 2")
 							.setPlaceholder("Hall 2")
 							.setCustomId(OrganizationalFormInputIds.Hall2)
-							.setStyle(TextInputStyle.Short)
+							.setStyle(TextInputStyle.Paragraph)
 							.setRequired(false),
 
 						new TextInputBuilder()
 							.setLabel("Hall 3")
 							.setPlaceholder("Hall 3")
 							.setCustomId(OrganizationalFormInputIds.Hall3)
-							.setStyle(TextInputStyle.Short)
+							.setStyle(TextInputStyle.Paragraph)
 							.setRequired(false),
 					],
 					title: "Formulário Organizacional",
@@ -160,7 +163,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 			string,
 		][]) {
 			if (value === "" || !value || value === null) {
-				result[key] = "N/A";
+				result[key] = "N/D";
 			}
 		}
 
@@ -176,7 +179,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 
 		const members: Record<
 			Exclude<OrganizationalFormInput, "Time" | "TopPosition">,
-			GuildMember[]
+			(GuildMember | string)[]
 		> = {
 			CommandAssistance: [],
 			GeneralCommand: [],
@@ -188,38 +191,69 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 			Total: [],
 		};
 
+		const unparsedTargets: [keyof typeof targets, string][] = [];
+
+		for (const [key, value] of Object.entries(targets) as [
+			Exclude<OrganizationalFormInput, "Time" | "Total" | "TopPosition">,
+			string,
+		][]) {
+			if (value === "N/D") continue;
+
+			unparsedTargets.push(
+				...value
+					.split(/,| /g)
+					.map(
+						(v) =>
+							[key, v] as [
+								Exclude<
+									OrganizationalFormInput,
+									"Time" | "Total" | "TopPosition"
+								>,
+								string,
+							],
+					),
+			);
+		}
+
 		for await (const [group, target] of Object.entries(targets) as [
 			Exclude<OrganizationalFormInput, "Time" | "TopPosition">,
 			string,
 		][]) {
-			const { member: targetMember } =
-				await this.container.utilities.habbo.inferTargetGuildMember(target);
+			const inferredTarget = await Result.fromAsync(
+				this.container.utilities.habbo.inferTargetGuildMember(target),
+			);
 
-			if (!targetMember) {
+			if (inferredTarget.isErr()) {
+				this.container.logger.warn(
+					`[OrganizationalFormInteractionHandler#run] Couldn't find target: ${target}.`,
+				);
+
+				members[group].push(`${target} (Não Cadastrado)`);
+
+				continue;
+			}
+
+			const { habbo: targetHabbo, member: targetMember } =
+				inferredTarget.unwrap();
+
+			if (!targetHabbo) {
 				await interactionFromModal.editReply({
 					content: `O usuário informado (${target}) não foi encontrado, você tem certeza que o nome é correto?`,
 					components: [],
 					embeds: [],
 				});
 
-				return;
+				continue;
 			}
 
-			const targetUser = await this.container.prisma.user.findUnique({
-				where: { discordId: targetMember.user.id },
-				select: { id: true },
-			});
-
-			if (!targetUser) {
-				this.container.logger.warn(
-					"[OrganizationalFormInteractionHandler#run] Author or target user was not found in database.",
-				);
-
-				return;
-			}
+			if (targetMember)
+				await this.container.prisma.user.update({
+					where: { discordId: targetMember.user.id },
+					data: { reportsHistory: { push: new Date() } },
+				});
 
 			members[group] ||= [];
-			members[group].push(targetMember);
+			members[group].push(targetHabbo.name);
 		}
 
 		const embed = new EmbedBuilder()
@@ -244,36 +278,58 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 				{
 					name: "👥 Auxílio do Comando",
 					value: this.#joinList(
-						members.CommandAssistance.map((x) => x.user.toString()),
+						members.CommandAssistance.map((x) =>
+							typeof x === "string" ? x : x.user.toString(),
+						),
 					),
 				},
 				{
 					name: "🏢 Comando Geral",
 					value: this.#joinList(
-						members.GeneralCommand.map((x) => x.user.toString()),
+						members.GeneralCommand.map((x) =>
+							typeof x === "string" ? x : x.user.toString(),
+						),
 					),
 				},
 				{
 					name: "📣 Ouvidoria",
 					value: this.#joinList(
-						members.Ombudsman.map((x) => x.user.toString()),
+						members.Ombudsman.map((x) =>
+							typeof x === "string" ? x : x.user.toString(),
+						),
 					),
 				},
 				{
 					name: "🎤 Palco",
-					value: this.#joinList(members.Stage.map((x) => x.user.toString())),
+					value: this.#joinList(
+						members.Stage.map((x) =>
+							typeof x === "string" ? x : x.user.toString(),
+						),
+					),
 				},
 				{
 					name: "🏛️ Hall 1",
-					value: this.#joinList(members.Hall1.map((x) => x.user.toString())),
+					value: this.#joinList(
+						members.Hall1.map((x) =>
+							typeof x === "string" ? x : x.user.toString(),
+						),
+					),
 				},
 				{
 					name: "🏛️ Hall 2",
-					value: this.#joinList(members.Hall2.map((x) => x.user.toString())),
+					value: this.#joinList(
+						members.Hall2.map((x) =>
+							typeof x === "string" ? x : x.user.toString(),
+						),
+					),
 				},
 				{
 					name: "🏛️ Hall 3",
-					value: this.#joinList(members.Hall3.map((x) => x.user.toString())),
+					value: this.#joinList(
+						members.Hall3.map((x) =>
+							typeof x === "string" ? x : x.user.toString(),
+						),
+					),
 				},
 			)
 			.setColor(EmbedColors.Default);
@@ -294,21 +350,17 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 			embeds: [embed],
 		});
 
-		const authorExists = await this.container.prisma.user.findUnique({
-			where: { discordId: interaction.user.id },
-		});
+		await i
+			.deleteReply()
+			.catch(() =>
+				this.container.logger.error("[Form] Couldn't delete reply."),
+			);
 
-		if (!authorExists)
-			await interactionFromModal.editReply({
-				content:
-					"O formulário foi enviado, mas você não foi registrado, use `vincular` em si mesmo(a) para registrar-se.",
-			});
-		else await interactionFromModal.deleteReply();
-
-		await this.container.prisma.user.update({
-			where: { discordId: interaction.user.id },
-			data: { reportsHistory: { push: new Date() } },
-		});
+		await interactionFromModal
+			.deleteReply()
+			.catch(() =>
+				this.container.logger.error("[Form] Couldn't delete reply."),
+			);
 	}
 
 	public override onLoad() {

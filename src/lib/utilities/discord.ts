@@ -105,23 +105,45 @@ export class DiscordUtility extends Utility {
 	 * // => Role { id: '123456789012345678' }
 	 * ```
 	 */
-	public inferHighestSectorRole(roles: GuildMemberRoleManager) {
-		const sectorRoles = roles.cache.filter((role) =>
-			Object.values(ENVIRONMENT.SECTORS_ROLES).some((r) => r.id === role.id),
+	public inferHighestSectorRole(roles: string[]) {
+		const sectorRoles = roles.filter((role) =>
+			Object.values(ENVIRONMENT.SECTORS_ROLES).some((r) => r?.id === role),
 		);
 
-		if (sectorRoles.size === 0) return null;
+		if (sectorRoles.length === 0) return null;
 
 		return sectorRoles.reduce((highest, current) => {
 			const currentIndex =
-				Object.values(ENVIRONMENT.SECTORS_ROLES).find(
-					(r) => r.id === current.id,
-				)?.index ?? 0;
+				Object.values(ENVIRONMENT.SECTORS_ROLES).find((r) => r?.id === current)
+					?.index ?? 0;
 
 			const highestIndex =
-				Object.values(ENVIRONMENT.SECTORS_ROLES).find(
-					(r) => r.id === highest.id,
-				)?.index ?? 0;
+				Object.values(ENVIRONMENT.SECTORS_ROLES).find((r) => r?.id === highest)
+					?.index ?? 0;
+
+			if (!currentIndex || !highestIndex) {
+				return current;
+			}
+
+			return currentIndex > highestIndex ? current : highest;
+		});
+	}
+
+	public inferHighestJobRole(roles: string[]) {
+		const jobRoles = roles.filter((role) =>
+			Object.values(ENVIRONMENT.JOBS_ROLES).some((r) => r?.id === role),
+		);
+
+		if (jobRoles.length === 0) return null;
+
+		return jobRoles.reduce((highest, current) => {
+			const currentIndex =
+				Object.values(ENVIRONMENT.JOBS_ROLES).find((r) => r?.id === current)
+					?.index ?? 0;
+
+			const highestIndex =
+				Object.values(ENVIRONMENT.JOBS_ROLES).find((r) => r?.id === highest)
+					?.index ?? 0;
 
 			if (!currentIndex || !highestIndex) {
 				return current;

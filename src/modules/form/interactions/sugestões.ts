@@ -37,13 +37,13 @@ export class SuggestionFormInteractionHandler extends InteractionHandler {
 	}
 
 	public override async run(interaction: ButtonInteraction) {
-		const { result, interaction: i } =
+		const { result, interaction: interactionFromModal } =
 			await this.container.utilities.inquirer.awaitModal<FeedbackInput>(
 				interaction,
 				{
 					inputs: [
 						new TextInputBuilder()
-							.setLabel("Avaliado (Discord ou Habbo)")
+							.setLabel("Autor da Sugestão")
 							.setPlaceholder(
 								"Informe ID do Discord (@Nick) ou do Habbo (Nick).",
 							)
@@ -68,29 +68,48 @@ export class SuggestionFormInteractionHandler extends InteractionHandler {
 				result.Target,
 			);
 
+		if (!interactionFromModal.deferred) {
+			await interaction.deferReply({ ephemeral: true });
+		}
+
 		if (!targetMember) {
-			await i.reply({
-				ephemeral: true,
+			await interactionFromModal.editReply({
 				content: "Não foi possível encontrar o usuário informado.",
 			});
 
 			return;
 		}
 
+		const guild =
+			interaction.guild ??
+			(await interaction.client.guilds.fetch(ENVIRONMENT.GUILD_ID));
+
+		const targetHighestSectorId =
+			this.container.utilities.discord.inferHighestJobRole(
+				targetMember.roles.cache.map((r) => r.id),
+			);
+
+		const targetHighestSector = targetHighestSectorId
+			? await guild.roles.fetch(targetHighestSectorId)
+			: null;
+
 		const embed = new EmbedBuilder()
 			.setTitle("Sugestão")
 			.setThumbnail(
-				`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.user.figureString}&size=b`,
+				`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`,
 			)
 			.addFields([
 				{
 					name: "Autor(a)",
-					value:
-						result.Target.length > 0 ? result.Target : "Nenhuma informação",
+					value: `${targetHabbo?.name} // ${targetMember.toString()} `,
 				},
 				{
 					name: "Diretor(a)",
 					value: interaction.user.toString(),
+				},
+				{
+					name: "Cargo",
+					value: targetHighestSector?.name ?? "N/D",
 				},
 				{
 					name: "Descrição",
@@ -102,10 +121,6 @@ export class SuggestionFormInteractionHandler extends InteractionHandler {
 				iconURL: interaction.user.displayAvatarURL(),
 			})
 			.setColor(EmbedColors.Default);
-
-		const guild =
-			interaction.guild ??
-			(await interaction.client.guilds.fetch(ENVIRONMENT.GUILD_ID));
 
 		const channel = await guild.channels.fetch(
 			ENVIRONMENT.NOTIFICATION_CHANNELS.FORM_SUGGESTION,
@@ -121,6 +136,6 @@ export class SuggestionFormInteractionHandler extends InteractionHandler {
 			embeds: [embed],
 		});
 
-		await i.deleteReply();
+		await interactionFromModal.deleteReply();
 	}
 }

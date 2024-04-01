@@ -145,10 +145,6 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
 			ENVIRONMENT.NOTIFICATION_CHANNELS.FORM_FOLLOWUP,
 		);
 
-		this.container.logger.info({
-			channel: JSON.stringify(channel),
-		});
-
 		if (!channel?.isTextBased()) {
 			throw new Error("Form followUp channel not found or not a text channel.");
 		}

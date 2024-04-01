@@ -24,6 +24,7 @@ export const BASE_BUTTON_ID_REGEX = new RegExp(`^${BASE_BUTTON_ID}/`);
 const MONETARY_INTL = new Intl.NumberFormat("pt-BR", {
 	style: "currency",
 	currency: "CAM",
+	minimumFractionDigits: 0,
 });
 
 /** @internal @see {@link decodeButtonId} */
@@ -45,7 +46,7 @@ export class ModGroupInteractionHandler extends InteractionHandler {
 	async #isAuthorized(interaction: ButtonInteraction) {
 		if (!interaction.inCachedGuild()) {
 			this.container.logger.warn(
-				`[HireInteractionHandler#isAuthorized] ${interaction.user.tag} tried to perform an action in a DM.`,
+				`[ModGroupInteractionHandler#isAuthorized] ${interaction.user.tag} tried to perform an action in a DM.`,
 			);
 
 			return false;
@@ -106,46 +107,35 @@ export class ModGroupInteractionHandler extends InteractionHandler {
 			interaction.guild ??
 			(await interaction.client.guilds.fetch(interaction.guildId));
 
-		const [targetRoleId] =
-			await this.container.utilities.inquirer.awaitSelectMenu(i, {
-				choices: await Promise.all(
-					Object.values(ENVIRONMENT.JOBS_ROLES).map(async (x) => ({
-						id: x.id,
-						label:
-							guild.roles.cache.get(x.id)?.name ??
-							(await guild.roles.fetch(x.id))?.name ??
-							"Unknown",
-					})),
-				),
-				placeholder: "Selecionar",
-				question: "Escolha o cargo no qual deseja.",
-			});
+		// const [targetRoleId] =
+		// 	await this.container.utilities.inquirer.awaitSelectMenu(i, {
+		// 		choices: await Promise.all(
+		// 			Object.values(ENVIRONMENT.JOBS_ROLES).map(async (x) => ({
+		// 				id: x.id,
+		// 				label:
+		// 					guild.roles.cache.get(x.id)?.name ??
+		// 					(await guild.roles.fetch(x.id))?.name ??
+		// 					"Unknown",
+		// 			})),
+		// 		),
+		// 		placeholder: "Selecionar",
+		// 		question: "Escolha o cargo no qual deseja.",
+		// 	});
 
-		if (!targetRoleId) {
-			this.container.logger.warn(
-				`[HireInteractionHandler#run] ${interaction.user.tag} tried to perform an action in a DM.`,
-			);
+		// if (!targetRoleId) {
+		// 	this.container.logger.warn(
+		// 		`[HireInteractionHandler#run] ${interaction.user.tag} tried to perform an action in a DM.`,
+		// 	);
 
-			await i.editReply({
-				content: "Nenhum cargo selecionado.",
-			});
+		// 	await i.editReply({
+		// 		content: "Nenhum cargo selecionado.",
+		// 	});
 
-			return;
-		}
+		// 	return;
+		// }
 
 		const rawAmount = Number(result.Amount);
-
-		const amount =
-			rawAmount > 0
-				? rawAmount
-				: ENVIRONMENT.JOBS_PAYMENT[
-						Object.keys(ENVIRONMENT.JOBS_PAYMENT).find(
-							(key) =>
-								ENVIRONMENT.JOBS_ROLES[
-									key as keyof typeof ENVIRONMENT.JOBS_ROLES
-								].id === targetRoleId,
-						) as keyof typeof ENVIRONMENT.JOBS_PAYMENT
-					];
+		const amount = rawAmount > 0 ? rawAmount : 0;
 
 		const targets = result.Targets.split(",")
 			.filter((x) => x.length > 0)
@@ -171,20 +161,20 @@ export class ModGroupInteractionHandler extends InteractionHandler {
 			return;
 		}
 
-		let members: GuildMember[] = [];
+		const members: GuildMember[] = [];
 
 		for await (const target of targets) {
 			const { member: targetMember } =
 				await this.container.utilities.habbo.inferTargetGuildMember(target);
 
 			if (!targetMember) {
-				await i.editReply({
-					content: "Não foi possível encontrar o usuário informado.",
-					components: [],
-					embeds: [],
-				});
+				// await i.editReply({
+				// 	content: "Não foi possível encontrar o usuário informado.",
+				// 	components: [],
+				// 	embeds: [],
+				// });
 
-				return;
+				continue;
 			}
 
 			const targetUser = await this.container.prisma.user.findUnique({
@@ -203,7 +193,7 @@ export class ModGroupInteractionHandler extends InteractionHandler {
 					"[HireInteractionHandler#run] Author or target user was not found in database.",
 				);
 
-				return;
+				continue;
 			}
 
 			this.container.logger.info(
@@ -213,11 +203,11 @@ export class ModGroupInteractionHandler extends InteractionHandler {
 			members.push(targetMember);
 		}
 
-		const disqualifiedMembers = members.filter(
-			(x) => !x.roles.cache.has(targetRoleId),
-		);
+		// const disqualifiedMembers = members.filter(
+		// 	(x) => !x.roles.cache.has(targetRoleId),
+		// );
 
-		members = members.filter((x) => x.roles.cache.has(targetRoleId));
+		// members = members.filter((x) => x.roles.cache.has(targetRoleId));
 
 		if (members.length < 1) {
 			await i.editReply({
@@ -245,16 +235,16 @@ export class ModGroupInteractionHandler extends InteractionHandler {
 			})
 			.setColor(EmbedColors.Default);
 
-		if (disqualifiedMembers.length > 0) {
-			confirmationEmbed.addFields([
-				{
-					name: "Usuários Desqualificados",
-					value: `- ${disqualifiedMembers
-						.map((x) => `~~${x.user.toString()}~~`)
-						.join("\n- ")}`,
-				},
-			]);
-		}
+		// if (disqualifiedMembers.length > 0) {
+		// 	confirmationEmbed.addFields([
+		// 		{
+		// 			name: "Usuários Desqualificados",
+		// 			value: `- ${disqualifiedMembers
+		// 				.map((x) => `~~${x.user.toString()}~~`)
+		// 				.join("\n- ")}`,
+		// 		},
+		// 	]);
+		// }
 
 		const { result: isConfirmed } =
 			await this.container.utilities.inquirer.awaitButtons(i, {
@@ -283,7 +273,22 @@ export class ModGroupInteractionHandler extends InteractionHandler {
 			return;
 		}
 
-		for (const member of members)
+		const fields: string[] = [];
+
+		for (const member of members) {
+			const {
+				_sum: { amount: totalAmount },
+			} = await this.container.prisma.transaction.aggregate({
+				where: { user: { discordId: member.user.id } },
+				_sum: { amount: true },
+			});
+
+			fields.push(
+				`- ${member.user.toString()}: \`\`${MONETARY_INTL.format(
+					totalAmount ?? 0,
+				)}\`\` -> \`\`${MONETARY_INTL.format((totalAmount ?? 0) + amount)}\`\``,
+			);
+
 			await this.container.prisma.user.update({
 				where: {
 					discordId: member.user.id,
@@ -298,6 +303,7 @@ export class ModGroupInteractionHandler extends InteractionHandler {
 					},
 				},
 			});
+		}
 
 		await i.editReply({
 			content: `Operação concluída com sucesso, todos os ${targets.length} ${
@@ -327,15 +333,15 @@ export class ModGroupInteractionHandler extends InteractionHandler {
 						data.action === "Add"
 							? `Adicionado ${amount} Câmbios em ${targets.length} ${
 									targets.length === 1 ? "usuário" : "usuários"
-								}`
+							  }`
 							: `Removido ${amount} Câmbios em ${targets.length} ${
 									targets.length === 1 ? "usuário" : "usuários"
-								}`,
+							  }`,
 					)
 					.setFields([
 						{
 							name: "Usuários",
-							value: `- ${members.map((x) => x.user.toString()).join("\n- ")}`,
+							value: fields.join("\n"),
 						},
 					])
 					.setColor(EmbedColors.Success),

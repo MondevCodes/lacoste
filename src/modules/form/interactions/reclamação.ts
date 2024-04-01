@@ -37,13 +37,13 @@ export class ComplaintFormInteractionHandler extends InteractionHandler {
 	}
 
 	public override async run(interaction: ButtonInteraction) {
-		const { result, interaction: i } =
+		const { result, interaction: interactionFromModal } =
 			await this.container.utilities.inquirer.awaitModal<FeedbackInput>(
 				interaction,
 				{
 					inputs: [
 						new TextInputBuilder()
-							.setLabel("Avaliado (Discord ou Habbo)")
+							.setLabel("Autor")
 							.setPlaceholder(
 								"Informe ID do Discord (@Nick) ou do Habbo (Nick).",
 							)
@@ -59,7 +59,7 @@ export class ComplaintFormInteractionHandler extends InteractionHandler {
 							.setRequired(true),
 					],
 					listenInteraction: true,
-					title: "Reclamação / Denúncias",
+					title: "Reclamação / Denúncia",
 				},
 			);
 
@@ -68,9 +68,12 @@ export class ComplaintFormInteractionHandler extends InteractionHandler {
 				result.Target,
 			);
 
+		if (!interactionFromModal.deferred) {
+			await interaction.deferReply({ ephemeral: true });
+		}
+
 		if (!targetMember) {
-			await i.reply({
-				ephemeral: true,
+			await interactionFromModal.editReply({
 				content: "Não foi possível encontrar o usuário informado.",
 			});
 
@@ -78,15 +81,14 @@ export class ComplaintFormInteractionHandler extends InteractionHandler {
 		}
 
 		const embed = new EmbedBuilder()
-			.setTitle("Sugestão")
+			.setTitle("Reclamação / Denúncia")
 			.setThumbnail(
-				`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.user.figureString}&size=b`,
+				`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`,
 			)
 			.addFields([
 				{
 					name: "Autor(a)",
-					value:
-						result.Target.length > 0 ? result.Target : "Nenhuma informação",
+					value: `${targetHabbo?.name} // ${targetMember.toString()} `,
 				},
 				{
 					name: "Diretor(a)",
@@ -121,6 +123,6 @@ export class ComplaintFormInteractionHandler extends InteractionHandler {
 			embeds: [embed],
 		});
 
-		await i.deleteReply();
+		await interactionFromModal.deleteReply();
 	}
 }

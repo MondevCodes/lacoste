@@ -3,13 +3,14 @@ import { Command, type Args } from "@sapphire/framework";
 
 import type { Message } from "discord.js";
 
-const MONETARY_INTL = new Intl.NumberFormat("pt-BR", {
+export const MONETARY_INTL = new Intl.NumberFormat("pt-BR", {
 	style: "currency",
 	currency: "CAM",
+	minimumFractionDigits: 0,
 });
 
 @ApplyOptions<Command.Options>({ name: "saldo" })
-export class BallanceCommand extends Command {
+export class BalanceCommand extends Command {
 	public override async messageRun(message: Message, args: Args) {
 		const user = (await args.pickResult("member")).unwrapOr(message.author);
 

@@ -111,38 +111,37 @@ export interface HabboSelectedBadge {
 	name: "habbo",
 })
 export class HabboUtility extends Utility {
-	public async getProfile(
-		username: string,
-	): Promise<Result<HabboProfile, Error>> {
+	public async getProfile(username: string): Promise<Result<HabboUser, Error>> {
 		let uniqueId: string = username;
 
-		if (!username.startsWith("hhbr-")) {
-			const { status, data } = await HabboAPI.get<HabboUser>(
-				`users?name=${encodeURIComponent(username)}`,
-				{ responseType: "json" },
+		if (!username.startsWith("hhbr")) {
+			const apiResult = await Result.fromAsync(
+				HabboAPI.get<HabboUser>(`users?name=${encodeURIComponent(username)}`, {
+					responseType: "json",
+				}),
 			);
 
-			if (status !== 200) {
+			console.log({
+				url: `users?name=${encodeURIComponent(username)}`,
+			});
+
+			if (apiResult.isErr()) {
 				return Result.err(new Error("User Not Found"));
 			}
 
+			const { data } = apiResult.unwrap();
 			uniqueId = data.uniqueId;
 		}
 
+		console.log({
+			url: `users/${encodeURIComponent(uniqueId)}/profile`,
+		});
+
 		const getResult = await Result.fromAsync(
-			HabboAPI.get<HabboProfile>(
-				`users/${encodeURIComponent(uniqueId)}/profile`,
-			),
+			HabboAPI.get<HabboUser>(`users/${encodeURIComponent(uniqueId)}`),
 		);
 
-		if (getResult.isErr()) {
-			this.container.logger.error({
-				cause: getResult.unwrapErr(),
-			});
-
-			return Result.err(new Error("User Not Found"));
-		}
-
+		if (getResult.isErr()) return Result.err(new Error("User Not Found"));
 		return Result.ok(getResult.unwrap().data);
 	}
 
@@ -163,7 +162,7 @@ export class HabboUtility extends Utility {
 			ENVIRONMENT.GUILD_ID,
 		);
 
-		let habbo: HabboProfile | undefined;
+		let habbo: HabboUser | undefined;
 		let member: GuildMember | undefined;
 
 		if (target.startsWith("@")) {
@@ -195,7 +194,7 @@ export class HabboUtility extends Utility {
 			if (!habbo) return { member, habbo };
 
 			const databaseUser = await this.container.prisma.user.findUnique({
-				where: { habboId: habbo.user.uniqueId },
+				where: { habboId: habbo.uniqueId },
 				select: { discordId: true },
 			});
 

@@ -33,6 +33,10 @@ export class LinkCommand extends Command {
 		});
 
 		if (!isAuthorized) {
+			this.container.logger.info(
+				`[LinkCommand#messageRun] ${message.member?.id} tried to perform an action in a DM.`,
+			);
+
 			return;
 		}
 
@@ -43,6 +47,7 @@ export class LinkCommand extends Command {
 			await this.container.utilities.discord.sendEphemeralMessage(message, {
 				content:
 					"Comando inválido, use `vincular NickNoHabbo @NickNoDiscord` deve ser usado para vincular um usuário.",
+				method: "reply",
 			});
 
 			return;
@@ -53,9 +58,14 @@ export class LinkCommand extends Command {
 		);
 
 		if (profileResult.isErr()) {
+			this.container.logger.info({
+				err: profileResult.unwrapErr(),
+			});
+
 			await this.container.utilities.discord.sendEphemeralMessage(message, {
 				content:
 					"Parece que o usuário informado não existe, verifique o nome e tente novamente.",
+				method: "reply",
 			});
 
 			return;
@@ -64,35 +74,50 @@ export class LinkCommand extends Command {
 		const member = memberResult.unwrap();
 		const profile = profileResult.unwrap();
 
+		const roles = (
+			await message.guild.members.fetch(member.id)
+		).roles.cache.map((role) => role.id);
+
 		const existingUser = await this.container.prisma.user.findUnique({
-			where: { habboId: profile.user.uniqueId },
+			where: { habboId: profile.uniqueId },
 			select: { habboId: true, discordId: true },
 		});
 
-		if (existingUser) {
-			await this.container.utilities.discord.sendEphemeralMessage(message, {
-				content: `O usuário informado ja está vinculado com <@${existingUser.discordId}>.`,
-				method: "reply",
-			});
+		const highestJob =
+			this.container.utilities.discord.inferHighestJobRole(roles);
 
-			return;
-		}
+		const highestSector =
+			this.container.utilities.discord.inferHighestSectorRole(roles);
 
 		for await (const role of ENVIRONMENT.DEFAULT_ROLES) {
-			await cachedGuild.members.addRole({
-				user: member,
-				role,
-			});
+			await cachedGuild.members
+				.addRole({
+					user: member,
+					role,
+				})
+				.catch(() => undefined);
 		}
 
-		await cachedGuild.members.addRole({
-			user: member,
-			role: ENVIRONMENT.JOBS_ROLES.ESTAGIÁRIO.id,
-		});
+		if (!highestSector) {
+			await cachedGuild.members
+				.addRole({
+					user: member,
+					role: ENVIRONMENT.SECTORS_ROLES.INICIAL.id,
+				})
+				.catch(() => undefined);
+
+			if (!highestJob)
+				await cachedGuild.members
+					.addRole({
+						user: member,
+						role: ENVIRONMENT.JOBS_ROLES.ESTAGIÁRIO.id,
+					})
+					.catch(() => undefined);
+		}
 
 		await cachedGuild.members
 			.edit(member, {
-				nick: `· ${profile.user.name}`,
+				nick: `· ${profile.name}`,
 			})
 			.catch(() => {
 				this.container.logger.warn(
@@ -100,9 +125,20 @@ export class LinkCommand extends Command {
 				);
 			});
 
-		await this.container.prisma.user.create({
-			data: { habboId: profile.user.uniqueId, discordId: member.id },
-		});
+		if (existingUser) {
+			await this.container.prisma.user
+				.update({
+					where: { discordId: existingUser.discordId },
+					data: { habboId: profile.uniqueId },
+				})
+				.catch(() => undefined);
+		} else {
+			await this.container.prisma.user
+				.create({
+					data: { habboId: profile.uniqueId, discordId: member.id },
+				})
+				.catch(() => undefined);
+		}
 
 		const notificationChannel = await member.guild.channels.fetch(
 			ENVIRONMENT.NOTIFICATION_CHANNELS.HABBO_USERNAME_ADDED,
@@ -115,15 +151,17 @@ export class LinkCommand extends Command {
 		const embed = new EmbedBuilder()
 			.setColor(EmbedColors.Default)
 			.setAuthor({
-				name: `Vinculado por @${message.author.tag}`,
+				name: `${existingUser ? "Revinculado" : "Vinculando"} por @${
+					message.author.tag
+				}`,
 				iconURL: message.author.displayAvatarURL(),
 			})
 			.addFields([
-				{ name: "Habbo", value: profile.user.name, inline: true },
+				{ name: "Habbo", value: profile.name, inline: true },
 				{ name: "Discord", value: `<@${member.id}>`, inline: true },
 			])
 			.setThumbnail(
-				`https://www.habbo.com/habbo-imaging/avatarimage?figure=${profile.user.figureString}&size=b&gesture=std`,
+				`https://www.habbo.com/habbo-imaging/avatarimage?figure=${profile.figureString}&size=b&gesture=std`,
 			);
 
 		await notificationChannel.send({

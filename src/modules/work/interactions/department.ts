@@ -4,7 +4,6 @@ import {
 	ButtonInteraction,
 	ButtonStyle,
 	EmbedBuilder,
-	GuildMemberRoleManager,
 	Role,
 	TextInputBuilder,
 	TextInputStyle,
@@ -16,14 +15,14 @@ import {
 	InteractionHandlerTypes,
 } from "@sapphire/framework";
 
-import { z } from "zod";
 import { schedule } from "node-cron";
+import { z } from "zod";
 
-import { ApplyOptions } from "@sapphire/decorators";
 import { RenewalPeriod } from "@prisma/client";
+import { ApplyOptions } from "@sapphire/decorators";
 
-import { ENVIRONMENT } from "$lib/env";
 import { EmbedColors } from "$lib/constants/discord";
+import { ENVIRONMENT } from "$lib/env";
 
 const ActionData = z.object({
 	action: z.enum([
@@ -58,17 +57,23 @@ export class DepartmentInteractionHandler extends InteractionHandler {
 			return this.none();
 		}
 
+		const { action, id } = ActionData.parse(
+			JSON.parse(interaction.customId.split("/")[1]),
+		);
+
+		if (action === "SelfRequestRenew" || action === "SelfRequestReturn") {
+			if (!(await this.#hasPendingRenewal(interaction.user.id))) {
+				return this.none();
+			}
+		}
+
 		if (!interaction.inGuild()) {
 			this.container.logger.warn(
-				`[HireInteractionHandler#isAuthorized] ${interaction.user.tag} tried to perform an action in a DM.`,
+				`[DepartmentInteractionHandler#isAuthorized] ${interaction.user.tag} tried to perform an action in a DM.`,
 			);
 
 			return this.none();
 		}
-
-		const { action, id } = ActionData.parse(
-			JSON.parse(interaction.customId.split("/")[1]),
-		);
 
 		const { members } =
 			interaction.guild ??
@@ -336,7 +341,7 @@ export class DepartmentInteractionHandler extends InteractionHandler {
 							iconURL: targetMember.displayAvatarURL(),
 						})
 						.setThumbnail(
-							`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.user.figureString}&size=b`,
+							`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`,
 						),
 				],
 			});
@@ -357,7 +362,7 @@ export class DepartmentInteractionHandler extends InteractionHandler {
 							iconURL: interaction.user.displayAvatarURL(),
 						})
 						.setThumbnail(
-							`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.user.figureString}&size=b`,
+							`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`,
 						),
 				],
 				components: [
@@ -472,7 +477,12 @@ export class DepartmentInteractionHandler extends InteractionHandler {
 			.fetch(ENVIRONMENT.GUILD_ID)
 			.then((guild) => guild.members.fetch(id));
 
-		const currentJob = this.#inferHighestJobRole(member.roles);
+		const currentJobId = this.container.utilities.discord.inferHighestJobRole(
+			member.roles.cache.map((r) => r.id),
+		);
+
+		const currentJob =
+			currentJobId && (await member.guild.roles.fetch(currentJobId));
 
 		if (!currentJob) {
 			await interaction?.reply({
@@ -483,7 +493,13 @@ export class DepartmentInteractionHandler extends InteractionHandler {
 			return;
 		}
 
-		const previousJob = this.#inferPreviousJobRole(member.roles, currentJob);
+		const previousJobId = this.#inferPreviousJobRole(
+			member.roles.cache.map((x) => x.id),
+			currentJob,
+		);
+
+		const previousJob =
+			previousJobId && (await member.guild.roles.fetch(previousJobId));
 
 		if (!previousJob) {
 			await interaction?.reply({
@@ -509,31 +525,7 @@ export class DepartmentInteractionHandler extends InteractionHandler {
 		});
 	}
 
-	#inferHighestJobRole(roles: GuildMemberRoleManager) {
-		const jobRoles = roles.cache.filter((role) =>
-			Object.values(ENVIRONMENT.JOBS_ROLES).some((r) => r.id === role.id),
-		);
-
-		if (jobRoles.size === 0) return null;
-
-		return jobRoles.reduce((highest, current) => {
-			const currentIndex =
-				Object.values(ENVIRONMENT.JOBS_ROLES).find((r) => r.id === current.id)
-					?.index ?? 0;
-
-			const highestIndex =
-				Object.values(ENVIRONMENT.JOBS_ROLES).find((r) => r.id === highest.id)
-					?.index ?? 0;
-
-			if (!currentIndex || !highestIndex) {
-				return current;
-			}
-
-			return currentIndex > highestIndex ? current : highest;
-		});
-	}
-
-	#inferPreviousJobRole(roles: GuildMemberRoleManager, currentRole: Role) {
+	#inferPreviousJobRole(roles: string[], currentRole: Role) {
 		const currentRoleIndex =
 			Object.values(ENVIRONMENT.JOBS_ROLES).find((r) => r.id === currentRole.id)
 				?.index ?? 0;
@@ -544,6 +536,6 @@ export class DepartmentInteractionHandler extends InteractionHandler {
 			.sort((a, b) => a.index - b.index)
 			.find((role) => role.index < currentRoleIndex);
 
-		return nextRole ? roles.cache.find((r) => r.id === nextRole.id) : null;
+		return nextRole ? roles.find((r) => r === nextRole.id) : null;
 	}
 }

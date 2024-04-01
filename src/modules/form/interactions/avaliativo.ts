@@ -152,7 +152,7 @@ export class EvaluationFormInteractionHandler extends InteractionHandler {
 		const embed = new EmbedBuilder()
 			.setTitle("Avaliação")
 			.setThumbnail(
-				`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.user.figureString}&size=b`,
+				`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`,
 			)
 			.addFields([
 				{

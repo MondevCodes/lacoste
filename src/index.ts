@@ -4,9 +4,9 @@ import "@sapphire/plugin-hmr/register";
 import "@sapphire/plugin-logger/register";
 import "@sapphire/plugin-utilities-store/register";
 
-import { isNonNull } from "remeda";
-import { dirname, join } from "node:path";
 import { readdirSync, statSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { isNonNull } from "remeda";
 
 import { PrismaClient } from "@prisma/client";
 import { SapphireClient, container } from "@sapphire/framework";
@@ -199,7 +199,12 @@ async function run(): Promise<void> {
 			IntentsBitField.Flags.Guilds,
 			IntentsBitField.Flags.GuildMembers,
 			IntentsBitField.Flags.GuildMessages,
+
 			IntentsBitField.Flags.MessageContent,
+
+			IntentsBitField.Flags.DirectMessages,
+			IntentsBitField.Flags.DirectMessageTyping,
+			IntentsBitField.Flags.DirectMessageReactions,
 		],
 
 		defaultPrefix: "-",
