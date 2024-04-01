@@ -252,7 +252,8 @@ export default class SendCommand extends Command {
 						new ButtonBuilder()
 							.setLabel("Enviar Elogios")
 							.setStyle(ButtonStyle.Secondary)
-							.setCustomId(encodeOmbudsmanButtonId({ action: "OpenPraise" })),
+							.setCustomId(encodeOmbudsmanButtonId({ action: "OpenPraise" }))
+							.setDisabled(true),
 					),
 				],
 			});

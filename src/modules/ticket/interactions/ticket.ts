@@ -138,7 +138,6 @@ export class OmbudsmanInteractionHandler extends InteractionHandler {
 					status: TicketStatus.Open,
 					messageId: ticketMessage.id,
 					channelId: ticketChannel.id,
-					User: { connect: { discordId: interaction.user.id } },
 				},
 				select: {
 					id: true,

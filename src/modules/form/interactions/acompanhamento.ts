@@ -73,7 +73,7 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
 							.setLabel("Promovidos")
 							.setPlaceholder("Lista de @Nicks ou Nicks separados por virgula.")
 							.setCustomId(FeedbackInputIds.Promoted)
-							.setStyle(TextInputStyle.Short)
+							.setStyle(TextInputStyle.Paragraph)
 							.setRequired(true),
 
 						new TextInputBuilder()
@@ -138,20 +138,35 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
 
 		const targets: string[] = [];
 
-		for (const target of result.Promoted.split(/,| /)) {
-			const { habbo, member } =
-				await this.container.utilities.habbo.inferTargetGuildMember(target);
+		for (const target of result.Promoted.split(/,/)) {
+			// const [possibleTarget, possibleJob] = target
+			// 	.split("//")
+			// 	.map((r) => r.trim()) as [string, string | undefined];
 
-			const jobId =
-				member &&
-				this.container.utilities.discord.inferHighestJobRole(
-					member.roles.cache.map((r) => r.id),
-				);
+			// if (!possibleTarget) {
+			// 	this.container.logger.warn(
+			// 		`Target ${target} not found in ${result.Promoted}.`,
+			// 	);
 
-			const jobRole = jobId && (await member.guild.roles.fetch(jobId));
+			// 	continue;
+			// }
 
-			if (habbo && jobRole)
-				targets.push(`${habbo?.name} // ${jobRole.toString()}`);
+			targets.push(target);
+
+			// const { habbo, member } =
+			// 	await this.container.utilities.habbo.inferTargetGuildMember(target);
+
+			// const jobId =
+			// 	member &&
+			// 	this.container.utilities.discord.inferHighestJobRole(
+			// 		member.roles.cache.map((r) => r.id),
+			// 	);
+
+			// const jobRole = jobId && (await member.guild.roles.fetch(jobId));
+
+			// if (habbo && jobRole)
+			// 	targets.push(`${habbo?.name} // ${jobRole.toString()}`);
+			// else targets.push(`${possibleTarget} // ${possibleJob || "N/A"}`);
 		}
 
 		const embed = new EmbedBuilder()
@@ -164,7 +179,7 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
 				},
 				{
 					name: "Promovidos",
-					value: this.#joinList(targets),
+					value: targets.join("\n"),
 					inline: true,
 				},
 				{
@@ -210,13 +225,5 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
 		});
 
 		await i.deleteReply();
-	}
-
-	#joinList(list: string[]) {
-		if (list.length === 0) {
-			return "N/D";
-		}
-
-		return `- ${list.join("\n- ")}`;
 	}
 }

@@ -63,8 +63,8 @@ export class DepartmentInteractionHandler extends InteractionHandler {
 
 		let isAuthorized: boolean;
 
-		if (action === "SelfRequestRenew" || action === "SelfRequestReturn") {
-			isAuthorized = await this.#hasPendingRenewal(interaction.user.id);
+		if (action === "SelfRequestReturn") {
+			isAuthorized = true;
 		} else {
 			if (!interaction.inGuild()) {
 				this.container.logger.warn(
@@ -103,29 +103,71 @@ export class DepartmentInteractionHandler extends InteractionHandler {
 			data.action === "SelfRequestReturn"
 		) {
 			if (data.action === "SelfRequestRenew") {
-				const [renewalPeriod] =
-					await this.container.utilities.inquirer.awaitSelectMenu(interaction, {
-						placeholder: "Selecionar",
-						question: "Por quanto tempo deseja afastar o usuário?",
-						choices: [
-							{ id: "Cancel", label: "Cancelar", emoji: "❌" },
-							{
-								id: RenewalPeriod.Leave15Days,
-								label: "15 Dias",
-								emoji: "⏳",
-							},
-							{
-								id: RenewalPeriod.Leave30Days,
-								label: "30 Dias",
-								emoji: "⏳",
-							},
-						] as const,
+				const { result, interaction: interactionFromModal } =
+					await this.container.utilities.inquirer.awaitModal<
+						"target" | "reason"
+					>(interaction, {
+						inputs: [
+							new TextInputBuilder()
+								.setLabel("Usuário")
+								.setPlaceholder("Selecione o usuário que deseja renovar.")
+								.setCustomId("target")
+								.setStyle(TextInputStyle.Short)
+								.setRequired(true),
+
+							new TextInputBuilder()
+								.setCustomId("reason")
+								.setLabel("Motivo")
+								.setPlaceholder("Ex.: Motivo do afastamento")
+								.setStyle(TextInputStyle.Paragraph)
+								.setRequired(true),
+						],
+						listenInteraction: true,
+						title: "Acompanhamento",
 					});
 
+				const [renewalPeriod] =
+					await this.container.utilities.inquirer.awaitSelectMenu(
+						interactionFromModal,
+						{
+							placeholder: "Selecionar",
+							question: "Por quanto tempo deseja renovar?",
+							choices: [
+								{
+									id: "Cancel",
+									label: "Cancelar",
+									emoji: "❌",
+								},
+								{
+									id: RenewalPeriod.Leave15Days,
+									label: "15 Dias",
+									emoji: "⏳",
+								},
+								{
+									id: RenewalPeriod.Leave30Days,
+									label: "30 Dias",
+									emoji: "⏳",
+								},
+							] as const,
+						},
+					);
+
 				if (renewalPeriod === "Cancel") {
-					await interaction.reply({
+					await interactionFromModal.editReply({
 						content: "Operação cancelada.",
-						ephemeral: true,
+					});
+
+					return;
+				}
+
+				const { member: targetMember } =
+					await this.container.utilities.habbo.inferTargetGuildMember(
+						result.target,
+					);
+
+				if (!targetMember) {
+					await interactionFromModal.editReply({
+						content: `Não consegui encontrar o perfil do usuário (${result.target}), talvez sua conta esteja deletada? `,
 					});
 
 					return;
@@ -133,7 +175,7 @@ export class DepartmentInteractionHandler extends InteractionHandler {
 
 				await this.container.prisma.user.update({
 					where: {
-						id: interaction.user.id,
+						discordId: targetMember.id,
 					},
 					data: {
 						activeRenewal: renewalPeriod,
@@ -149,18 +191,18 @@ export class DepartmentInteractionHandler extends InteractionHandler {
 				await interaction.message.edit({
 					embeds: [
 						EmbedBuilder.from(interaction.message.embeds[0]).setDescription(
-							`Você foi afastado até ${time(
+							`${targetMember} foi afastado até ${time(
 								new Date(Date.now() + renewalPeriodInMilliseconds),
-								"f",
+								"D",
 							)}.`,
 						),
 					],
 				});
 
-				await interaction.reply({
-					content:
-						"Operação concluída, você receberá uma notificação quando seu afastamento estiver perto de expirar.",
-					ephemeral: true,
+				await interactionFromModal.editReply({
+					content: `Operação concluída, ${targetMember} receberá uma notificação quando seu afastamento estiver perto de expirar.`,
+					embeds: [],
+					components: [],
 				});
 
 				const notificationChannel = await this.container.client.channels.fetch(
@@ -170,16 +212,30 @@ export class DepartmentInteractionHandler extends InteractionHandler {
 				if (notificationChannel?.isTextBased()) {
 					const { member: targetMember, habbo: targetHabbo } =
 						await this.container.utilities.habbo.inferTargetGuildMember(
-							interaction.user.id,
+							result.target,
 						);
 
-					if (!targetHabbo) {
+					if (!targetMember || !targetHabbo) {
 						this.container.logger.warn(
 							`[Utilities/DiscordUtility] Could not find Habbo for user ${interaction.user.id}.`,
 						);
 
+						await interactionFromModal.editReply({
+							content: `Não consegui encontrar o perfil do usuário (${result.target}), talvez sua conta esteja deletada? `,
+						});
+
 						return;
 					}
+
+					const targetMemberJobRoleId =
+						targetMember &&
+						this.container.utilities.discord.inferHighestJobRole(
+							targetMember.roles.cache.map((role) => role.id),
+						);
+
+					const targetMemberJobRole =
+						targetMemberJobRoleId &&
+						(await targetMember.guild.roles.fetch(targetMemberJobRoleId));
 
 					await notificationChannel.send({
 						embeds: [
@@ -200,15 +256,36 @@ export class DepartmentInteractionHandler extends InteractionHandler {
 										}`,
 									},
 									{
-										name: "Data (Expiração)",
-										value: time(
+										name: "Cargo",
+										value: targetMemberJobRole
+											? targetMemberJobRole.toString()
+											: "N/D",
+									},
+									{
+										name: "Data",
+										value: `${time(new Date(), "D")} até ${time(
 											new Date(Date.now() + renewalPeriodInMilliseconds),
-											"f",
-										),
+											"D",
+										)}`,
+									},
+									{
+										name: "Motivo",
+										value: result.reason.length > 0 ? result.reason : "N/D",
 									},
 								]),
 						],
 					});
+
+					await targetMember?.roles.remove([
+						ENVIRONMENT.SYSTEMS_ROLES.AFASTADO15.id,
+						ENVIRONMENT.SYSTEMS_ROLES.AFASTADO30.id,
+					]);
+
+					await targetMember?.roles.add(
+						renewalPeriod === "Leave15Days"
+							? ENVIRONMENT.SYSTEMS_ROLES.RENOVADO15.id
+							: ENVIRONMENT.SYSTEMS_ROLES.RENOVADO30.id,
+					);
 				}
 
 				return;
@@ -223,19 +300,31 @@ export class DepartmentInteractionHandler extends InteractionHandler {
 		// ---------------
 
 		const { interaction: interactionFromModal, result } =
-			await this.container.utilities.inquirer.awaitModal(interaction, {
-				title: "Aplicar Afastamento",
-				listenInteraction: true,
+			await this.container.utilities.inquirer.awaitModal<"target" | "reason">(
+				interaction,
+				{
+					title: "Aplicar Afastamento",
+					listenInteraction: true,
 
-				inputs: [
-					new TextInputBuilder()
-						.setCustomId("target")
-						.setLabel("Avaliado (Discord ou Habbo)")
-						.setPlaceholder("Informe ID do Discord (@Nick) ou do Habbo (Nick).")
-						.setStyle(TextInputStyle.Short)
-						.setRequired(true),
-				],
-			});
+					inputs: [
+						new TextInputBuilder()
+							.setCustomId("target")
+							.setLabel("Avaliado (Discord ou Habbo)")
+							.setPlaceholder(
+								"Informe ID do Discord (@Nick) ou do Habbo (Nick).",
+							)
+							.setStyle(TextInputStyle.Short)
+							.setRequired(true),
+
+						new TextInputBuilder()
+							.setCustomId("reason")
+							.setLabel("Motivo")
+							.setPlaceholder("Ex.: Motivo do afastamento")
+							.setStyle(TextInputStyle.Paragraph)
+							.setRequired(true),
+					],
+				},
+			);
 
 		const { member: targetMember, habbo: targetHabbo } =
 			await this.container.utilities.habbo.inferTargetGuildMember(
@@ -348,8 +437,8 @@ export class DepartmentInteractionHandler extends InteractionHandler {
 
 		const renewalPeriodInMilliseconds =
 			renewalPeriod === "Leave15Days"
-				? 1000 * 60 * 60 * 24 * 15
-				: 1000 * 60 * 60 * 24 * 30;
+				? 15 * 24 * 60 * 60 * 1000
+				: 30 * 24 * 60 * 60 * 1000;
 
 		await interactionFromModal.editReply({
 			content: `O usuário <@${targetMember.user.id}> foi afastado com sucesso!`,
@@ -359,6 +448,14 @@ export class DepartmentInteractionHandler extends InteractionHandler {
 		const notificationChannel = await this.container.client.channels.fetch(
 			ENVIRONMENT.NOTIFICATION_CHANNELS.DEPARTMENT_DEMOTION,
 		);
+
+		const targetMemberJobRoleId =
+			this.container.utilities.discord.inferHighestJobRole(
+				targetMember.roles.cache.map((role) => role.id),
+			);
+
+		const targetMemberJobRole =
+			targetMemberJobRoleId && (await guild.roles.fetch(targetMemberJobRoleId));
 
 		if (notificationChannel?.isTextBased()) {
 			await notificationChannel.send({
@@ -374,6 +471,27 @@ export class DepartmentInteractionHandler extends InteractionHandler {
 							text: targetMember.nickname || targetMember.user.username,
 							iconURL: targetMember.displayAvatarURL(),
 						})
+						.setFields([
+							{
+								name: "Usuário",
+								value: targetHabbo?.name || targetMember.user.toString(),
+							},
+							{
+								name: "Cargo",
+								value: targetMemberJobRole?.toString() || "N/D",
+							},
+							{
+								name: "Data",
+								value: `${time(new Date(), "D")} até ${time(
+									new Date(Date.now() + renewalPeriodInMilliseconds),
+									"D",
+								)}`,
+							},
+							{
+								name: "Motivo",
+								value: result.reason.length > 0 ? result.reason : "N/D",
+							},
+						])
 						.setThumbnail(
 							`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`,
 						),
@@ -641,16 +759,18 @@ export class DepartmentInteractionHandler extends InteractionHandler {
 		if (notificationChannel?.isTextBased()) {
 			const { member: targetMember, habbo: targetHabbo } =
 				await this.container.utilities.habbo.inferTargetGuildMember(
-					user.discordId,
+					user.habboId,
 				);
 
-			if (!targetHabbo) {
-				this.container.logger.warn(
-					`[Utilities/DiscordUtility] Could not find Habbo for user ${user.discordId}.`,
+			const targetMemberJobRoleId =
+				targetMember &&
+				this.container.utilities.discord.inferHighestJobRole(
+					targetMember.roles.cache.map((role) => role.id),
 				);
 
-				return;
-			}
+			const targetMemberJobRole =
+				targetMemberJobRoleId &&
+				(await targetMember.guild.roles.fetch(targetMemberJobRoleId));
 
 			await notificationChannel.send({
 				embeds: [
@@ -658,7 +778,7 @@ export class DepartmentInteractionHandler extends InteractionHandler {
 						.setColor(EmbedColors.Default)
 						.setTitle("Retorno")
 						.setFooter({
-							text: targetHabbo.name,
+							text: targetHabbo?.name ?? targetMember?.user.tag ?? "N/D",
 						})
 						.setThumbnail(
 							`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`,
@@ -666,11 +786,20 @@ export class DepartmentInteractionHandler extends InteractionHandler {
 						.setFields([
 							{
 								name: "Usuário",
-								value: `${targetHabbo.name}${
-									targetMember ? ` // ${targetMember.toString()}` : ""
-								}`,
+								value: `${
+									targetHabbo?.name ?? targetMember?.user.tag ?? "N/D"
+								}${targetMember ? ` // ${targetMember.toString()}` : ""}`,
 							},
-							{ name: "Data", value: new Date().toLocaleDateString("pt-BR") },
+							{
+								name: "Cargo",
+								value: targetMemberJobRole
+									? targetMemberJobRole.toString()
+									: "N/D",
+							},
+							{
+								name: "Data",
+								value: time(new Date(), "D"),
+							},
 						]),
 				],
 			});

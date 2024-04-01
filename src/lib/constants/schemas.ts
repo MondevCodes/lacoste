@@ -83,6 +83,7 @@ export const NotificationChannels = z.enum([
 	"FORM_NOTES",
 	"FORM_WARNINGS",
 	"FORM_FOLLOWUP",
+	"FORM_ANALYTICS",
 	"FORM_INTERVIEW",
 	"FORM_COMPLAINT",
 	"FORM_EVALUATION",

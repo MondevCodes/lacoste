@@ -381,7 +381,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 				});
 
 				const notificationChannel = await this.container.client.channels.fetch(
-					ENVIRONMENT.NOTIFICATION_CHANNELS.FORM_ORGANIZATIONAL,
+					ENVIRONMENT.NOTIFICATION_CHANNELS.FORM_ANALYTICS,
 				);
 
 				if (notificationChannel?.isTextBased()) {
