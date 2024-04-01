@@ -121,10 +121,6 @@ export class HabboUtility extends Utility {
 				}),
 			);
 
-			console.log({
-				url: `users?name=${encodeURIComponent(username)}`,
-			});
-
 			if (apiResult.isErr()) {
 				return Result.err(new Error("User Not Found"));
 			}
@@ -132,10 +128,6 @@ export class HabboUtility extends Utility {
 			const { data } = apiResult.unwrap();
 			uniqueId = data.uniqueId;
 		}
-
-		console.log({
-			url: `users/${encodeURIComponent(uniqueId)}/profile`,
-		});
 
 		const getResult = await Result.fromAsync(
 			HabboAPI.get<HabboUser>(`users/${encodeURIComponent(uniqueId)}`),
