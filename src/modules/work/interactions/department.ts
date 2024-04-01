@@ -163,6 +163,54 @@ export class DepartmentInteractionHandler extends InteractionHandler {
 					ephemeral: true,
 				});
 
+				const notificationChannel = await this.container.client.channels.fetch(
+					ENVIRONMENT.NOTIFICATION_CHANNELS.DEPARTMENT_DEMOTION,
+				);
+
+				if (notificationChannel?.isTextBased()) {
+					const { member: targetMember, habbo: targetHabbo } =
+						await this.container.utilities.habbo.inferTargetGuildMember(
+							interaction.user.id,
+						);
+
+					if (!targetHabbo) {
+						this.container.logger.warn(
+							`[Utilities/DiscordUtility] Could not find Habbo for user ${interaction.user.id}.`,
+						);
+
+						return;
+					}
+
+					await notificationChannel.send({
+						embeds: [
+							new EmbedBuilder()
+								.setColor(EmbedColors.Default)
+								.setTitle("Renovação")
+								.setFooter({
+									text: targetHabbo.name,
+								})
+								.setThumbnail(
+									`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`,
+								)
+								.setFields([
+									{
+										name: "Usuário",
+										value: `${targetHabbo.name}${
+											targetMember ? ` // ${targetMember.toString()}` : ""
+										}`,
+									},
+									{
+										name: "Data (Expiração)",
+										value: time(
+											new Date(Date.now() + renewalPeriodInMilliseconds),
+											"f",
+										),
+									},
+								]),
+						],
+					});
+				}
+
 				return;
 			}
 
@@ -585,6 +633,48 @@ export class DepartmentInteractionHandler extends InteractionHandler {
 			content: "Usuário retornado.",
 			ephemeral: true,
 		});
+
+		const notificationChannel = await this.container.client.channels.fetch(
+			ENVIRONMENT.NOTIFICATION_CHANNELS.DEPARTMENT_DEMOTION,
+		);
+
+		if (notificationChannel?.isTextBased()) {
+			const { member: targetMember, habbo: targetHabbo } =
+				await this.container.utilities.habbo.inferTargetGuildMember(
+					user.discordId,
+				);
+
+			if (!targetHabbo) {
+				this.container.logger.warn(
+					`[Utilities/DiscordUtility] Could not find Habbo for user ${user.discordId}.`,
+				);
+
+				return;
+			}
+
+			await notificationChannel.send({
+				embeds: [
+					new EmbedBuilder()
+						.setColor(EmbedColors.Default)
+						.setTitle("Retorno")
+						.setFooter({
+							text: targetHabbo.name,
+						})
+						.setThumbnail(
+							`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`,
+						)
+						.setFields([
+							{
+								name: "Usuário",
+								value: `${targetHabbo.name}${
+									targetMember ? ` // ${targetMember.toString()}` : ""
+								}`,
+							},
+							{ name: "Data", value: new Date().toLocaleDateString("pt-BR") },
+						]),
+				],
+			});
+		}
 	}
 
 	#inferPreviousJobRole(roles: string[], currentRole: Role) {

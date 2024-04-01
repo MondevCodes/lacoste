@@ -139,16 +139,16 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
 		const targets: string[] = [];
 
 		for (const target of result.Promoted.split(/,| /)) {
-			const { habbo } =
+			const { habbo, member } =
 				await this.container.utilities.habbo.inferTargetGuildMember(target);
 
 			const jobId =
-				targetMember &&
+				member &&
 				this.container.utilities.discord.inferHighestJobRole(
-					targetMember.roles.cache.map((r) => r.id),
+					member.roles.cache.map((r) => r.id),
 				);
 
-			const jobRole = jobId && (await targetMember.guild.roles.fetch(jobId));
+			const jobRole = jobId && (await member.guild.roles.fetch(jobId));
 
 			if (habbo && jobRole)
 				targets.push(`${habbo?.name} // ${jobRole.toString()}`);

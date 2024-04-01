@@ -88,7 +88,9 @@ export class ComplaintFormInteractionHandler extends InteractionHandler {
 			.addFields([
 				{
 					name: "Autor(a)",
-					value: `${targetHabbo?.name} // ${targetMember.toString()} `,
+					value: `${
+						targetHabbo?.name ?? result.Target
+					} // ${targetMember.toString()} `,
 				},
 				{
 					name: "Diretor(a)",
