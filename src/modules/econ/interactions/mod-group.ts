@@ -286,7 +286,11 @@ export class ModGroupInteractionHandler extends InteractionHandler {
 			fields.push(
 				`- ${member.user.toString()}: \`\`${MONETARY_INTL.format(
 					totalAmount ?? 0,
-				)}\`\` -> \`\`${MONETARY_INTL.format((totalAmount ?? 0) + amount)}\`\``,
+				)}\`\` -> \`\`${MONETARY_INTL.format(
+					data.action === "Add"
+						? (totalAmount ?? 0) + amount
+						: (totalAmount ?? 0) - amount,
+				)}\`\``,
 			);
 
 			await this.container.prisma.user.update({

@@ -382,6 +382,12 @@ export class PromotionInteractionHandler extends InteractionHandler {
 				],
 			});
 		}
+
+		await interactionFromModal.editReply({
+			content: "Operação concluída.",
+			embeds: [],
+			components: [],
+		});
 	}
 
 	// Private Methods
