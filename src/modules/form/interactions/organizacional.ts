@@ -207,6 +207,8 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 			Targets,
 			string,
 		][]) {
+			if (target === "N/D") continue;
+
 			const inferredTarget = await Result.fromAsync(
 				this.container.utilities.habbo.inferTargetGuildMember(target),
 			);
@@ -391,6 +393,6 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 			return "N/D";
 		}
 
-		return `- ${list.map((x) => x.split("\\n")).join("\n- ")}`;
+		return `${list.map((x) => x.split("\\n")).join("\n")}`;
 	}
 }
