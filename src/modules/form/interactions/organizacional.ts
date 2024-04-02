@@ -35,6 +35,9 @@ enum OrganizationalFormInputIds {
 
 type OrganizationalFormInput = keyof typeof OrganizationalFormInputIds;
 
+const MARKDOWN_CHARS_RE =
+	/((`){1,3}|(\*){1,3}|(~){2}|(\|){2}|^(>){1,3}|(_){1,2})+/gm;
+
 @ApplyOptions<InteractionHandler.Options>({
 	interactionHandlerType: InteractionHandlerTypes.Button,
 })
@@ -221,7 +224,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 					`[OrganizationalFormInteractionHandler#run] Couldn't find target: ${target}.`,
 				);
 
-				members[group].push(target);
+				members[group].push(target.replaceAll(MARKDOWN_CHARS_RE, "\\$&"));
 				continue;
 			}
 
@@ -231,7 +234,9 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 					data: { reportsHistory: { push: new Date() } },
 				});
 
-			members[group].push(targetHabbo.name);
+			members[group].push(
+				targetHabbo.name.replaceAll(MARKDOWN_CHARS_RE, "\\$&"),
+			);
 		}
 
 		this.container.logger.info(
