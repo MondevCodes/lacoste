@@ -428,7 +428,7 @@ export class InquirerUtility extends Utility {
 			await collectedButton.showModal(modal);
 
 			modalSubmit = await collectedButton.awaitModalSubmit({
-				time: options.timeout ?? 1000 * 60,
+				time: options.timeout ?? 30 * 60 * 1000,
 				filter: (component) => component.user.id === interaction.user.id,
 			});
 		}
