@@ -201,7 +201,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 
 			unparsedTargets.push(
 				...value
-					.split(/,| /g)
+					.split(/[^\r\n,]/g)
 					.map(
 						(v) =>
 							[key, v] as [
