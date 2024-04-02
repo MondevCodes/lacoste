@@ -219,9 +219,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 					`[OrganizationalFormInteractionHandler#run] Couldn't find target: ${target}.`,
 				);
 
-				members[group] ||= [];
 				members[group].push(target);
-
 				continue;
 			}
 
@@ -231,7 +229,6 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 					data: { reportsHistory: { push: new Date() } },
 				});
 
-			members[group] ||= [];
 			members[group].push(targetHabbo.name);
 		}
 
@@ -394,6 +391,6 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 			return "N/D";
 		}
 
-		return `- ${list.join("\n- ")}`;
+		return `- ${list.map((x) => x.split("\\n")).join("\n- ")}`;
 	}
 }
