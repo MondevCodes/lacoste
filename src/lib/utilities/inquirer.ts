@@ -238,7 +238,7 @@ export class InquirerUtility extends Utility {
 			filter: (component) =>
 				component.customId.startsWith(`${uuid}${ID_SEPARATOR}`) &&
 				component.user.id === interaction.user.id,
-			time: options.timeout ?? 1000 * 30,
+			time: options.timeout ?? 30 * 60 * 1000,
 		});
 
 		await answer.deferUpdate();
@@ -393,7 +393,7 @@ export class InquirerUtility extends Utility {
 			await interaction.showModal(modal);
 
 			modalSubmit = await interaction.awaitModalSubmit({
-				time: options.timeout ?? 1000 * 60,
+				time: options.timeout ?? 30 * 60 * 1000,
 				filter: (component) => component.user.id === interaction.user.id,
 			});
 		} else {
@@ -422,7 +422,7 @@ export class InquirerUtility extends Utility {
 				filter: (component) =>
 					component.customId.startsWith(`${uuid}${ID_SEPARATOR}`) &&
 					component.user.id === interaction.user.id,
-				time: options.timeout ?? 1000 * 30,
+				time: options.timeout ?? 30 * 60 * 1000,
 			});
 
 			await collectedButton.showModal(modal);
@@ -523,6 +523,7 @@ export class InquirerUtility extends Utility {
 			filter: (component) =>
 				component.customId === uuid &&
 				component.user.id === interaction.user.id,
+			time: options.timeout ?? 30 * 60 * 1000,
 		});
 
 		await answer.deferUpdate();
