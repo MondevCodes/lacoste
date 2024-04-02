@@ -158,11 +158,6 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 
 		const result = merge(resultPartial, resultPartial2);
 
-		for (const [key, value] of Object.entries(result)) {
-			if (isTruthy(value)) continue;
-			result[key as OrganizationalFormInput] = "N/D";
-		}
-
 		const targets = {
 			CommandAssistance: result.CommandAssistance,
 			GeneralCommand: result.GeneralCommand,
@@ -174,6 +169,16 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 		};
 
 		type Targets = keyof typeof targets;
+
+		for (const [key, value] of Object.entries(result)) {
+			if (isTruthy(value)) continue;
+			result[key as OrganizationalFormInput] = "N/D";
+		}
+
+		this.container.logger.info(
+			"[OrganizationalFormInteractionHandler#run] Report",
+			{ report: JSON.stringify(result, null, 2) },
+		);
 
 		const members: Record<Targets, (GuildMember | string)[]> = {
 			CommandAssistance: [],
@@ -211,7 +216,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 
 			if (!targetHabbo) {
 				this.container.logger.warn(
-					`[OrganizationalFormInteractionHandler#run.220] Couldn't find target: ${target}.`,
+					`[OrganizationalFormInteractionHandler#run] Couldn't find target: ${target}.`,
 				);
 
 				members[group] ||= [];
@@ -229,6 +234,11 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 			members[group] ||= [];
 			members[group].push(targetHabbo.name);
 		}
+
+		this.container.logger.info(
+			"[OrganizationalFormInteractionHandler#run] Members",
+			{ members: JSON.stringify(members, null, 2) },
+		);
 
 		const embed = new EmbedBuilder()
 			.setTitle("Formulário Organizacional")
