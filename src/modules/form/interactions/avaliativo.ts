@@ -106,12 +106,26 @@ export class EvaluationFormInteractionHandler extends InteractionHandler {
 				},
 			);
 
-		const { member: targetMember, habbo: targetHabbo } =
+		const { habbo: targetHabbo } =
 			await this.container.utilities.habbo.inferTargetGuildMember(
 				result.Target,
 			);
 
-		if (!targetMember) {
+		if (!targetHabbo) {
+			await i.reply({
+				ephemeral: true,
+				content: "Não foi possível encontrar o usuário informado.",
+			});
+
+			return;
+		}
+
+		const { habbo: authorHabbo } =
+			await this.container.utilities.habbo.inferTargetGuildMember(
+				`@${interaction.user.tag}`,
+			);
+
+		if (!authorHabbo) {
 			await i.reply({
 				ephemeral: true,
 				content: "Não foi possível encontrar o usuário informado.",
@@ -196,7 +210,7 @@ export class EvaluationFormInteractionHandler extends InteractionHandler {
 				},
 			])
 			.setAuthor({
-				name: interaction.user.tag,
+				name: authorHabbo.name,
 				iconURL: interaction.user.displayAvatarURL(),
 			})
 			.setFooter({
