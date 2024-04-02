@@ -415,7 +415,12 @@ export class InquirerUtility extends Utility {
 
 			if (options.inDM) {
 				await channel.send(messageOptions);
-			} else await interaction.editReply(messageOptions);
+			} else {
+				if (!interaction.deferred)
+					await interaction.deferReply({ ephemeral: true });
+
+				await interaction.editReply(messageOptions);
+			}
 
 			const collectedButton = await channel.awaitMessageComponent({
 				componentType: ComponentType.Button,
