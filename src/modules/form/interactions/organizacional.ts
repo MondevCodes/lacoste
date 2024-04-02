@@ -14,7 +14,7 @@ import {
 } from "discord.js";
 
 import { schedule } from "node-cron";
-import { merge, pick } from "remeda";
+import { isTruthy, merge } from "remeda";
 
 import { EmbedColors } from "$lib/constants/discord";
 import { FormIds } from "$lib/constants/forms";
@@ -26,11 +26,11 @@ enum OrganizationalFormInputIds {
 	Hall2 = "Hall2",
 	Hall3 = "Hall3",
 	Stage = "Stage",
+	Total = "Total",
+	Ombudsman = "Ombudsman",
+	TopPosition = "TopPosition",
 	GeneralCommand = "GeneralCommand",
 	CommandAssistance = "CommandAssistance",
-	Ombudsman = "Ombudsman",
-	Total = "Total",
-	TopPosition = "TopPosition",
 }
 
 type OrganizationalFormInput = keyof typeof OrganizationalFormInputIds;
@@ -158,29 +158,24 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 
 		const result = merge(resultPartial, resultPartial2);
 
-		for (const [key, value] of Object.entries(result) as [
-			OrganizationalFormInput,
-			string,
-		][]) {
-			if (value === "" || !value || value === null) {
-				result[key] = "N/D";
-			}
+		for (const [key, value] of Object.entries(result)) {
+			if (isTruthy(value)) continue;
+			result[key as OrganizationalFormInput] = "N/D";
 		}
 
-		const targets = pick(result, [
-			"CommandAssistance",
-			"GeneralCommand",
-			"Ombudsman",
-			"Stage",
-			"Hall1",
-			"Hall2",
-			"Hall3",
-		]);
+		const targets = {
+			CommandAssistance: result.CommandAssistance,
+			GeneralCommand: result.GeneralCommand,
+			Ombudsman: result.Ombudsman,
+			Stage: result.Stage,
+			Hall1: result.Hall1,
+			Hall2: result.Hall2,
+			Hall3: result.Hall3,
+		};
 
-		const members: Record<
-			Exclude<OrganizationalFormInput, "Time" | "TopPosition">,
-			(GuildMember | string)[]
-		> = {
+		type Targets = keyof typeof targets;
+
+		const members: Record<Targets, (GuildMember | string)[]> = {
 			CommandAssistance: [],
 			GeneralCommand: [],
 			Ombudsman: [],
@@ -188,35 +183,23 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 			Hall2: [],
 			Hall3: [],
 			Stage: [],
-			Total: [],
 		};
 
 		const unparsedTargets: [keyof typeof targets, string][] = [];
 
-		for (const [key, value] of Object.entries(targets) as [
-			Exclude<OrganizationalFormInput, "Time" | "Total" | "TopPosition">,
-			string,
-		][]) {
+		for (const [key, value] of Object.entries(targets) as [Targets, string][]) {
 			if (value === "N/D") continue;
 
 			unparsedTargets.push(
 				...value
-					.split(/[^\r\n,]/g)
-					.map(
-						(v) =>
-							[key, v] as [
-								Exclude<
-									OrganizationalFormInput,
-									"Time" | "Total" | "TopPosition"
-								>,
-								string,
-							],
-					),
+					.split(/\s+/gm)
+					.filter((v) => v !== "")
+					.map((v) => [key, v] as (typeof unparsedTargets)[number]),
 			);
 		}
 
 		for await (const [group, target] of Object.entries(targets) as [
-			Exclude<OrganizationalFormInput, "Time" | "TopPosition">,
+			Targets,
 			string,
 		][]) {
 			const inferredTarget = await Result.fromAsync(
@@ -224,25 +207,15 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 			);
 
 			const { habbo: targetHabbo, member: targetMember } =
-				inferredTarget.unwrap();
+				inferredTarget.unwrapOr({ habbo: undefined, member: undefined });
 
 			if (!targetHabbo) {
-				// await interactionFromModal.editReply({
-				// 	content: `O usuário informado (${target}) não foi encontrado, você tem certeza que o nome é correto?`,
-				// 	components: [],
-				// 	embeds: [],
-				// });
-
-				continue;
-			}
-
-			if (inferredTarget.isErr() || !targetHabbo) {
 				this.container.logger.warn(
-					`[OrganizationalFormInteractionHandler#run] Couldn't find target: ${target}.`,
+					`[OrganizationalFormInteractionHandler#run.220] Couldn't find target: ${target}.`,
 				);
 
 				members[group] ||= [];
-				members[group].push(`${target} (Não Cadastrado)`);
+				members[group].push(`${target} (Desconhecido)`);
 
 				continue;
 			}
