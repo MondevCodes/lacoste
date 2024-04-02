@@ -220,7 +220,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 				);
 
 				members[group] ||= [];
-				members[group].push(`${target} (Ninguém)`);
+				members[group].push(target);
 
 				continue;
 			}
