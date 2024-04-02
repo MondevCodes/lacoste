@@ -158,6 +158,11 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 
 		const result = merge(resultPartial, resultPartial2);
 
+		for (const [key, value] of Object.entries(result)) {
+			if (isTruthy(value)) continue;
+			result[key as OrganizationalFormInput] = "N/D";
+		}
+
 		const targets = {
 			CommandAssistance: result.CommandAssistance,
 			GeneralCommand: result.GeneralCommand,
@@ -169,11 +174,6 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 		};
 
 		type Targets = keyof typeof targets;
-
-		for (const [key, value] of Object.entries(result)) {
-			if (isTruthy(value)) continue;
-			result[key as OrganizationalFormInput] = "N/D";
-		}
 
 		this.container.logger.info(
 			"[OrganizationalFormInteractionHandler#run] Report",
@@ -220,7 +220,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 				);
 
 				members[group] ||= [];
-				members[group].push(`${target} (Desconhecido)`);
+				members[group].push(`${target} (Ninguém)`);
 
 				continue;
 			}
