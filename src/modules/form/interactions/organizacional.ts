@@ -223,25 +223,26 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 				this.container.utilities.habbo.inferTargetGuildMember(target),
 			);
 
-			if (inferredTarget.isErr()) {
-				this.container.logger.warn(
-					`[OrganizationalFormInteractionHandler#run] Couldn't find target: ${target}.`,
-				);
-
-				members[group].push(`${target} (Não Cadastrado)`);
-
-				continue;
-			}
-
 			const { habbo: targetHabbo, member: targetMember } =
 				inferredTarget.unwrap();
 
 			if (!targetHabbo) {
-				await interactionFromModal.editReply({
-					content: `O usuário informado (${target}) não foi encontrado, você tem certeza que o nome é correto?`,
-					components: [],
-					embeds: [],
-				});
+				// await interactionFromModal.editReply({
+				// 	content: `O usuário informado (${target}) não foi encontrado, você tem certeza que o nome é correto?`,
+				// 	components: [],
+				// 	embeds: [],
+				// });
+
+				continue;
+			}
+
+			if (inferredTarget.isErr() || !targetHabbo) {
+				this.container.logger.warn(
+					`[OrganizationalFormInteractionHandler#run] Couldn't find target: ${target}.`,
+				);
+
+				members[group] ||= [];
+				members[group].push(`${target} (Não Cadastrado)`);
 
 				continue;
 			}
