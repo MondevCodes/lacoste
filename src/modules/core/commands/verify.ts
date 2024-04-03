@@ -86,7 +86,10 @@ export default class SendCommand extends Command {
 						text: message.author.tag,
 						iconURL: message.author.displayAvatarURL(),
 					})
-					.setColor(EmbedColors.Default),
+					.setColor(EmbedColors.Default)
+					.setThumbnail(
+						`https://www.habbo.com/habbo-imaging/avatarimage?figure=${habbo.figureString}&size=b`,
+					),
 			],
 		});
 	}
