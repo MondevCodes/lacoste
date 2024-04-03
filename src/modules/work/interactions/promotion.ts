@@ -97,7 +97,7 @@ export class PromotionInteractionHandler extends InteractionHandler {
 		}
 
 		const { member: targetMember, habbo: targetHabbo } =
-			inferredTargetResult.unwrap();
+			inferredTargetResult.unwrapOr({ member: undefined, habbo: undefined });
 
 		if (!targetMember) {
 			await interactionFromModal.editReply({
@@ -106,6 +106,22 @@ export class PromotionInteractionHandler extends InteractionHandler {
 
 			return;
 		}
+
+		const currentTargetJob = this.#inferHighestJobRole(targetMember.roles);
+
+		if (!currentTargetJob) {
+			await interactionFromModal.editReply({
+				content:
+					"||WP120|| Não foi possível encontrar o atual cargo do usuário, contate o desenvolvedor.",
+			});
+
+			return;
+		}
+
+		const authorizedHigherRoleId = this.#getHigherRoleId(
+			ENVIRONMENT.JOBS_ROLES.SUPERVISOR.id,
+			currentTargetJob.id,
+		);
 
 		// Next Job
 		// Next Job
@@ -164,17 +180,6 @@ export class PromotionInteractionHandler extends InteractionHandler {
 		// Infer Roles
 		// Infer Roles
 
-		const currentTargetJob = this.#inferHighestJobRole(targetMember.roles);
-
-		if (!currentTargetJob) {
-			await interactionFromModal.editReply({
-				content:
-					"||WP120|| Não foi possível encontrar o atual cargo do usuário, contate o desenvolvedor.",
-			});
-
-			return;
-		}
-
 		let nextTargetJob: Role | null | undefined;
 
 		if (nextTargetJobId === "AUTO")
@@ -209,7 +214,7 @@ export class PromotionInteractionHandler extends InteractionHandler {
 			},
 		});
 
-		if (!existingUser) {
+		if (!existingUser && !authorizedHigherRoleId) {
 			await interactionFromModal.editReply({
 				content:
 					"||WP157|| Usuário não encontrado na base de dados, use `vincular`.",
@@ -220,16 +225,17 @@ export class PromotionInteractionHandler extends InteractionHandler {
 
 		let shouldPromote =
 			/** isFirstPromotion */
-			!existingUser.latestPromotionRoleId || !existingUser.latestPromotionDate;
+			!existingUser?.latestPromotionRoleId ||
+			!existingUser?.latestPromotionDate;
 
 		if (!shouldPromote) {
 			const latestPromotionDate =
-				existingUser.latestPromotionDate &&
-				new Date(existingUser.latestPromotionDate);
+				existingUser?.latestPromotionDate &&
+				new Date(existingUser?.latestPromotionDate);
 
 			const minDaysProm = find(
 				values(ENVIRONMENT.JOBS_ROLES),
-				(x) => x.id === existingUser.latestPromotionRoleId,
+				(x) => x.id === existingUser?.latestPromotionRoleId,
 			)?.minDaysProm;
 
 			if (latestPromotionDate && minDaysProm) {
@@ -334,10 +340,16 @@ export class PromotionInteractionHandler extends InteractionHandler {
 			ENVIRONMENT.NOTIFICATION_CHANNELS.DEPARTMENT_PROMOTIONS,
 		);
 
-		const { habbo: authorHabbo } =
-			await this.container.utilities.habbo.inferTargetGuildMember(
+		const authorResult = await Result.fromAsync(
+			this.container.utilities.habbo.inferTargetGuildMember(
 				`@${interaction.user.tag}`,
-			);
+			),
+		);
+
+		const { habbo: authorHabbo } = authorResult.unwrapOr({
+			member: undefined,
+			habbo: undefined,
+		});
 
 		if (notificationChannel?.isTextBased()) {
 			await notificationChannel.send({
@@ -364,7 +376,7 @@ export class PromotionInteractionHandler extends InteractionHandler {
 							},
 							{
 								name: "📅 Última Promoção",
-								value: existingUser.latestPromotionDate
+								value: existingUser?.latestPromotionDate
 									? time(existingUser.latestPromotionDate, "F")
 									: "N/A",
 								inline: true,
@@ -472,5 +484,15 @@ export class PromotionInteractionHandler extends InteractionHandler {
 			.find((role) => role.index > currentRoleIndex);
 
 		return nextRole ? roles.cache.find((r) => r.id === nextRole.id) : null;
+	}
+
+	#getHigherRoleId(a: string, b: string) {
+		const aIndex =
+			Object.values(ENVIRONMENT.JOBS_ROLES).find((r) => r.id === a)?.index ?? 0;
+
+		const bIndex =
+			Object.values(ENVIRONMENT.JOBS_ROLES).find((r) => r.id === b)?.index ?? 0;
+
+		return aIndex > bIndex ? a : b;
 	}
 }
