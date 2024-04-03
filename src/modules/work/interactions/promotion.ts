@@ -187,11 +187,6 @@ export class PromotionInteractionHandler extends InteractionHandler {
 				guild.roles.cache.get(nextTargetJobId) ??
 				(await guild.roles.fetch(nextTargetJobId));
 
-		console.log({
-			nextTargetJob,
-			nextTargetJobId,
-		});
-
 		if (!nextTargetJob) {
 			await interactionFromModal.editReply({
 				content:
@@ -341,7 +336,7 @@ export class PromotionInteractionHandler extends InteractionHandler {
 
 		const { habbo: authorHabbo } =
 			await this.container.utilities.habbo.inferTargetGuildMember(
-				interaction.user.id,
+				`@${interaction.user.tag}`,
 			);
 
 		if (notificationChannel?.isTextBased()) {
@@ -382,10 +377,16 @@ export class PromotionInteractionHandler extends InteractionHandler {
 							{
 								name: "📗 Cargo Promovido",
 								value: nextTargetJob.toString(),
-								inline: true,
+							},
+							{
+								name: "📝 Promovido",
+								value: targetHabbo?.name ?? `@${targetMember.user.tag}`,
 							},
 						])
-						.setColor(EmbedColors.Default),
+						.setColor(EmbedColors.Default)
+						.setThumbnail(
+							`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`,
+						),
 				],
 			});
 		}

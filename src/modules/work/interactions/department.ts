@@ -507,7 +507,7 @@ export class DepartmentInteractionHandler extends InteractionHandler {
 							`Você foi afastado até ${time(
 								new Date(Date.now() + renewalPeriodInMilliseconds),
 								"f",
-							)}.`,
+							)}. Lembre-se de atualizar a sua situação até o final do prazo para não ser punido. Você pode retornar por conta própria ou solicitar uma renovação do seu afastamento na presidência.`,
 						)
 						.setFooter({
 							text: interaction.user.tag,

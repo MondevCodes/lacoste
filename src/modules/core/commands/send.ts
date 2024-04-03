@@ -74,7 +74,7 @@ export default class SendCommand extends Command {
 						.setColor(EmbedColors.Default)
 						.setTitle("Controle Financeiro")
 						.setDescription(
-							"Para adicionar ou remover um membro específico ou de um grupo (ex. setor estagiário), basta clicar no botão correspondente.",
+							'Para adicionar ou remover um membro específico ou de um grupo (ex. setor estagiário), basta clicar no botão correspondente. Em adição ou remoção em grupo, use vírgula (",") para separar os nicks (ex. Brendo, Fortissima, Trobs).',
 						)
 						.setImage(
 							"https://media.discordapp.net/attachments/1217954543417950329/1224064257084100778/Lac_8.png?ex=661c21ac&is=6609acac&hm=1446a824b74f9b0bc102f07047c4ecca95ad0c91a2f904b655913910980a58fe&=&format=webp",

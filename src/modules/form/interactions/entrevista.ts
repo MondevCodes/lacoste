@@ -185,7 +185,7 @@ export class InterviewFormInteractionHandler extends InteractionHandler {
 				},
 			])
 			.setAuthor({
-				name: interaction.user.tag,
+				name: authorHabbo.name ?? `@${interaction.user.tag}`,
 				iconURL: interaction.user.displayAvatarURL(),
 			})
 			.setColor(EmbedColors.Default);
