@@ -396,6 +396,12 @@ export class InquirerUtility extends Utility {
 				time: options.timeout ?? 30 * 60 * 1000,
 				filter: (component) => component.user.id === interaction.user.id,
 			});
+
+			if (!modalSubmit.deferred) {
+				await modalSubmit.deferReply({
+					ephemeral: true,
+				});
+			}
 		} else {
 			const button = new ButtonBuilder()
 				.setLabel(options.startButtonLabel ?? "Start")
@@ -436,14 +442,13 @@ export class InquirerUtility extends Utility {
 				time: options.timeout ?? 30 * 60 * 1000,
 				filter: (component) => component.user.id === interaction.user.id,
 			});
-		}
 
-		await modalSubmit.deferReply({ ephemeral: true }).catch((error) => {
-			this.container.logger.warn(
-				`[ModalInquirer#parse] ${interaction.user.id} unknown error while awaiting modal submit.`,
-				{ error },
-			);
-		});
+			if (!modalSubmit.deferred) {
+				await modalSubmit.deferReply({
+					ephemeral: true,
+				});
+			}
+		}
 
 		return {
 			interaction: modalSubmit,
