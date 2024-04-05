@@ -220,7 +220,7 @@ async function run(): Promise<void> {
 		loadApplicationCommandRegistriesStatusListeners: true,
 
 		hmr: { enabled: __DEV__ },
-		logger: { level: ENVIRONMENT.LOG_LEVEL },
+		logger: { level: ENVIRONMENT.LOG_LEVEL, depth: Number.POSITIVE_INFINITY },
 	});
 
 	container.prisma = new PrismaClient();

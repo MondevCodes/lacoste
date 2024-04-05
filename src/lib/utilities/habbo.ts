@@ -4,7 +4,7 @@ import { Result } from "@sapphire/result";
 import { ApplyOptions } from "@sapphire/decorators";
 import { Utility } from "@sapphire/plugin-utilities-store";
 
-import { GuildMember } from "discord.js";
+import { Guild, GuildMember } from "discord.js";
 import { ENVIRONMENT } from "$lib/env";
 
 const BASE_API_URL = "https://www.habbo.com.br/api/public/";
@@ -148,50 +148,67 @@ export class HabboUtility extends Utility {
 		);
 	}
 
+	#guild: Guild | undefined;
+
 	/** Infers the target guild member from the target (Discord or Habbo). */
-	public async inferTargetGuildMember(target: string) {
-		const guild = await this.container.client.guilds.fetch(
+	public async inferTargetGuildMember(target: string): Promise<{
+		member: GuildMember | undefined;
+		habbo: HabboUser | undefined;
+	}> {
+		// const guild = await this.container.client.guilds.fetch(
+		// 	ENVIRONMENT.GUILD_ID,
+		// );
+
+		this.#guild ??= await this.container.client.guilds.fetch(
 			ENVIRONMENT.GUILD_ID,
 		);
+
+		if (!this.#guild) return { member: undefined, habbo: undefined };
 
 		let habbo: HabboUser | undefined;
 		let member: GuildMember | undefined;
 
 		if (target.startsWith("@")) {
 			member = (
-				await guild.members.search({
-					query: target.replace(/@/g, ""),
-					limit: 1,
-				})
-			).first();
-
-			if (member) {
-				const databaseUser = await this.container.prisma.user.findUnique({
-					where: { discordId: member.id },
-					select: { habboId: true },
-				});
-
-				if (databaseUser?.habboId)
-					habbo = (
-						await this.container.utilities.habbo.getProfile(
-							databaseUser?.habboId,
-						)
-					).unwrapOr(undefined);
-			}
+				await Result.fromAsync(
+					this.#guild.members.search({
+						query: target.replace(/@/g, ""),
+						limit: 1,
+					}),
+				)
+			)
+				.unwrapOr(undefined)
+				?.first();
 		} else {
 			habbo = (
 				await this.container.utilities.habbo.getProfile(target)
 			).unwrapOr(undefined);
+		}
 
-			if (!habbo) return { member, habbo };
-
-			const databaseUser = await this.container.prisma.user.findUnique({
+		if (habbo && !member) {
+			const userByHabboId = await this.container.prisma.user.findUnique({
 				where: { habboId: habbo.uniqueId },
 				select: { discordId: true },
 			});
 
-			if (!databaseUser) return { member, habbo };
-			member = await guild.members.fetch(databaseUser.discordId);
+			if (userByHabboId?.discordId) {
+				member = await this.#guild.members.fetch(userByHabboId?.discordId);
+			}
+		}
+
+		if (member && !habbo) {
+			const userByDiscordId = await this.container.prisma.user.findUnique({
+				where: { discordId: member.id },
+				select: { habboId: true },
+			});
+
+			if (userByDiscordId?.habboId) {
+				habbo = (
+					await this.container.utilities.habbo.getProfile(
+						userByDiscordId?.habboId,
+					)
+				).unwrapOr(undefined);
+			}
 		}
 
 		return { member, habbo };

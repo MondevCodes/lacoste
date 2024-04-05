@@ -70,7 +70,7 @@ export class PromotionInteractionHandler extends InteractionHandler {
 				inputs: [
 					new TextInputBuilder()
 						.setCustomId("target")
-						.setLabel("Avaliado (Discord ou Habbo)")
+						.setLabel("Promovido (Discord ou Habbo)")
 						.setPlaceholder("Informe ID do Discord (@Nick) ou do Habbo (Nick).")
 						.setStyle(TextInputStyle.Short)
 						.setRequired(true),
@@ -90,8 +90,13 @@ export class PromotionInteractionHandler extends InteractionHandler {
 
 		if (inferredTargetResult.isErr()) {
 			await interactionFromModal.editReply({
-				content: "Não foi possível encontrar o usuário informado.",
+				content: "||P93N|| Houve um erro inesperado, contate o desenvolvedor.",
 			});
+
+			this.container.logger.error(
+				`[PromotionInteractionHandler#run/${interaction.id}] ${interaction.user.tag} tried to promote ${result.target} but failed because they are not in the server.`,
+				{ error: inferredTargetResult.unwrapErr() },
+			);
 
 			return;
 		}
@@ -100,8 +105,17 @@ export class PromotionInteractionHandler extends InteractionHandler {
 			inferredTargetResult.unwrapOr({ member: undefined, habbo: undefined });
 
 		if (!targetMember) {
+			const isHabboTarget = result.target.startsWith("@");
+
+			this.container.logger.info(
+				`[PromotionInteractionHandler#run/${interaction.id}] ${interaction.user.tag} tried to promote ${result.target} but failed because they are not in the server.`,
+				{ isHabboTarget },
+			);
+
 			await interactionFromModal.editReply({
-				content: "Não foi possível encontrar o usuário informado.",
+				content: !isHabboTarget
+					? "||P108N|| Não foi possível encontrar o usuário informado neste servidor (para mencionar usuários com o ID do Discord, ele(a) deve estar no servidor)."
+					: "||P107N|| Não foi possível encontrar o usuário informado neste servidor (para mencionar usuários com o nickname do Habbo, ele(a) deve estar registrado(a) com `vincular`).",
 			});
 
 			return;
@@ -112,16 +126,15 @@ export class PromotionInteractionHandler extends InteractionHandler {
 		if (!currentTargetJob) {
 			await interactionFromModal.editReply({
 				content:
-					"||WP120|| Não foi possível encontrar o atual cargo do usuário, contate o desenvolvedor.",
+					"||WP120|| Não foi possível encontrar o atual cargo do usuário, você tem certeza que ele(a) possui um cargo hierárquico? Se não, contate o desenvolvedor.",
 			});
+
+			this.container.logger.info(
+				`[PromotionInteractionHandler#run/${interaction.id}] ${interaction.user.tag} tried to promote ${result.target} but failed because they don't have a job.`,
+			);
 
 			return;
 		}
-
-		const authorizedHigherRoleId = this.#getHigherRoleId(
-			ENVIRONMENT.JOBS_ROLES.SUPERVISOR.id,
-			currentTargetJob.id,
-		);
 
 		// Next Job
 		// Next Job
@@ -174,6 +187,10 @@ export class PromotionInteractionHandler extends InteractionHandler {
 					"Você não pode promover este usuário, pois ele já possui um cargo de maior autoridade permitido para realizar promoções.",
 			});
 
+			this.container.logger.info(
+				`[PromotionInteractionHandler#run/${interaction.id}] ${interaction.user.tag} tried to promote ${result.target} but failed because they are not authorized to promote.`,
+			);
+
 			return;
 		}
 
@@ -195,8 +212,13 @@ export class PromotionInteractionHandler extends InteractionHandler {
 		if (!nextTargetJob) {
 			await interactionFromModal.editReply({
 				content:
-					"||WP132|| Não foi possível encontrar o próximo cargo do usuário, contate o desenvolvedor.",
+					"||P132N|| O usuário selecionado já está no ápice possível em que você pode promover. Se não, contate o desenvolvedor.",
 			});
+
+			this.container.logger.info(
+				`[PromotionInteractionHandler#run/${interaction.id}] ${interaction.user.tag} tried to promote ${result.target} but failed because they are not authorized to promote.`,
+				{ nextTargetJobId, previousTargetJobId: currentTargetJob.id },
+			);
 
 			return;
 		}
@@ -213,6 +235,16 @@ export class PromotionInteractionHandler extends InteractionHandler {
 				latestPromotionRoleId: true,
 			},
 		});
+
+		const authorizedHigherRoleId = this.#isTargetRoleInferior(
+			"SUPERVISOR",
+			nextTargetJob.id,
+		);
+
+		this.container.logger.info(
+			`[PromotionInteractionHandler#run/${interaction.id}] ${interaction.user.tag} tried to promote ${result.target} but failed because they are not authorized to promote.`,
+			{ authorizedHigherRoleId },
+		);
 
 		if (!existingUser && !authorizedHigherRoleId) {
 			await interactionFromModal.editReply({
@@ -486,13 +518,20 @@ export class PromotionInteractionHandler extends InteractionHandler {
 		return nextRole ? roles.cache.find((r) => r.id === nextRole.id) : null;
 	}
 
-	#getHigherRoleId(a: string, b: string) {
-		const aIndex =
-			Object.values(ENVIRONMENT.JOBS_ROLES).find((r) => r.id === a)?.index ?? 0;
+	#isTargetRoleInferior(
+		maxRole: keyof typeof ENVIRONMENT.JOBS_ROLES,
+		targetRoleId: string,
+	) {
+		const jobsRoles = Object.values(ENVIRONMENT.JOBS_ROLES);
 
-		const bIndex =
-			Object.values(ENVIRONMENT.JOBS_ROLES).find((r) => r.id === b)?.index ?? 0;
+		const maxRoleIndex =
+			jobsRoles[Object.keys(jobsRoles).findIndex((key) => key === maxRole)]
+				?.index;
 
-		return aIndex > bIndex ? a : b;
+		const targetRoleIndex =
+			jobsRoles[Object.keys(jobsRoles).findIndex((key) => key === targetRoleId)]
+				?.index;
+
+		return targetRoleIndex && targetRoleIndex < maxRoleIndex;
 	}
 }

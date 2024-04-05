@@ -438,7 +438,12 @@ export class InquirerUtility extends Utility {
 			});
 		}
 
-		await modalSubmit.deferReply({ ephemeral: true });
+		await modalSubmit.deferReply({ ephemeral: true }).catch((error) => {
+			this.container.logger.warn(
+				`[ModalInquirer#parse] ${interaction.user.id} unknown error while awaiting modal submit.`,
+				{ error },
+			);
+		});
 
 		return {
 			interaction: modalSubmit,

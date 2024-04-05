@@ -37,7 +37,7 @@ type ParsedData = { action: Action };
 
 const MODAL_INPUTS_OBJ = {
 	Target: new TextInputBuilder()
-		.setLabel("Avaliado (Discord ou Habbo)")
+		.setLabel("Anotado (Discord ou Habbo)")
 		.setPlaceholder("Informe ID do Discord (@Nick) ou do Habbo (Nick).")
 		.setStyle(TextInputStyle.Short)
 		.setCustomId("Target")

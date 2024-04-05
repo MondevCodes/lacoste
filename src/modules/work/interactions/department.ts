@@ -309,7 +309,7 @@ export class DepartmentInteractionHandler extends InteractionHandler {
 					inputs: [
 						new TextInputBuilder()
 							.setCustomId("target")
-							.setLabel("Avaliado (Discord ou Habbo)")
+							.setLabel("Afastado (Discord ou Habbo)")
 							.setPlaceholder(
 								"Informe ID do Discord (@Nick) ou do Habbo (Nick).",
 							)
