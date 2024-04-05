@@ -206,37 +206,41 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 			);
 		}
 
-		for await (const [group, target] of Object.entries(targets) as [
+		for (const [group, target] of Object.entries(targets) as [
 			Targets,
 			string,
 		][]) {
 			if (target === "N/D") continue;
 
-			const inferredTarget = await Result.fromAsync(
-				this.container.utilities.habbo.inferTargetGuildMember(target),
-			);
-
-			const { habbo: targetHabbo, member: targetMember } =
-				inferredTarget.unwrapOr({ habbo: undefined, member: undefined });
-
-			if (!targetHabbo) {
-				this.container.logger.warn(
-					`[OrganizationalFormInteractionHandler#run] Couldn't find target: ${target}.`,
+			try {
+				const inferredTarget = await Result.fromAsync(
+					this.container.utilities.habbo.inferTargetGuildMember(target),
 				);
 
+				const { habbo: targetHabbo, member: targetMember } =
+					inferredTarget.unwrapOr({ habbo: undefined, member: undefined });
+
+				if (!targetHabbo) {
+					this.container.logger.warn(
+						`[OrganizationalFormInteractionHandler#run] Couldn't find target: ${target}.`,
+					);
+
+					members[group].push(target.replaceAll(MARKDOWN_CHARS_RE, "\\$&"));
+					continue;
+				}
+
+				if (targetMember)
+					await this.container.prisma.user.update({
+						where: { discordId: targetMember.user.id },
+						data: { reportsHistory: { push: new Date() } },
+					});
+
+				members[group].push(
+					targetHabbo.name.replaceAll(MARKDOWN_CHARS_RE, "\\$&"),
+				);
+			} catch (error) {
 				members[group].push(target.replaceAll(MARKDOWN_CHARS_RE, "\\$&"));
-				continue;
 			}
-
-			if (targetMember)
-				await this.container.prisma.user.update({
-					where: { discordId: targetMember.user.id },
-					data: { reportsHistory: { push: new Date() } },
-				});
-
-			members[group].push(
-				targetHabbo.name.replaceAll(MARKDOWN_CHARS_RE, "\\$&"),
-			);
 		}
 
 		this.container.logger.info(
