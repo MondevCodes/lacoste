@@ -393,15 +393,9 @@ export class InquirerUtility extends Utility {
 			await interaction.showModal(modal);
 
 			modalSubmit = await interaction.awaitModalSubmit({
-				time: options.timeout ?? 30 * 60 * 1000,
+				time: options.timeout ?? 5 * 60 * 1000,
 				filter: (component) => component.user.id === interaction.user.id,
 			});
-
-			if (!modalSubmit.deferred) {
-				await modalSubmit.deferReply({
-					ephemeral: true,
-				});
-			}
 		} else {
 			const button = new ButtonBuilder()
 				.setLabel(options.startButtonLabel ?? "Start")
@@ -442,12 +436,10 @@ export class InquirerUtility extends Utility {
 				time: options.timeout ?? 30 * 60 * 1000,
 				filter: (component) => component.user.id === interaction.user.id,
 			});
+		}
 
-			if (!modalSubmit.deferred) {
-				await modalSubmit.deferReply({
-					ephemeral: true,
-				});
-			}
+		if (!modalSubmit.deferred) {
+			await modalSubmit.deferReply({ ephemeral: true }).catch(() => {});
 		}
 
 		return {
