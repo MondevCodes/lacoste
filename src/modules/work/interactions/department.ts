@@ -753,7 +753,7 @@ export class DepartmentInteractionHandler extends InteractionHandler {
 		});
 
 		const notificationChannel = await this.container.client.channels.fetch(
-			ENVIRONMENT.NOTIFICATION_CHANNELS.DEPARTMENT_DEMOTION,
+			ENVIRONMENT.NOTIFICATION_CHANNELS.DEPARTMENT_RETURN,
 		);
 
 		if (notificationChannel?.isTextBased()) {
