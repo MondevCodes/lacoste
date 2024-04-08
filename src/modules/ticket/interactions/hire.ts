@@ -449,6 +449,34 @@ export class HireInteractionHandler extends InteractionHandler {
 			targetUser.latestPromotionRoleId &&
 			(await guild.roles.fetch(targetUser.latestPromotionRoleId));
 
+		const hasInitialSectorRole = (
+			await guild.members.fetch(targetUser.discordId)
+		).roles.cache.has(ENVIRONMENT.SECTORS_ROLES.INICIAL.id);
+
+		const hasInitialJobRole = (
+			await guild.members.fetch(targetUser.discordId)
+		).roles.cache.has(ENVIRONMENT.JOBS_ROLES.ESTAGIÁRIO.id);
+
+		if (
+			hasInitialSectorRole &&
+			sectorRole?.id !== ENVIRONMENT.SECTORS_ROLES.INICIAL.id
+		) {
+			await guild.members.removeRole({
+				user: targetUser.discordId,
+				role: ENVIRONMENT.SECTORS_ROLES.INICIAL.id,
+			});
+		}
+
+		if (
+			hasInitialJobRole &&
+			pendingPromotionRole?.id !== ENVIRONMENT.JOBS_ROLES.ESTAGIÁRIO.id
+		) {
+			await guild.members.removeRole({
+				user: targetUser.discordId,
+				role: ENVIRONMENT.JOBS_ROLES.ESTAGIÁRIO.id,
+			});
+		}
+
 		if (latestPromotionRole) {
 			await guild.members.removeRole({
 				user: targetUser.discordId,
