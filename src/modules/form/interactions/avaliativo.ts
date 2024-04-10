@@ -15,6 +15,7 @@ import {
 import { EmbedColors } from "$lib/constants/discord";
 import { FormIds } from "$lib/constants/forms";
 import { ENVIRONMENT } from "$lib/env";
+import { MarkdownCharactersRegex } from "$lib/constants/regexes";
 
 enum FeedbackInputIds {
 	Target = "Target",
@@ -172,7 +173,9 @@ export class EvaluationFormInteractionHandler extends InteractionHandler {
 				{
 					name: "Avaliado(a)",
 					value:
-						result.Target.length > 0 ? result.Target : "Nenhuma informação",
+						result.Target.length > 0
+							? result.Target.replaceAll(MarkdownCharactersRegex, "\\$&")
+							: "Nenhuma informação",
 				},
 				{
 					name: "Posição (Sede)",

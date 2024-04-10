@@ -14,6 +14,7 @@ import {
 import { EmbedColors } from "$lib/constants/discord";
 import { FormIds } from "$lib/constants/forms";
 import { ENVIRONMENT } from "$lib/env";
+import { MarkdownCharactersRegex } from "$lib/constants/regexes";
 
 enum FeedbackInputIds {
 	Target = "Target",
@@ -89,7 +90,8 @@ export class ComplaintFormInteractionHandler extends InteractionHandler {
 				{
 					name: "Autor(a)",
 					value: `${
-						targetHabbo?.name ?? result.Target
+						targetHabbo?.name.replaceAll(MarkdownCharactersRegex, "\\$&") ??
+						result.Target
 					} // ${targetMember.toString()} `,
 				},
 				{

@@ -15,6 +15,7 @@ import {
 import { EmbedColors } from "$lib/constants/discord";
 import { FormIds } from "$lib/constants/forms";
 import { ENVIRONMENT } from "$lib/env";
+import { MarkdownCharactersRegex } from "$lib/constants/regexes";
 
 enum FeedbackInputIds {
 	Target = "Target",
@@ -151,7 +152,7 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
 			// 	continue;
 			// }
 
-			targets.push(target);
+			targets.push(target.replaceAll(MarkdownCharactersRegex, "\\$&"));
 
 			// const { habbo, member } =
 			// 	await this.container.utilities.habbo.inferTargetGuildMember(target);
@@ -174,7 +175,10 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
 			.addFields([
 				{
 					name: "Promotor",
-					value: `${targetHabbo.name} // ${targetJobRole.toString()}`,
+					value: `${targetHabbo.name.replaceAll(
+						MarkdownCharactersRegex,
+						"\\$&",
+					)} // ${targetJobRole.toString()}`,
 					inline: true,
 				},
 				{

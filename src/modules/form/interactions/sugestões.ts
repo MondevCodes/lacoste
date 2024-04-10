@@ -14,6 +14,7 @@ import {
 import { EmbedColors } from "$lib/constants/discord";
 import { FormIds } from "$lib/constants/forms";
 import { ENVIRONMENT } from "$lib/env";
+import { MarkdownCharactersRegex } from "$lib/constants/regexes";
 
 enum FeedbackInputIds {
 	Target = "Target",
@@ -102,8 +103,9 @@ export class SuggestionFormInteractionHandler extends InteractionHandler {
 				{
 					name: "Autor(a)",
 					value: `${
-						targetHabbo?.name ?? result.Target
-					} // ${targetMember.toString()} `,
+						targetHabbo?.name.replaceAll(MarkdownCharactersRegex, "\\$&") ??
+						result.Target
+					} // ${targetMember.toString()}`,
 				},
 				{
 					name: "Diretor(a)",

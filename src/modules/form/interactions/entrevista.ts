@@ -17,6 +17,7 @@ import { EmbedColors } from "$lib/constants/discord";
 import { FormIds } from "$lib/constants/forms";
 
 import { ENVIRONMENT } from "$lib/env";
+import { MarkdownCharactersRegex } from "$lib/constants/regexes";
 
 enum FeedbackInputIds {
 	Target = "Target",
@@ -101,12 +102,10 @@ export class InterviewFormInteractionHandler extends InteractionHandler {
 				},
 			);
 
-		await i.deleteReply();
+		await i.deleteReply().catch(() => null);
 
 		const inferredTarget = await Result.fromAsync(
-			this.container.utilities.habbo.inferTargetGuildMember(
-				result.Target.replace("@", ""),
-			),
+			this.container.utilities.habbo.inferTargetGuildMember(result.Target),
 		);
 
 		if (inferredTarget.isErr()) {
@@ -165,11 +164,17 @@ export class InterviewFormInteractionHandler extends InteractionHandler {
 			.addFields([
 				{
 					name: "Entrevistado",
-					value: `${targetHabbo.name}`,
+					value: `${targetHabbo.name.replaceAll(
+						MarkdownCharactersRegex,
+						"\\$&",
+					)}`,
 				},
 				{
 					name: "Entrevistador",
-					value: `${authorHabbo.name}`,
+					value: `${authorHabbo.name.replaceAll(
+						MarkdownCharactersRegex,
+						"\\$&",
+					)}`,
 				},
 				{
 					name: "Suas novas funções estão claras?",

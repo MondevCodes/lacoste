@@ -1,3 +1,6 @@
+export const MarkdownCharactersRegex =
+	/((`){1,3}|(\*){1,3}|(~){2}|(\|){2}|^(>){1,3}|(_){1,2})+/gm;
+
 /**
  * Regex that can capture the ID in Discord Channel mentions
  * @raw `/^<#(?<id>\d{17,20})>$/`
