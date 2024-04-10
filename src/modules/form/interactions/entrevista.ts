@@ -102,8 +102,6 @@ export class InterviewFormInteractionHandler extends InteractionHandler {
 				},
 			);
 
-		await i.deleteReply().catch(() => null);
-
 		const inferredTarget = await Result.fromAsync(
 			this.container.utilities.habbo.inferTargetGuildMember(result.Target),
 		);
