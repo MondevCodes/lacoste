@@ -223,6 +223,9 @@ export class PromotionInteractionHandler extends InteractionHandler {
 			return;
 		}
 
+		const skipRoleManagement =
+			nextTargetJob.id === ENVIRONMENT.JOBS_ROLES.ESTAGIÁRIO.id;
+
 		// Check Cooldown
 		// Check Cooldown
 
@@ -335,38 +338,40 @@ export class PromotionInteractionHandler extends InteractionHandler {
 		// Promotion
 		// Promotion
 
-		const nextSectorRoleKey = getJobSectorsById(nextTargetJob.id);
-		const previousSectorRoleKey = getJobSectorsById(currentTargetJob.id);
+		if (!skipRoleManagement) {
+			const nextSectorRoleKey = getJobSectorsById(nextTargetJob.id);
+			const previousSectorRoleKey = getJobSectorsById(currentTargetJob.id);
 
-		const nextSectorRole =
-			nextSectorRoleKey &&
-			(await guild.roles.fetch(
-				ENVIRONMENT.SECTORS_ROLES[nextSectorRoleKey].id,
-			));
+			const nextSectorRole =
+				nextSectorRoleKey &&
+				(await guild.roles.fetch(
+					ENVIRONMENT.SECTORS_ROLES[nextSectorRoleKey].id,
+				));
 
-		const previousSectorRole =
-			previousSectorRoleKey &&
-			(await guild.roles.fetch(
-				ENVIRONMENT.SECTORS_ROLES[previousSectorRoleKey].id,
-			));
+			const previousSectorRole =
+				previousSectorRoleKey &&
+				(await guild.roles.fetch(
+					ENVIRONMENT.SECTORS_ROLES[previousSectorRoleKey].id,
+				));
 
-		await Promise.all([
-			targetMember.roles.add(nextTargetJob.id),
-			targetMember.roles.remove(currentTargetJob.id),
+			await Promise.all([
+				targetMember.roles.add(nextTargetJob.id),
+				targetMember.roles.remove(currentTargetJob.id),
 
-			nextSectorRole &&
-				guild.members.addRole({
-					user: targetMember.id,
-					role: nextSectorRole,
-				}),
+				nextSectorRole &&
+					guild.members.addRole({
+						user: targetMember.id,
+						role: nextSectorRole,
+					}),
 
-			previousSectorRole?.id !== nextSectorRole?.id &&
-				previousSectorRole &&
-				guild.members.removeRole({
-					user: targetMember.id,
-					role: previousSectorRole,
-				}),
-		]);
+				previousSectorRole?.id !== nextSectorRole?.id &&
+					previousSectorRole &&
+					guild.members.removeRole({
+						user: targetMember.id,
+						role: previousSectorRole,
+					}),
+			]);
+		}
 
 		const notificationChannel = await this.container.client.channels.fetch(
 			ENVIRONMENT.NOTIFICATION_CHANNELS.DEPARTMENT_PROMOTIONS,
