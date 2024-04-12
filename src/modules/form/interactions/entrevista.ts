@@ -102,6 +102,10 @@ export class InterviewFormInteractionHandler extends InteractionHandler {
 				},
 			);
 
+		if (!i.deferred) {
+			await i.deferReply({ ephemeral: true }).catch(() => null);
+		}
+
 		const inferredTarget = await Result.fromAsync(
 			this.container.utilities.habbo.inferTargetGuildMember(result.Target),
 		);
@@ -129,14 +133,11 @@ export class InterviewFormInteractionHandler extends InteractionHandler {
 		// ---
 
 		const inferredAuthor = await Result.fromAsync(
-			this.container.utilities.habbo.inferTargetGuildMember(
-				result.Author.replace("@", ""),
-			),
+			this.container.utilities.habbo.inferTargetGuildMember(result.Author),
 		);
 
 		if (inferredAuthor.isErr()) {
-			await i.reply({
-				ephemeral: true,
+			await i.editReply({
 				content: "Não foi possível encontrar o usuário informado.",
 			});
 
@@ -146,8 +147,7 @@ export class InterviewFormInteractionHandler extends InteractionHandler {
 		const { habbo: authorHabbo } = inferredAuthor.unwrapOr(null);
 
 		if (!authorHabbo) {
-			await i.reply({
-				ephemeral: true,
+			await i.editReply({
 				content: "Não foi possível encontrar o usuário informado.",
 			});
 
@@ -210,5 +210,7 @@ export class InterviewFormInteractionHandler extends InteractionHandler {
 		await channel.send({
 			embeds: [embed],
 		});
+
+		await i.deleteReply().catch(() => null);
 	}
 }
