@@ -168,22 +168,22 @@ export class HabboUtility extends Utility {
 		let habbo: HabboUser | undefined;
 		let member: GuildMember | undefined;
 
-		if (target.startsWith("@")) {
-			member = (
-				await Result.fromAsync(
-					this.#guild.members.search({
-						query: target.replace(/@/g, ""),
-						limit: 1,
-					}),
-				)
-			)
-				.unwrapOr(undefined)
-				?.first();
-		} else {
-			habbo = (
-				await this.container.utilities.habbo.getProfile(target)
-			).unwrapOr(undefined);
-		}
+		// if (target.startsWith("@")) {
+		// 	member = (
+		// 		await Result.fromAsync(
+		// 			this.#guild.members.search({
+		// 				query: target.replace(/@/g, ""),
+		// 				limit: 1,
+		// 			}),
+		// 		)
+		// 	)
+		// 		.unwrapOr(undefined)
+		// 		?.first();
+		// }
+
+		habbo = (await this.container.utilities.habbo.getProfile(target)).unwrapOr(
+			undefined,
+		);
 
 		if (habbo && !member) {
 			const userByHabboId = await this.container.prisma.user.findUnique({
