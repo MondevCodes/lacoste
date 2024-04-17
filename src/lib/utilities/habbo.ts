@@ -151,14 +151,13 @@ export class HabboUtility extends Utility {
 	#guild: Guild | undefined;
 
 	/** Infers the target guild member from the target (Discord or Habbo). */
-	public async inferTargetGuildMember(target: string): Promise<{
+	public async inferTargetGuildMember(
+		target: string,
+		discord?: boolean,
+	): Promise<{
 		member: GuildMember | undefined;
 		habbo: HabboUser | undefined;
 	}> {
-		// const guild = await this.container.client.guilds.fetch(
-		// 	ENVIRONMENT.GUILD_ID,
-		// );
-
 		this.#guild ??= await this.container.client.guilds.fetch(
 			ENVIRONMENT.GUILD_ID,
 		);
@@ -168,18 +167,18 @@ export class HabboUtility extends Utility {
 		let habbo: HabboUser | undefined;
 		let member: GuildMember | undefined;
 
-		// if (target.startsWith("@")) {
-		// 	member = (
-		// 		await Result.fromAsync(
-		// 			this.#guild.members.search({
-		// 				query: target.replace(/@/g, ""),
-		// 				limit: 1,
-		// 			}),
-		// 		)
-		// 	)
-		// 		.unwrapOr(undefined)
-		// 		?.first();
-		// }
+		if (target.startsWith("@") && discord) {
+			member = (
+				await Result.fromAsync(
+					this.#guild.members.search({
+						query: target.replace(/@/g, ""),
+						limit: 1,
+					}),
+				)
+			)
+				.unwrapOr(undefined)
+				?.first();
+		}
 
 		habbo = (await this.container.utilities.habbo.getProfile(target)).unwrapOr(
 			undefined,

@@ -113,8 +113,7 @@ export class EvaluationFormInteractionHandler extends InteractionHandler {
 			);
 
 		if (!targetHabbo) {
-			await i.reply({
-				ephemeral: true,
+			await i.editReply({
 				content: "Não foi possível encontrar o usuário informado.",
 			});
 
@@ -124,11 +123,11 @@ export class EvaluationFormInteractionHandler extends InteractionHandler {
 		const { habbo: authorHabbo } =
 			await this.container.utilities.habbo.inferTargetGuildMember(
 				`@${interaction.user.tag}`,
+				true,
 			);
 
 		if (!authorHabbo) {
-			await i.reply({
-				ephemeral: true,
+			await i.editReply({
 				content: "Não foi possível encontrar o usuário informado.",
 			});
 

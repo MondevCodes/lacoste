@@ -105,6 +105,24 @@ export default class SendCommand extends Command {
 		const target = await guild.members.fetch(user);
 		const author = await guild.members.fetch(message.author.id);
 
+		const userDb = await this.container.prisma.user.findUnique({
+			where: {
+				discordId: user,
+			},
+			select: {
+				latestPromotionDate: true,
+				latestPromotionRoleId: true,
+			},
+		});
+
+		if (!userDb) {
+			this.container.logger.warn(
+				`Promotion for ${user} is possible because the user is not registered.`,
+			);
+
+			return true;
+		}
+
 		const targetJobRole =
 			this.container.utilities.discord.inferHighestSectorRole(
 				target.roles.cache.map((r) => r.id),
@@ -123,9 +141,25 @@ export default class SendCommand extends Command {
 			(job) => job.id === authorJobRole,
 		);
 
-		return (
+		const hasEnoughHierarchy =
 			(targetJob?.index ?? 0) >= (authorJob?.index ?? 0) &&
-			message.author.id !== user
-		);
+			message.author.id !== user;
+
+		const isNotSelfPromotion = message.author.id !== user;
+
+		if (targetJob && authorJob && userDb.latestPromotionDate) {
+			const currentDate = new Date();
+			const daysSinceLastPromotion = Math.floor(
+				(currentDate.getTime() - userDb.latestPromotionDate.getTime()) /
+					(1000 * 3600 * 24),
+			);
+
+			const isEnoughDaysPassed =
+				daysSinceLastPromotion >= targetJob.minDaysProm;
+
+			return isEnoughDaysPassed && isNotSelfPromotion && hasEnoughHierarchy;
+		}
+
+		return isNotSelfPromotion && hasEnoughHierarchy;
 	}
 }

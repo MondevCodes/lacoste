@@ -380,6 +380,7 @@ export class PromotionInteractionHandler extends InteractionHandler {
 		const authorResult = await Result.fromAsync(
 			this.container.utilities.habbo.inferTargetGuildMember(
 				`@${interaction.user.tag}`,
+				true,
 			),
 		);
 
@@ -461,6 +462,24 @@ export class PromotionInteractionHandler extends InteractionHandler {
 		const target = await guild.members.fetch(user);
 		const author = await guild.members.fetch(interaction.user.id);
 
+		const userDb = await this.container.prisma.user.findUnique({
+			where: {
+				discordId: user,
+			},
+			select: {
+				latestPromotionDate: true,
+				latestPromotionRoleId: true,
+			},
+		});
+
+		if (!userDb) {
+			this.container.logger.warn(
+				`Promotion for ${user} is possible because the user is not registered.`,
+			);
+
+			return true;
+		}
+
 		const targetJobRole =
 			this.container.utilities.discord.inferHighestSectorRole(
 				target.roles.cache.map((r) => r.id),
@@ -479,10 +498,26 @@ export class PromotionInteractionHandler extends InteractionHandler {
 			(job) => job.id === authorJobRole,
 		);
 
-		return (
+		const hasEnoughHierarchy =
 			(targetJob?.index ?? 0) >= (authorJob?.index ?? 0) &&
-			interaction.user.id !== user
-		);
+			interaction.user.id !== user;
+
+		const isNotSelfPromotion = interaction.user.id !== user;
+
+		if (targetJob && authorJob && userDb.latestPromotionDate) {
+			const currentDate = new Date();
+			const daysSinceLastPromotion = Math.floor(
+				(currentDate.getTime() - userDb.latestPromotionDate.getTime()) /
+					(1000 * 3600 * 24),
+			);
+
+			const isEnoughDaysPassed =
+				daysSinceLastPromotion >= targetJob.minDaysProm;
+
+			return isEnoughDaysPassed && isNotSelfPromotion && hasEnoughHierarchy;
+		}
+
+		return isNotSelfPromotion && hasEnoughHierarchy;
 	}
 
 	#inferHighestJobRole(roles: GuildMemberRoleManager) {

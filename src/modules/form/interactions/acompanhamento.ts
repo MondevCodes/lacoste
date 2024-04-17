@@ -103,8 +103,6 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
 				},
 			);
 
-		if (!i.deferred) await i.deferUpdate();
-
 		const { member: targetMember, habbo: targetHabbo } =
 			await this.container.utilities.habbo.inferTargetGuildMember(
 				result.Target,
