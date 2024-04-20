@@ -234,6 +234,7 @@ export class PromotionInteractionHandler extends InteractionHandler {
 				discordId: targetMember.user.id,
 			},
 			select: {
+				id: true,
 				latestPromotionDate: true,
 				latestPromotionRoleId: true,
 			},
@@ -371,6 +372,17 @@ export class PromotionInteractionHandler extends InteractionHandler {
 						role: previousSectorRole,
 					}),
 			]);
+
+			if (existingUser && nextSectorRole)
+				await this.container.prisma.user.update({
+					where: {
+						id: existingUser.id,
+					},
+					data: {
+						latestPromotionDate: new Date(),
+						latestPromotionRoleId: nextSectorRole.id,
+					},
+				});
 		}
 
 		const notificationChannel = await this.container.client.channels.fetch(
