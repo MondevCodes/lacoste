@@ -98,7 +98,10 @@ export class ModGroupInteractionHandler extends InteractionHandler {
 							.setStyle(TextInputStyle.Short)
 							.setRequired(false),
 					],
-					title: "Adicionar Saldo Grupo",
+					title:
+						data.action === "Add"
+							? "Adicionar Saldo Grupo"
+							: "Remover Saldo Grupo",
 					listenInteraction: true,
 				},
 			);

@@ -90,7 +90,10 @@ export class ModIndividualInteractionHandler extends InteractionHandler {
 							.setStyle(TextInputStyle.Short)
 							.setRequired(true),
 					],
-					title: "Adicionar Saldo Individual",
+					title:
+						data.action === "Add"
+							? "Adicionar Saldo Individual"
+							: "Remover Saldo Individual",
 					listenInteraction: true,
 				},
 			);
