@@ -315,7 +315,9 @@ export class ModGroupInteractionHandler extends InteractionHandler {
 		await i.editReply({
 			content: `Operação concluída com sucesso, todos os ${targets.length} ${
 				targets.length === 1 ? "usuário" : "usuários"
-			} receberão o valor de ${amount}.`,
+			} ${
+				data.action === "Add" ? "receberão" : "perderão"
+			} o valor de ${amount}.`,
 			components: [],
 			embeds: [],
 		});
