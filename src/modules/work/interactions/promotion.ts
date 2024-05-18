@@ -26,6 +26,9 @@ import { getJobSectorsById } from "$lib/constants/jobs";
 
 type InGuild = "cached" | "raw";
 
+const MAX_PROMOTABLE_UNREGISTERED_ROLES =
+	ENVIRONMENT.JOBS_ROLES.SUPERVISOR.index;
+
 @ApplyOptions<InteractionHandler.Options>({
 	interactionHandlerType: InteractionHandlerTypes.Button,
 })
@@ -176,10 +179,8 @@ export class PromotionInteractionHandler extends InteractionHandler {
 		// Authorized
 		// Authorized
 
-		const isPromotionPossible = await this.#isPromotionPossible(
-			interactionFromModal,
-			targetMember.id,
-		);
+		const [isPromotionPossible, registrationType] =
+			await this.#isPromotionPossible(interactionFromModal, targetMember.id);
 
 		if (!isPromotionPossible) {
 			await interactionFromModal.editReply({
@@ -389,17 +390,25 @@ export class PromotionInteractionHandler extends InteractionHandler {
 			ENVIRONMENT.NOTIFICATION_CHANNELS.DEPARTMENT_PROMOTIONS,
 		);
 
-		const authorResult = await Result.fromAsync(
-			this.container.utilities.habbo.inferTargetGuildMember(
-				`@${interaction.user.tag}`,
-				true,
-			),
-		);
+		const authorResult =
+			registrationType === "REGISTERED" &&
+			(await Result.fromAsync(
+				this.container.utilities.habbo.inferTargetGuildMember(
+					`@${interaction.user.tag}`,
+					true,
+				),
+			));
 
-		const { habbo: authorHabbo } = authorResult.unwrapOr({
-			member: undefined,
-			habbo: undefined,
-		});
+		let habboName: string | undefined = undefined;
+
+		if (authorResult) {
+			const { habbo: authorHabbo } = authorResult.unwrapOr({
+				member: undefined,
+				habbo: undefined,
+			});
+
+			habboName = authorHabbo?.name ?? "N/A";
+		}
 
 		if (notificationChannel?.isTextBased()) {
 			await notificationChannel.send({
@@ -413,9 +422,7 @@ export class PromotionInteractionHandler extends InteractionHandler {
 							}`,
 						)
 						.setFooter({
-							text: `Promotor ${
-								authorHabbo?.name ?? `@${interaction.user.tag}`
-							}`,
+							text: `Promotor ${habboName ?? `@${interaction.user.tag}`}`,
 							iconURL: interaction.user.displayAvatarURL(),
 						})
 						.addFields([
@@ -466,7 +473,7 @@ export class PromotionInteractionHandler extends InteractionHandler {
 	async #isPromotionPossible(
 		interaction: RepliableInteraction,
 		user: Snowflake,
-	): Promise<boolean> {
+	): Promise<[boolean, "REGISTERED" | "UNREGISTERED"]> {
 		const guild =
 			interaction.guild ??
 			(await interaction.client.guilds.fetch(ENVIRONMENT.GUILD_ID));
@@ -489,7 +496,7 @@ export class PromotionInteractionHandler extends InteractionHandler {
 				`Promotion for ${user} is possible because the user is not registered.`,
 			);
 
-			return true;
+			return [true, "REGISTERED"];
 		}
 
 		const targetJobRole =
@@ -516,6 +523,13 @@ export class PromotionInteractionHandler extends InteractionHandler {
 
 		const isNotSelfPromotion = interaction.user.id !== user;
 
+		const isAuthorizedUnregistered =
+			targetJob?.index ?? 0 <= MAX_PROMOTABLE_UNREGISTERED_ROLES;
+
+		if (!isAuthorizedUnregistered) {
+			return [true, "UNREGISTERED"];
+		}
+
 		if (targetJob && authorJob && userDb.latestPromotionDate) {
 			const currentDate = new Date();
 			const daysSinceLastPromotion = Math.floor(
@@ -526,10 +540,13 @@ export class PromotionInteractionHandler extends InteractionHandler {
 			const isEnoughDaysPassed =
 				daysSinceLastPromotion >= targetJob.minDaysProm;
 
-			return isEnoughDaysPassed && isNotSelfPromotion && hasEnoughHierarchy;
+			return [
+				isEnoughDaysPassed && isNotSelfPromotion && hasEnoughHierarchy,
+				"REGISTERED",
+			];
 		}
 
-		return isNotSelfPromotion && hasEnoughHierarchy;
+		return [isNotSelfPromotion && hasEnoughHierarchy, "REGISTERED"];
 	}
 
 	#inferHighestJobRole(roles: GuildMemberRoleManager) {
