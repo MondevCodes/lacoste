@@ -141,9 +141,9 @@ export default class SendCommand extends Command {
 			(job) => job.id === authorJobRole,
 		);
 
-		const hasEnoughHierarchy =
-			(targetJob?.index ?? 0) >= (authorJob?.index ?? 0) &&
-			message.author.id !== user;
+		// const hasEnoughHierarchy =
+		// 	(targetJob?.index ?? 0) >= (authorJob?.index ?? 0) &&
+		// 	message.author.id !== user;
 
 		const isNotSelfPromotion = message.author.id !== user;
 
@@ -157,9 +157,9 @@ export default class SendCommand extends Command {
 			const isEnoughDaysPassed =
 				daysSinceLastPromotion >= targetJob.minDaysProm;
 
-			return isEnoughDaysPassed && isNotSelfPromotion && hasEnoughHierarchy;
+			return isEnoughDaysPassed;
 		}
 
-		return isNotSelfPromotion && hasEnoughHierarchy;
+		return isNotSelfPromotion;
 	}
 }
