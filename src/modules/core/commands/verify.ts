@@ -149,8 +149,9 @@ export default class SendCommand extends Command {
 
 		if (targetJob && authorJob && userDb.latestPromotionDate) {
 			const currentDate = new Date();
+      const promotionDate = new Date(userDb.latestPromotionDate);
 			const daysSinceLastPromotion = Math.floor(
-				(currentDate.getTime() - userDb.latestPromotionDate.getTime()) /
+				(currentDate.getTime() - promotionDate.getTime()) /
 					(1000 * 3600 * 24),
 			);
 
