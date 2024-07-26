@@ -262,9 +262,9 @@ export class FireInteractionHandler extends InteractionHandler {
 				})
 				.addFields([
 					{
-						name: "Membro",
+						name: "Membro Demitido",
 						value: `@${targetMember.user.tag} | ${
-							targetHabbo?.uniqueId ?? "N/D"
+							targetHabbo?.name?? "N/D"
 						}`,
 					},
 					{
@@ -393,7 +393,7 @@ export class FireInteractionHandler extends InteractionHandler {
 		await notificationChannel.send({
 			embeds: [
 				EmbedBuilder.from(interaction.message.embeds[0])
-					.setTitle(`Demissão de ${interaction.user.tag}`)
+					.setTitle(`Demissor ${interaction.user.tag}`)
 					.addFields([{ name: "Autorizado Por", value: interaction.user.tag }])
 					.setColor(EmbedColors.Default),
 			],
