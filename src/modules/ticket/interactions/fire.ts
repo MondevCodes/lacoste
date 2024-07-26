@@ -209,7 +209,7 @@ export class FireInteractionHandler extends InteractionHandler {
 					`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}`,
 				)
 				.setFooter({
-					text: `@${targetMember.user.tag} | ${targetHabbo?.uniqueId ?? "N/D"}`,
+					text: `@${targetMember.user.tag} | ${targetHabbo?.name ?? "N/D"}`,
 					iconURL: targetMember.displayAvatarURL(),
 				})
 				.setTitle("Você tem certeza que deseja demiti-lo(a)?");
