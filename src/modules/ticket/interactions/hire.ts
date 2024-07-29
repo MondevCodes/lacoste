@@ -261,7 +261,7 @@ export class HireInteractionHandler extends InteractionHandler {
 				})
 				.setTitle("Você tem certeza?")
 				.setDescription(
-					`Você está contratando <@${targetHabbo?.name}> como <@&${selectedJob.id}>.`,
+					`Você está contratando ${targetHabbo?.name} como <@&${selectedJob.id}>.`,
 				)
 				.setColor(EmbedColors.Default);
 
@@ -303,7 +303,7 @@ export class HireInteractionHandler extends InteractionHandler {
 
 			const approvalEmbed = new EmbedBuilder()
 				.setTitle(
-					`Solicitação de Contratação para @${targetUser.user.tag} como ${selectedJob.name}`,
+					`Solicitação de Contratação para ${targetHabbo?.name} como ${selectedJob.name}`,
 				)
 				.setColor(EmbedColors.Default)
 				.setAuthor({
