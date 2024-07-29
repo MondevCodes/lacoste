@@ -261,6 +261,9 @@ export class FireInteractionHandler extends InteractionHandler {
 					name: interaction.user.tag,
 					iconURL: interaction.user.displayAvatarURL(),
 				})
+        .setFooter({
+          text: targetUserDb.id,
+        })
 				.addFields([
           {
             name: "Demissor",
