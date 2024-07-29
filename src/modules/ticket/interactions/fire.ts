@@ -1,6 +1,6 @@
 import {
-	InteractionHandler,
-	InteractionHandlerTypes,
+  InteractionHandler,
+  InteractionHandlerTypes, Result,
 } from "@sapphire/framework";
 
 import {
@@ -56,6 +56,7 @@ const MODAL_INPUTS = Object.values(MODAL_INPUTS_OBJ);
 type ModalInput = keyof typeof MODAL_INPUTS_OBJ;
 
 let habboTargetStorage: string | undefined;
+let habboInteractionName: string | undefined = undefined;
 
 @ApplyOptions<InteractionHandler.Options>({
 	interactionHandlerType: InteractionHandlerTypes.Button,
@@ -208,6 +209,23 @@ export class FireInteractionHandler extends InteractionHandler {
 
       habboTargetStorage = targetHabbo?.name;
 
+      const authorResult =
+        (await Result.fromAsync(
+          this.container.utilities.habbo.inferTargetGuildMember(
+            `@${interaction.user.tag}`,
+            true,
+          ),
+        ));
+
+      if (authorResult) {
+        const { habbo: authorHabbo } = authorResult.unwrapOr({
+          member: undefined,
+          habbo: undefined,
+        });
+
+        habboInteractionName = authorHabbo?.name ?? "N/A";
+      }
+
 			const confirmationEmbed = new EmbedBuilder()
 				.setThumbnail(
 					`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}`,
@@ -267,7 +285,7 @@ export class FireInteractionHandler extends InteractionHandler {
 				.addFields([
           {
             name: "Demissor",
-            value: `@${interaction.user.tag}`,
+            value: `${habboInteractionName ?? `@${interaction.user.tag}`}`,
           },
 					{
 						name: "Cargo",
@@ -392,11 +410,28 @@ export class FireInteractionHandler extends InteractionHandler {
 			},
 		});
 
+    const authorResult =
+      (await Result.fromAsync(
+        this.container.utilities.habbo.inferTargetGuildMember(
+          `@${interaction.user.tag}`,
+          true,
+        ),
+      ));
+
+    if (authorResult) {
+      const { habbo: authorHabbo } = authorResult.unwrapOr({
+        member: undefined,
+        habbo: undefined,
+      });
+
+      habboInteractionName = authorHabbo?.name ?? "N/A";
+    }
+
 		await notificationChannel.send({
 			embeds: [
 				EmbedBuilder.from(interaction.message.embeds[0])
 					.setTitle(`Demissão de ${habboTargetStorage}`)
-					.addFields([{ name: "Autorizado Por", value: interaction.user.tag }])
+					.addFields([{ name: "Autorizado Por", value: `${habboInteractionName ?? `@${interaction.user.tag}`}`, }])
 					.setColor(EmbedColors.Default),
 			],
 		});
