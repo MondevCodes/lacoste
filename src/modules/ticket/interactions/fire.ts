@@ -55,6 +55,8 @@ const MODAL_INPUTS_OBJ = {
 const MODAL_INPUTS = Object.values(MODAL_INPUTS_OBJ);
 type ModalInput = keyof typeof MODAL_INPUTS_OBJ;
 
+let habboTargetStorage: string | undefined;
+
 @ApplyOptions<InteractionHandler.Options>({
 	interactionHandlerType: InteractionHandlerTypes.Button,
 })
@@ -204,6 +206,8 @@ export class FireInteractionHandler extends InteractionHandler {
 				return;
 			}
 
+      habboTargetStorage = targetHabbo?.name;
+
 			const confirmationEmbed = new EmbedBuilder()
 				.setThumbnail(
 					`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}`,
@@ -257,16 +261,11 @@ export class FireInteractionHandler extends InteractionHandler {
 					name: interaction.user.tag,
 					iconURL: interaction.user.displayAvatarURL(),
 				})
-				.setFooter({
-					text: targetUserDb.id,
-				})
 				.addFields([
-					{
-						name: "Membro Demitido",
-						value: `@${targetMember.user.tag} | ${
-							targetHabbo?.name?? "N/D"
-						}`,
-					},
+          {
+            name: "Demissor",
+            value: `@${interaction.user.tag}`,
+          },
 					{
 						name: "Cargo",
 						value: currentJobRole.name ?? "N/D",
@@ -393,7 +392,7 @@ export class FireInteractionHandler extends InteractionHandler {
 		await notificationChannel.send({
 			embeds: [
 				EmbedBuilder.from(interaction.message.embeds[0])
-					.setTitle(`Demissor ${interaction.user.tag}`)
+					.setTitle(`Demissão de ${habboTargetStorage}`)
 					.addFields([{ name: "Autorizado Por", value: interaction.user.tag }])
 					.setColor(EmbedColors.Default),
 			],
