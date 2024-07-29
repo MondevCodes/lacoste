@@ -273,7 +273,7 @@ export class FireInteractionHandler extends InteractionHandler {
 			}
 
 			const approvalEmbed = new EmbedBuilder()
-				.setTitle("Solicitação de Demissão")
+				.setTitle(`Solicitação de Demissão de ${targetHabbo?.name}`)
 				.setColor(EmbedColors.Default)
 				.setAuthor({
 					name: interaction.user.tag,

@@ -1,6 +1,6 @@
 import {
 	InteractionHandler,
-	InteractionHandlerTypes,
+	InteractionHandlerTypes, Result,
 } from "@sapphire/framework";
 
 import {
@@ -54,6 +54,8 @@ const MODAL_INPUTS_OBJ = {
 
 const MODAL_INPUTS = Object.values(MODAL_INPUTS_OBJ);
 type ModalInput = keyof typeof MODAL_INPUTS_OBJ;
+
+let habboInteractionName: string | undefined = undefined;
 
 @ApplyOptions<InteractionHandler.Options>({
 	interactionHandlerType: InteractionHandlerTypes.Button,
@@ -232,17 +234,34 @@ export class HireInteractionHandler extends InteractionHandler {
 			if (!selectedJob)
 				throw new Error("Unexpected error while selecting job role.");
 
+      const authorResult =
+      (await Result.fromAsync(
+        this.container.utilities.habbo.inferTargetGuildMember(
+          `@${interaction.user.tag}`,
+          true,
+        ),
+      ));
+
+    if (authorResult) {
+      const { habbo: authorHabbo } = authorResult.unwrapOr({
+        member: undefined,
+        habbo: undefined,
+      });
+
+      habboInteractionName = authorHabbo?.name ?? "N/A";
+    }
+
 			const confirmationEmbed = new EmbedBuilder()
 				.setThumbnail(
 					`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}`,
 				)
 				.setFooter({
-					text: `@${targetMember.user.tag} | ${targetHabbo?.uniqueId ?? "N/D"}`,
+					text: `@${targetMember.user.tag} | ${targetHabbo?.name ?? "N/D"}`,
 					iconURL: targetMember.displayAvatarURL(),
 				})
 				.setTitle("Você tem certeza?")
 				.setDescription(
-					`Você está contratando <@${targetUserDb.discordId}> como <@&${selectedJob.id}>.`,
+					`Você está contratando <@${targetHabbo?.name}> como <@&${selectedJob.id}>.`,
 				)
 				.setColor(EmbedColors.Default);
 
@@ -296,10 +315,8 @@ export class HireInteractionHandler extends InteractionHandler {
 				})
 				.addFields([
 					{
-						name: "Membro",
-						value: `@${targetMember.user.tag} | ${
-							targetHabbo?.uniqueId ?? "N/D"
-						}`,
+						name: "Contratante",
+						value: `${habboInteractionName ?? `@${interaction.user.tag}`}`,
 					},
 					{
 						name: "Novo Cargo",
@@ -493,17 +510,34 @@ export class HireInteractionHandler extends InteractionHandler {
 			},
 		});
 
-		const habboProfile = (
+		const habboTargetProfile = (
 			await this.container.utilities.habbo.getProfile(targetUser.habboId)
 		).unwrapOr(null);
+
+    const authorResult =
+    (await Result.fromAsync(
+      this.container.utilities.habbo.inferTargetGuildMember(
+        `@${interaction.user.tag}`,
+        true,
+      ),
+    ));
+
+    if (authorResult) {
+      const { habbo: authorHabbo } = authorResult.unwrapOr({
+        member: undefined,
+        habbo: undefined,
+      });
+
+      habboInteractionName = authorHabbo?.name ?? "N/A";
+    }
 
 		await notificationChannel.send({
 			embeds: [
 				EmbedBuilder.from(interaction.message.embeds[0])
 					.setTitle(
-						`Contratação de ${habboProfile?.name ?? targetUser.habboId}`,
+						`Contratação de ${habboTargetProfile?.name ?? targetUser.habboId}`,
 					)
-					.addFields([{ name: "Autorizado Por", value: interaction.user.tag }])
+					.addFields([{ name: "Autorizado Por", value: `${habboInteractionName ?? `@${interaction.user.tag}`}` }])
 					.setColor(EmbedColors.Default),
 			],
 		});
