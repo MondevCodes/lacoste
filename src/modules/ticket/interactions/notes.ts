@@ -1,6 +1,6 @@
 import {
 	InteractionHandler,
-	InteractionHandlerTypes,
+	InteractionHandlerTypes, Result,
 } from "@sapphire/framework";
 
 import {
@@ -53,6 +53,9 @@ const MODAL_INPUTS_OBJ = {
 
 const MODAL_INPUTS = Object.values(MODAL_INPUTS_OBJ);
 type ModalInput = keyof typeof MODAL_INPUTS_OBJ;
+
+let habboTargetStorage: string | undefined;
+let habboInteractionName: string | undefined = undefined;
 
 @ApplyOptions<InteractionHandler.Options>({
 	interactionHandlerType: InteractionHandlerTypes.Button,
@@ -186,13 +189,32 @@ export class NotesInteractionHandler extends InteractionHandler {
 				throw new Error("Can't send message to non-text channel.");
 			}
 
-			const highestSectorRoleId =
-				this.container.utilities.discord.inferHighestSectorRole(
+			const highestJobRoleId =
+				this.container.utilities.discord.inferHighestJobRole(
 					targetUser.roles.cache.map((r) => r.id),
 				);
 
+      habboTargetStorage = targetHabbo?.name;
+
+      const authorResult =
+      (await Result.fromAsync(
+        this.container.utilities.habbo.inferTargetGuildMember(
+          `@${interaction.user.tag}`,
+          true,
+        ),
+      ));
+
+      if (authorResult) {
+        const { habbo: authorHabbo } = authorResult.unwrapOr({
+          member: undefined,
+          habbo: undefined,
+        });
+
+        habboInteractionName = authorHabbo?.name ?? "N/A";
+      }
+
 			const approvalEmbed = new EmbedBuilder()
-				.setTitle(`Solicitação de Anotação para @${targetMember.user.tag}`)
+				.setTitle(`Solicitação de Anotação para ${targetHabbo?.name}`)
 				.setColor(EmbedColors.Default)
 				.setAuthor({
 					name: interaction.user.tag,
@@ -200,13 +222,13 @@ export class NotesInteractionHandler extends InteractionHandler {
 				})
 				.addFields([
 					{
-						name: "Nome do Colaborador",
-						value: targetUser.displayName,
+						name: "Autor",
+						value: `${habboInteractionName ?? `@${interaction.user.tag}`}`,
 					},
 					{
 						name: "Cargo do Colaborador",
-						value: highestSectorRoleId
-							? (await targetMember.guild.roles.fetch(highestSectorRoleId))
+						value: highestJobRoleId
+							? (await targetMember.guild.roles.fetch(highestJobRoleId))
 									?.name ?? "N/A"
 							: "N/A",
 					},
@@ -216,8 +238,8 @@ export class NotesInteractionHandler extends InteractionHandler {
 					},
 				])
 				.setThumbnail(
-					`https://www.habbo.com/habbo-imaging/${targetHabbo?.figureString}`,
-				);
+					`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}`,
+				)
 
 			await approvalChannel.send({
 				embeds: [approvalEmbed],
@@ -262,11 +284,28 @@ export class NotesInteractionHandler extends InteractionHandler {
 			throw new Error("Can't send message to non-text channel.");
 		}
 
+    const authorResult =
+    (await Result.fromAsync(
+      this.container.utilities.habbo.inferTargetGuildMember(
+        `@${interaction.user.tag}`,
+        true,
+      ),
+    ));
+
+    if (authorResult) {
+      const { habbo: authorHabbo } = authorResult.unwrapOr({
+        member: undefined,
+        habbo: undefined,
+      });
+
+      habboInteractionName = authorHabbo?.name ?? "N/A";
+    }
+
 		await notificationChannel.send({
 			embeds: [
 				EmbedBuilder.from(interaction.message.embeds[0])
-					.setTitle(`Anotação de ${interaction.user.tag}`)
-					.addFields([{ name: "Autorizado Por", value: interaction.user.tag }])
+					.setTitle(`Anotação para ${habboTargetStorage}`)
+					.addFields([{ name: "Autorizado Por", value: `${habboInteractionName ?? `@${interaction.user.tag}`}`, }])
 					.setColor(EmbedColors.Default),
 			],
 		});
