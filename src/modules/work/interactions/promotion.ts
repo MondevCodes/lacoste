@@ -415,17 +415,17 @@ export class PromotionInteractionHandler extends InteractionHandler {
 				embeds: [
 					new EmbedBuilder()
 						.setDescription(
-							`### Promoção\n\n${
-								result.additional.length > 0
-									? result.additional
-									: "Nenhuma observação foi adicionada."
-							}`,
+							`### Promoção de ${targetHabbo?.name ?? `@${targetMember.user.tag}`}\n\n`,
 						)
-						.setFooter({
-							text: `Promotor ${habboName ?? `@${interaction.user.tag}`}`,
+						.setAuthor({
+							name: interaction.user.tag,
 							iconURL: interaction.user.displayAvatarURL(),
 						})
 						.addFields([
+              {
+                name: "👤 Promotor ",
+                value: `${habboName ?? `@${interaction.user.tag}`}`,
+              },
 							{
 								name: "🗓️ Promovido Em",
 								value: time(new Date(), "F"),
@@ -447,12 +447,14 @@ export class PromotionInteractionHandler extends InteractionHandler {
 								name: "📗 Cargo Promovido",
 								value: nextTargetJob.toString(),
 							},
-							{
-								name: "📝 Promovido",
-								value: targetHabbo?.name ?? `@${targetMember.user.tag}`,
-							},
+              {
+                name: "🗒️ Observação",
+                value: result.additional.length > 0
+                ? result.additional
+                : "Nenhuma observação foi adicionada.",
+              }
 						])
-						.setColor(EmbedColors.Default)
+						.setColor(EmbedColors.Success)
 						.setThumbnail(
 							`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`,
 						),
@@ -461,7 +463,7 @@ export class PromotionInteractionHandler extends InteractionHandler {
 		}
 
 		await interactionFromModal.editReply({
-			content: "Operação concluída.",
+			content: "✅ Operação concluída.",
 			embeds: [],
 			components: [],
 		});

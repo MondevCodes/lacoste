@@ -10,7 +10,7 @@ import {
 
 import {
 	InteractionHandler,
-	InteractionHandlerTypes,
+	InteractionHandlerTypes, Result,
 } from "@sapphire/framework";
 
 import { schedule } from "node-cron";
@@ -47,6 +47,8 @@ const BASE_BUTTON_ID_REGEX = new RegExp(`^${BASE_BUTTON_ID}/`);
 export function encodeButtonId(data: ActionData) {
 	return `${BASE_BUTTON_ID}/${JSON.stringify(data)}`;
 }
+
+let habboInteractionName: string | undefined = undefined;
 
 @ApplyOptions<InteractionHandler.Options>({
 	interactionHandlerType: InteractionHandlerTypes.Button,
@@ -250,26 +252,26 @@ export class DepartmentInteractionHandler extends InteractionHandler {
 								)
 								.setFields([
 									{
-										name: "Usuário",
+										name: "👤 Usuário",
 										value: `${targetHabbo.name}${
 											targetMember ? ` // ${targetMember.toString()}` : ""
 										}`,
 									},
 									{
-										name: "Cargo",
+										name: "📗 Cargo",
 										value: targetMemberJobRole
 											? targetMemberJobRole.toString()
 											: "N/D",
 									},
 									{
-										name: "Data",
+										name: "🗓️ Data",
 										value: `${time(new Date(), "D")} até ${time(
 											new Date(Date.now() + renewalPeriodInMilliseconds),
 											"D",
 										)}`,
 									},
 									{
-										name: "Motivo",
+										name: "🗒️ Motivo",
 										value: result.reason.length > 0 ? result.reason : "N/D",
 									},
 								]),
@@ -457,38 +459,55 @@ export class DepartmentInteractionHandler extends InteractionHandler {
 		const targetMemberJobRole =
 			targetMemberJobRoleId && (await guild.roles.fetch(targetMemberJobRoleId));
 
+    const authorResult =
+    (await Result.fromAsync(
+      this.container.utilities.habbo.inferTargetGuildMember(
+        `@${interaction.user.tag}`,
+        true,
+      ),
+    ));
+
+      if (authorResult) {
+        const { habbo: authorHabbo } = authorResult.unwrapOr({
+          member: undefined,
+          habbo: undefined,
+         });
+
+        habboInteractionName = authorHabbo?.name ?? "N/A";
+      }
+
 		if (notificationChannel?.isTextBased()) {
 			await notificationChannel.send({
 				embeds: [
 					new EmbedBuilder()
 						.setColor(EmbedColors.Default)
-						.setTitle(`Afastamento de ${readableRenewalPeriod}`)
+						.setTitle(`Afastamento de ${targetHabbo?.name}`)
 						.setAuthor({
 							name: interaction.user.tag,
 							iconURL: interaction.user.displayAvatarURL(),
 						})
-						.setFooter({
-							text: targetMember.nickname || targetMember.user.username,
-							iconURL: targetMember.displayAvatarURL(),
-						})
 						.setFields([
 							{
-								name: "Usuário",
-								value: targetHabbo?.name || targetMember.user.toString(),
+								name: "👤 Autor ",
+								value: `${habboInteractionName ?? `@${interaction.user.tag}`}`,
 							},
 							{
-								name: "Cargo",
+								name: "📗 Cargo",
 								value: targetMemberJobRole?.toString() || "N/D",
 							},
+              {
+                name: "⏰ Tempo",
+                value: readableRenewalPeriod,
+              },
 							{
-								name: "Data",
+								name: "🗓️ Data",
 								value: `${time(new Date(), "D")} até ${time(
 									new Date(Date.now() + renewalPeriodInMilliseconds),
 									"D",
 								)}`,
 							},
 							{
-								name: "Motivo",
+								name: "🗒️ Motivo",
 								value: result.reason.length > 0 ? result.reason : "N/D",
 							},
 						])
@@ -785,19 +804,19 @@ export class DepartmentInteractionHandler extends InteractionHandler {
 						)
 						.setFields([
 							{
-								name: "Usuário",
+								name: "👤 Usuário",
 								value: `${
 									targetHabbo?.name ?? targetMember?.user.tag ?? "N/D"
 								}${targetMember ? ` // ${targetMember.toString()}` : ""}`,
 							},
 							{
-								name: "Cargo",
+								name: "📗 Cargo",
 								value: targetMemberJobRole
 									? targetMemberJobRole.toString()
 									: "N/D",
 							},
 							{
-								name: "Data",
+								name: "🗓️ Data",
 								value: time(new Date(), "D"),
 							},
 						]),

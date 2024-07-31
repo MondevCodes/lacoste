@@ -315,26 +315,26 @@ export class HireInteractionHandler extends InteractionHandler {
 				})
 				.addFields([
 					{
-						name: "Contratante",
+						name: "👤 Contratante",
 						value: `${habboInteractionName ?? `@${interaction.user.tag}`}`,
 					},
 					{
-						name: "Novo Cargo",
+						name: "📗 Novo Cargo",
 						value: `<@&${selectedJob.id}>`,
 					},
 					{
-						name: "Observação Adicional",
+						name: "🗒️ Observação Adicional",
 						value: result.Additional === "" ? "N/A" : result.Additional,
 					},
 					{
-						name: "Última Promoção",
+						name: "🗓️ Última Promoção",
 						value:
 							targetUserDb.latestPromotionDate?.toLocaleString("pt-BR") ??
 							"N/A",
 						inline: true,
 					},
 					{
-						name: "Promoção Atual",
+						name: "🗓️ Promoção Atual",
 						value: new Date().toLocaleString("pt-BR"),
 						inline: true,
 					},
@@ -375,16 +375,21 @@ export class HireInteractionHandler extends InteractionHandler {
 		}
 
 		if (action === "Reject") {
-			// await interaction.message.edit({
-			// 	components: [],
-			// 	embeds: [
-			// 		EmbedBuilder.from(interaction.message.embeds[0])
-			// 			.setTitle(`Solicitação Rejeitada por ${interaction.user.tag}`)
-			// 			.setColor(EmbedColors.Error),
-			// 	],
-			// });
+			await interaction.message.edit({
+				components: [],
+				embeds: [
+					EmbedBuilder.from(interaction.message.embeds[0])
+						.setTitle('❌ Contratação Rejeitada')
+						.setColor(EmbedColors.Error),
+				],
+			});
 
-			await interaction.message.delete();
+      await interaction.followUp({
+				content: "❌ Rejeitada.",
+				ephemeral: true,
+			});
+
+			// await interaction.message.delete();
 
 			await this.container.prisma.user.update({
 				where: { id: targetUserId },
@@ -537,21 +542,26 @@ export class HireInteractionHandler extends InteractionHandler {
 					.setTitle(
 						`Contratação de ${habboTargetProfile?.name ?? targetUser.habboId}`,
 					)
-					.addFields([{ name: "Autorizado Por", value: `${habboInteractionName ?? `@${interaction.user.tag}`}` }])
-					.setColor(EmbedColors.Default),
+					.addFields([{ name: "🛡️ Autorizado Por", value: `${habboInteractionName ?? `@${interaction.user.tag}`}` }])
+					.setColor(EmbedColors.Success),
 			],
 		});
 
-		// await interaction.message.edit({
-		// 	components: [],
-		// 	embeds: [
-		// 		EmbedBuilder.from(interaction.message.embeds[0])
-		// 			.setTitle(`Contratação Aprovada por ${interaction.user.tag}`)
-		// 			.setColor(EmbedColors.Success),
-		// 	],
-		// });
+		await interaction.message.edit({
+			components: [],
+			embeds: [
+				EmbedBuilder.from(interaction.message.embeds[0])
+					.setTitle("✅ Contratação Aprovada")
+					.setColor(EmbedColors.Success),
+			],
+		});
 
-		await interaction.message.delete();
+    await interaction.reply({
+			content: "✅ Operação concluída.",
+			ephemeral: true,
+		});
+
+		// await interaction.message.delete();
 
 		return;
 	}

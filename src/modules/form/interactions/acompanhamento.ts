@@ -1,7 +1,7 @@
 import { ApplyOptions } from "@sapphire/decorators";
 import {
 	InteractionHandler,
-	InteractionHandlerTypes,
+	InteractionHandlerTypes, Result,
 } from "@sapphire/framework";
 
 import {
@@ -26,6 +26,8 @@ enum FeedbackInputIds {
 }
 
 type FeedbackInput = keyof typeof FeedbackInputIds;
+
+let habboInteractionName: string | undefined = undefined;
 
 @ApplyOptions<InteractionHandler.Options>({
 	interactionHandlerType: InteractionHandlerTypes.Button,
@@ -168,11 +170,32 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
 			// else targets.push(`${possibleTarget} // ${possibleJob || "N/A"}`);
 		}
 
+    const authorResult =
+    (await Result.fromAsync(
+      this.container.utilities.habbo.inferTargetGuildMember(
+        `@${interaction.user.tag}`,
+        true,
+      ),
+    ));
+
+    if (authorResult) {
+      const { habbo: authorHabbo } = authorResult.unwrapOr({
+        member: undefined,
+        habbo: undefined,
+      });
+
+      habboInteractionName = authorHabbo?.name ?? "N/A";
+    }
+
 		const embed = new EmbedBuilder()
 			.setTitle("Acompanhamento")
 			.addFields([
+        {
+          name: "👤 Autor",
+          value: `${habboInteractionName ?? `@${interaction.user.tag}`}`,
+        },
 				{
-					name: "Promotor",
+					name: "🧑‍🏫 Promotor",
 					value: `${targetHabbo.name.replaceAll(
 						MarkdownCharactersRegex,
 						"\\$&",
@@ -180,27 +203,27 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
 					inline: true,
 				},
 				{
-					name: "Promovidos",
+					name: "🧑‍🎓 Promovidos",
 					value: targets.join("\n"),
 					inline: true,
 				},
 				{
-					name: "Nota de Desempenho",
+					name: "🏆 Nota de Desempenho",
 					value: result.PerformanceRate.replace(/[^0-9]/g, "") || "N/A",
 					inline: true,
 				},
 				{
-					name: "Motivo da Nota",
+					name: "🗒️ Motivo da Nota",
 					value: result.Target.length > 0 ? result.Performance : "N/A",
 					inline: true,
 				},
 				{
-					name: "Precisa de mais acompanhamento?",
+					name: "⚠️ Precisa de mais acompanhamento?",
 					value: result.Target.length > 0 ? result.NeedsMoreFollowUp : "N/A",
 					inline: true,
 				},
 				{
-					name: "Data",
+					name: "🗓️ Data",
 					value: new Date().toLocaleString("pt-BR"),
 				},
 			])

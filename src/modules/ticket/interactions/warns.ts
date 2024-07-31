@@ -222,18 +222,18 @@ export class WarningsInteractionHandler extends InteractionHandler {
 				})
 				.addFields([
 					{
-						name: "Autor",
+						name: "👤 Autor",
 						value: `${habboInteractionName ?? `@${interaction.user.tag}`}`,
 					},
 					{
-						name: "Cargo do Colaborador",
+						name: "📗 Cargo do Colaborador",
 						value: highestJobRoleId
 							? (await targetMember.guild.roles.fetch(highestJobRoleId))
 									?.name ?? "N/A"
 							: "N/A",
 					},
 					{
-						name: "Advertência",
+						name: "🗒️ Advertência",
 						value: result.Content,
 					},
 				])
@@ -263,13 +263,13 @@ export class WarningsInteractionHandler extends InteractionHandler {
 				components: [],
 				embeds: [
 					EmbedBuilder.from(interaction.message.embeds[0])
-						.setTitle("Solicitação Rejeitada")
+						.setTitle("❌ Advertência Rejeitada")
 						.setColor(EmbedColors.Error),
 				],
 			});
 
 			await interaction.followUp({
-				content: "Rejeitada.",
+				content: "❌ Rejeitada.",
 				ephemeral: true,
 			});
 
@@ -305,8 +305,8 @@ export class WarningsInteractionHandler extends InteractionHandler {
 			embeds: [
 				EmbedBuilder.from(interaction.message.embeds[0])
 					.setTitle(`Advertência para ${habboTargetStorage}`)
-					.addFields([{ name: "Autorizado Por", value: `${habboInteractionName ?? `@${interaction.user.tag}`}` }])
-					.setColor(EmbedColors.Default),
+					.addFields([{ name: "🛡️ Autorizado Por", value: `${habboInteractionName ?? `@${interaction.user.tag}`}` }])
+					.setColor(EmbedColors.Error),
 			],
 		});
 
@@ -314,13 +314,13 @@ export class WarningsInteractionHandler extends InteractionHandler {
 			components: [],
 			embeds: [
 				EmbedBuilder.from(interaction.message.embeds[0])
-					.setTitle("Solicitação Aprovada")
+					.setTitle("✅ Advertência Aprovada")
 					.setColor(EmbedColors.Success),
 			],
 		});
 
 		await interaction.reply({
-			content: "Operação concluída.",
+			content: "✅ Operação concluída.",
 			ephemeral: true,
 		});
 
