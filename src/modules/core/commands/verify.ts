@@ -64,61 +64,79 @@ export default class SendCommand extends Command {
       },
 		});
 
-    const minDaysProm = find(
-      values(ENVIRONMENT.JOBS_ROLES),
-      (x) => x.id === databaseUser?.latestPromotionRoleId,
-    )?.minDaysProm;
+		let shouldPromote =
+			/** isFirstPromotion */
+			!databaseUser?.latestPromotionRoleId ||
+			!databaseUser?.latestPromotionDate;
 
-    if (databaseUser?.latestPromotionDate && minDaysProm) {
-      const daysSinceLastPromotion = Math.floor(
-          (new Date().getTime() - databaseUser?.latestPromotionDate?.getTime()) /
-            (1000 * 3600 * 24),
-      );
+    if (!shouldPromote) {
 
-      const daysForPromote = minDaysProm - daysSinceLastPromotion
-      const isEnoughDaysPassed = daysSinceLastPromotion >= minDaysProm;
+      const latestPromotionDate =
+      databaseUser?.latestPromotionDate &&
+      new Date(databaseUser?.latestPromotionDate);
 
-      await message.reply({
-        embeds: [
-          new EmbedBuilder()
-            .setTitle(`Verificação de ${habbo.name}`)
-            .setFields([
-              {
-                name: "Setor // Cargo",
-                value: `**${currentSector?.name}** // **${currentJob?.name}**`,
-              },
-              {
-                name: "Ultima Promoção",
-                value: databaseUser?.latestPromotionDate
-                  ? new Date(
-                      databaseUser?.latestPromotionDate,
-                    ).toLocaleDateString("pt-BR")
-                  : "N/D",
-              },
-              {
-                name: "Promoção Disponível?",
-                value: isEnoughDaysPassed
-                  ? "Sim"
-                  : "Não",
-              },
-              {
-                name: "Dias até a próxima Promoção",
-                value: `${daysForPromote}`,
-              }
-            ])
-            .setFooter({
-              text: message.author.tag,
-              iconURL: message.author.displayAvatarURL(),
-            })
-            .setColor(EmbedColors.Default)
-            .setThumbnail(
-              `https://www.habbo.com/habbo-imaging/avatarimage?figure=${habbo.figureString}&size=b`,
-            ),
-        ],
-      });
+      const minDaysProm = find(
+        values(ENVIRONMENT.JOBS_ROLES),
+        (x) => x.id === databaseUser?.latestPromotionRoleId,
+      )?.minDaysProm;
+
+      if (databaseUser?.latestPromotionDate && minDaysProm && latestPromotionDate) {
+        const daysSinceLastPromotion = Math.floor(
+            (new Date().getTime() - latestPromotionDate.getTime()) /
+              (1000 * 3600 * 24),
+        );
+
+        const daysForPromote = minDaysProm - daysSinceLastPromotion
+        shouldPromote = daysSinceLastPromotion >= minDaysProm
+
+        await message.reply({
+          embeds: [
+            new EmbedBuilder()
+              .setTitle(`Verificação de ${habbo.name}`)
+              .setFields([
+                {
+                  name: "Setor // Cargo",
+                  value: `**${currentSector?.name}** // **${currentJob?.name}**`,
+                },
+                {
+                  name: "Ultima Promoção",
+                  value: databaseUser?.latestPromotionDate
+                    ? new Date(
+                        databaseUser?.latestPromotionDate,
+                      ).toLocaleDateString("pt-BR")
+                    : "N/D",
+                },
+                {
+                  name: "Promoção Disponível?",
+                  value: shouldPromote
+                    ? "Sim"
+                    : "Não",
+                },
+                {
+                  name: "Dias até a próxima Promoção",
+                  value: `${daysForPromote}`,
+                }
+              ])
+              .setFooter({
+                text: message.author.tag,
+                iconURL: message.author.displayAvatarURL(),
+              })
+              .setColor(EmbedColors.Default)
+              .setThumbnail(
+                `https://www.habbo.com/habbo-imaging/avatarimage?figure=${habbo.figureString}&size=b`,
+              ),
+          ],
+        });
+
+      } else {
+        await message.reply({
+          content:
+            "Erro, contate o Desenvolvedor.",
+        });
+      }
 
     }
+    }
 
-	}
 
 }
