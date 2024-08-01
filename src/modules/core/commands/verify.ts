@@ -7,8 +7,6 @@ import { find, values } from "remeda";
 import { ENVIRONMENT } from "$lib/env";
 import { EmbedColors } from "$lib/constants/discord";
 
-let daysForPromote: number | undefined;;
-
 @ApplyOptions<Command.Options>({ name: "verificar" })
 export default class SendCommand extends Command {
 	public override async messageRun(message: Message, args: Args) {
@@ -59,8 +57,31 @@ export default class SendCommand extends Command {
 
 		const databaseUser = await this.container.prisma.user.findUnique({
 			where: { habboId: habbo.uniqueId },
-			select: { latestPromotionDate: true },
+			select: {
+        id: true,
+        latestPromotionDate: true,
+        latestPromotionRoleId: true,
+      },
 		});
+
+    const minDaysProm = find(
+      values(ENVIRONMENT.JOBS_ROLES),
+      (x) => x.id === databaseUser?.latestPromotionRoleId,
+    )?.minDaysProm;
+
+
+    let daysSinceLastPromotion: number | undefined;
+    if (databaseUser?.latestPromotionDate) {
+      daysSinceLastPromotion = Math.floor(
+          (new Date().getTime() - databaseUser?.latestPromotionDate?.getTime()) /
+            (1000 * 3600 * 24),
+        )
+      }
+
+    let daysForPromote: number | undefined;
+    if (minDaysProm && daysSinceLastPromotion) {
+      daysForPromote = minDaysProm - daysSinceLastPromotion
+    }
 
 		await message.reply({
 			embeds: [
@@ -150,10 +171,7 @@ export default class SendCommand extends Command {
 			(job) => job.id === authorJobRole,
 		);
 
-
-    let minDaysProm: number | undefined = 0;
-
-    minDaysProm = find(
+    const minDaysProm = find(
       values(ENVIRONMENT.JOBS_ROLES),
       (x) => x.id === userDb?.latestPromotionRoleId,
     )?.minDaysProm;
@@ -174,9 +192,6 @@ export default class SendCommand extends Command {
       if (minDaysProm) {
         const isEnoughDaysPassed =
           daysSinceLastPromotion >= minDaysProm;
-
-        daysForPromote =
-          minDaysProm - daysSinceLastPromotion;
 
         return isEnoughDaysPassed
       }
