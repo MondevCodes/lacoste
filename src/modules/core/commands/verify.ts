@@ -131,7 +131,36 @@ export default class SendCommand extends Command {
       } else {
         await message.reply({
           content:
-            "Erro, contate o Desenvolvedor.",
+            "Erro: Função 'shouldPromote' e 'daysForPromote', contate o Desenvolvedor.",
+        });
+
+        await message.reply({
+          embeds: [
+            new EmbedBuilder()
+              .setTitle(`Verificação de ${habbo.name}`)
+              .setFields([
+                {
+                  name: "Setor // Cargo",
+                  value: `**${currentSector?.name}** // **${currentJob?.name}**`,
+                },
+                {
+                  name: "Ultima Promoção",
+                  value: databaseUser?.latestPromotionDate
+                    ? new Date(
+                        databaseUser?.latestPromotionDate,
+                      ).toLocaleDateString("pt-BR")
+                    : "N/D",
+                },
+              ])
+              .setFooter({
+                text: message.author.tag,
+                iconURL: message.author.displayAvatarURL(),
+              })
+              .setColor(EmbedColors.Default)
+              .setThumbnail(
+                `https://www.habbo.com/habbo-imaging/avatarimage?figure=${habbo.figureString}&size=b`,
+              ),
+          ],
         });
       }
 
