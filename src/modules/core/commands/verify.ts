@@ -1,4 +1,4 @@
-import { EmbedBuilder, Message, Snowflake } from "discord.js";
+import { EmbedBuilder, Message} from "discord.js";
 import { ApplyOptions } from "@sapphire/decorators";
 import { Args, Command} from "@sapphire/framework";
 
@@ -69,134 +69,56 @@ export default class SendCommand extends Command {
       (x) => x.id === databaseUser?.latestPromotionRoleId,
     )?.minDaysProm;
 
-
-    let daysSinceLastPromotion: number | undefined;
-    if (databaseUser?.latestPromotionDate) {
-      daysSinceLastPromotion = Math.floor(
+    if (databaseUser?.latestPromotionDate && minDaysProm) {
+      const daysSinceLastPromotion = Math.floor(
           (new Date().getTime() - databaseUser?.latestPromotionDate?.getTime()) /
             (1000 * 3600 * 24),
-        )
-      }
+      );
 
-    let daysForPromote: number | undefined;
-    if (minDaysProm && daysSinceLastPromotion) {
-      daysForPromote = minDaysProm - daysSinceLastPromotion
+      const daysForPromote = minDaysProm - daysSinceLastPromotion
+      const isEnoughDaysPassed = daysSinceLastPromotion >= minDaysProm;
+
+      await message.reply({
+        embeds: [
+          new EmbedBuilder()
+            .setTitle(`Verificação de ${habbo.name}`)
+            .setFields([
+              {
+                name: "Setor // Cargo",
+                value: `**${currentSector?.name}** // **${currentJob?.name}**`,
+              },
+              {
+                name: "Ultima Promoção",
+                value: databaseUser?.latestPromotionDate
+                  ? new Date(
+                      databaseUser?.latestPromotionDate,
+                    ).toLocaleDateString("pt-BR")
+                  : "N/D",
+              },
+              {
+                name: "Promoção Disponível?",
+                value: isEnoughDaysPassed
+                  ? "Sim"
+                  : "Não",
+              },
+              {
+                name: "Dias até a próxima Promoção",
+                value: `${daysForPromote}`,
+              }
+            ])
+            .setFooter({
+              text: message.author.tag,
+              iconURL: message.author.displayAvatarURL(),
+            })
+            .setColor(EmbedColors.Default)
+            .setThumbnail(
+              `https://www.habbo.com/habbo-imaging/avatarimage?figure=${habbo.figureString}&size=b`,
+            ),
+        ],
+      });
+
     }
 
-		await message.reply({
-			embeds: [
-				new EmbedBuilder()
-					.setTitle(`Verificação de ${habbo.name}`)
-					.setFields([
-						{
-							name: "Setor // Cargo",
-							value: `**${currentSector?.name}** // **${currentJob?.name}**`,
-						},
-						{
-							name: "Ultima Promoção",
-							value: databaseUser?.latestPromotionDate
-								? new Date(
-										databaseUser?.latestPromotionDate,
-								  ).toLocaleDateString("pt-BR")
-								: "N/D",
-						},
-						{
-							name: "Promoção Disponível?",
-							value: (await this.#isPromotionPossible(message, member.user.id))
-								? "Sim"
-								: "Não",
-						},
-            {
-              name: "Dias até a próxima Promoção",
-              value: `${daysForPromote}`,
-            }
-					])
-					.setFooter({
-						text: message.author.tag,
-						iconURL: message.author.displayAvatarURL(),
-					})
-					.setColor(EmbedColors.Default)
-					.setThumbnail(
-						`https://www.habbo.com/habbo-imaging/avatarimage?figure=${habbo.figureString}&size=b`,
-					),
-			],
-		});
 	}
 
-	async #isPromotionPossible(
-		message: Message,
-		user: Snowflake,
-	): Promise<boolean> {
-		const guild =
-			message.guild ??
-			(await message.client.guilds.fetch(ENVIRONMENT.GUILD_ID));
-
-		const target = await guild.members.fetch(user);
-		const author = await guild.members.fetch(message.author.id);
-
-		const userDb = await this.container.prisma.user.findUnique({
-			where: {
-				discordId: user,
-			},
-			select: {
-        id: true,
-				latestPromotionDate: true,
-				latestPromotionRoleId: true,
-			},
-		});
-
-		if (!userDb) {
-			this.container.logger.warn(
-				`Promotion for ${user} is possible because the user is not registered.`,
-			);
-
-			return true;
-		}
-
-		const targetJobRole =
-			this.container.utilities.discord.inferHighestSectorRole(
-				target.roles.cache.map((r) => r.id),
-			);
-
-		const authorJobRole =
-			this.container.utilities.discord.inferHighestSectorRole(
-				author.roles.cache.map((r) => r.id),
-			);
-
-		const targetJob = Object.values(ENVIRONMENT.JOBS_ROLES).find(
-			(job) => job.id === targetJobRole,
-		);
-
-		const authorJob = Object.values(ENVIRONMENT.JOBS_ROLES).find(
-			(job) => job.id === authorJobRole,
-		);
-
-    const minDaysProm = find(
-      values(ENVIRONMENT.JOBS_ROLES),
-      (x) => x.id === userDb?.latestPromotionRoleId,
-    )?.minDaysProm;
-
-		// const hasEnoughHierarchy =
-		// 	(targetJob?.index ?? 0) >= (authorJob?.index ?? 0) &&
-		// 	message.author.id !== user;
-
-		const isNotSelfPromotion = message.author.id !== user;
-
-		if (targetJob && authorJob && userDb.latestPromotionDate) {
-
-			const daysSinceLastPromotion = Math.floor(
-				(new Date().getTime() - userDb.latestPromotionDate.getTime()) /
-					(1000 * 3600 * 24),
-			);
-
-      if (minDaysProm) {
-        const isEnoughDaysPassed =
-          daysSinceLastPromotion >= minDaysProm;
-
-        return isEnoughDaysPassed
-      }
-		}
-
-		return isNotSelfPromotion
-	}
 }
