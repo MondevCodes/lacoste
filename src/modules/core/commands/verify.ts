@@ -1,9 +1,13 @@
 import { EmbedBuilder, Message, Snowflake } from "discord.js";
 import { ApplyOptions } from "@sapphire/decorators";
-import { Args, Command } from "@sapphire/framework";
+import { Args, Command} from "@sapphire/framework";
+
+import { find, values } from "remeda";
 
 import { ENVIRONMENT } from "$lib/env";
 import { EmbedColors } from "$lib/constants/discord";
+
+let daysForPromote: number | undefined;;
 
 @ApplyOptions<Command.Options>({ name: "verificar" })
 export default class SendCommand extends Command {
@@ -81,6 +85,10 @@ export default class SendCommand extends Command {
 								? "Sim"
 								: "Não",
 						},
+            {
+              name: "Dias até a próxima Promoção",
+              value: `${daysForPromote}`,
+            }
 					])
 					.setFooter({
 						text: message.author.tag,
@@ -110,6 +118,7 @@ export default class SendCommand extends Command {
 				discordId: user,
 			},
 			select: {
+        id: true,
 				latestPromotionDate: true,
 				latestPromotionRoleId: true,
 			},
@@ -141,6 +150,14 @@ export default class SendCommand extends Command {
 			(job) => job.id === authorJobRole,
 		);
 
+
+    let minDaysProm: number | undefined = 0;
+
+    minDaysProm = find(
+      values(ENVIRONMENT.JOBS_ROLES),
+      (x) => x.id === userDb?.latestPromotionRoleId,
+    )?.minDaysProm;
+
 		// const hasEnoughHierarchy =
 		// 	(targetJob?.index ?? 0) >= (authorJob?.index ?? 0) &&
 		// 	message.author.id !== user;
@@ -148,19 +165,23 @@ export default class SendCommand extends Command {
 		const isNotSelfPromotion = message.author.id !== user;
 
 		if (targetJob && authorJob && userDb.latestPromotionDate) {
-			const currentDate = new Date();
-      const promotionDate = new Date(userDb.latestPromotionDate);
+
 			const daysSinceLastPromotion = Math.floor(
-				(currentDate.getTime() - promotionDate.getTime()) /
+				(new Date().getTime() - userDb.latestPromotionDate.getTime()) /
 					(1000 * 3600 * 24),
 			);
 
-			const isEnoughDaysPassed =
-				daysSinceLastPromotion >= targetJob.minDaysProm;
+      if (minDaysProm) {
+        const isEnoughDaysPassed =
+          daysSinceLastPromotion >= minDaysProm;
 
-			return isEnoughDaysPassed;
+        daysForPromote =
+          minDaysProm - daysSinceLastPromotion;
+
+        return isEnoughDaysPassed
+      }
 		}
 
-		return isNotSelfPromotion;
+		return isNotSelfPromotion
 	}
 }
