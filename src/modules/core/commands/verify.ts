@@ -51,6 +51,15 @@ export default class SendCommand extends Command {
 			member.roles.cache.map((r) => r.id),
 		);
 
+    if (!currentJobId) {
+			await message.reply({
+				content:
+					"Não consegui encontrar o cargo do usuário, talvez sua conta esteja deletada ou renomeada?",
+			});
+
+			return;
+		}
+
 		const currentJob = currentJobId
 			? await message.guild.roles.fetch(currentJobId)
 			: member.roles.highest;
@@ -64,21 +73,6 @@ export default class SendCommand extends Command {
       },
 		});
 
-		const guild =
-			message.guild ??
-			(await message.client.guilds.fetch(ENVIRONMENT.GUILD_ID));
-
-    const target = await guild.members.fetch(member.user.id);
-
-    const targetJobRole =
-    this.container.utilities.discord.inferHighestSectorRole(
-      target.roles.cache.map((r) => r.id),
-    );
-
-    const targetJob = Object.values(ENVIRONMENT.JOBS_ROLES).find(
-			(job) => job.id === targetJobRole,
-		);
-
 		let shouldPromote =
 			/** isFirstPromotion */
 			!databaseUser?.latestPromotionRoleId ||
@@ -91,17 +85,17 @@ export default class SendCommand extends Command {
 
       const minDaysProm = find(
         values(ENVIRONMENT.JOBS_ROLES),
-        (x) => x.id === databaseUser?.latestPromotionRoleId,
+        (x) => x.id === currentJobId,
       )?.minDaysProm;
 
-      if (latestPromotionDate && targetJob) {
+      if (latestPromotionDate && minDaysProm) {
         const daysSinceLastPromotion = Math.floor(
             (new Date().getTime() - latestPromotionDate.getTime()) /
               (1000 * 3600 * 24),
         );
 
-        const daysForPromote = targetJob.minDaysProm - daysSinceLastPromotion
-        shouldPromote = daysSinceLastPromotion >= targetJob.minDaysProm
+        const daysForPromote = minDaysProm - daysSinceLastPromotion
+        shouldPromote = daysSinceLastPromotion >= minDaysProm
 
         await message.reply({
           embeds: [
