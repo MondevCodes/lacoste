@@ -64,6 +64,21 @@ export default class SendCommand extends Command {
       },
 		});
 
+		const guild =
+			message.guild ??
+			(await message.client.guilds.fetch(ENVIRONMENT.GUILD_ID));
+
+    const target = await guild.members.fetch(member.user.id);
+
+    const targetJobRole =
+    this.container.utilities.discord.inferHighestSectorRole(
+      target.roles.cache.map((r) => r.id),
+    );
+
+    const targetJob = Object.values(ENVIRONMENT.JOBS_ROLES).find(
+			(job) => job.id === targetJobRole,
+		);
+
 		let shouldPromote =
 			/** isFirstPromotion */
 			!databaseUser?.latestPromotionRoleId ||
@@ -79,14 +94,14 @@ export default class SendCommand extends Command {
         (x) => x.id === databaseUser?.latestPromotionRoleId,
       )?.minDaysProm;
 
-      if (latestPromotionDate && minDaysProm ) {
+      if (latestPromotionDate && targetJob) {
         const daysSinceLastPromotion = Math.floor(
             (new Date().getTime() - latestPromotionDate.getTime()) /
               (1000 * 3600 * 24),
         );
 
-        const daysForPromote = minDaysProm - daysSinceLastPromotion
-        shouldPromote = daysSinceLastPromotion >= minDaysProm
+        const daysForPromote = targetJob.minDaysProm - daysSinceLastPromotion
+        shouldPromote = daysSinceLastPromotion >= targetJob.minDaysProm
 
         await message.reply({
           embeds: [
