@@ -94,8 +94,10 @@ export default class SendCommand extends Command {
               (1000 * 3600 * 24),
         );
 
-        const daysForPromote = minDaysProm - daysSinceLastPromotion
+        let daysForPromote = minDaysProm - daysSinceLastPromotion
         shouldPromote = daysSinceLastPromotion >= minDaysProm
+
+        if (daysForPromote < 0) {daysForPromote = 0}
 
         await message.reply({
           embeds: [
