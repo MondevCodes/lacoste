@@ -70,7 +70,6 @@ export default class SendCommand extends Command {
 			!databaseUser?.latestPromotionDate;
 
     if (!shouldPromote) {
-
       const latestPromotionDate =
       databaseUser?.latestPromotionDate &&
       new Date(databaseUser?.latestPromotionDate);
@@ -80,7 +79,7 @@ export default class SendCommand extends Command {
         (x) => x.id === databaseUser?.latestPromotionRoleId,
       )?.minDaysProm;
 
-      if (databaseUser?.latestPromotionDate && minDaysProm && latestPromotionDate) {
+      if (latestPromotionDate && minDaysProm ) {
         const daysSinceLastPromotion = Math.floor(
             (new Date().getTime() - latestPromotionDate.getTime()) /
               (1000 * 3600 * 24),
@@ -163,9 +162,6 @@ export default class SendCommand extends Command {
           ],
         });
       }
-
     }
-    }
-
-
+  }
 }
