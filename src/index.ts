@@ -199,6 +199,7 @@ async function run(): Promise<void> {
 			IntentsBitField.Flags.Guilds,
 			IntentsBitField.Flags.GuildMembers,
 			IntentsBitField.Flags.GuildMessages,
+      
       IntentsBitField.Flags.GuildPresences,
 
 			IntentsBitField.Flags.MessageContent,
