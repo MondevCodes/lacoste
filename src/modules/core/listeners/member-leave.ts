@@ -14,10 +14,15 @@ const MONETARY_INTL = new Intl.NumberFormat("pt-BR", {
 
 @ApplyOptions<Listener.Options>( ({ container }) => ({
   event: "guildMemberRemove",
-  emitter: container.client.ws
+  emitter: container.client.ws,
+  once: false
 }))
 export class OnGuildMemberRemoveListener extends Listener {
   public override async run(member: GuildMember) {
+    this.container.logger.info(
+      `Listener guildMemberRemove, a member left the server: ${member.user.tag}`
+    );
+
     await this.container.prisma.transaction.updateMany({
       where: {
         user:  { discordId: member.id },
@@ -82,34 +87,36 @@ export class OnGuildMemberRemoveListener extends Listener {
 			ENVIRONMENT.NOTIFICATION_CHANNELS.FORM_FIRE,
 		);
 
-    if (notificationChannel?.isTextBased()) {
-      await notificationChannel.send({ embeds: [
-        new EmbedBuilder()
-        .setTitle(`Demissão de ${habboName}`)
-        .setColor(EmbedColors.Error)
-        .setFooter({
-          text: `@${member.user.tag} | ${habboName ?? "N/D"}`,
-          iconURL: member.displayAvatarURL(),
-        })
-        .addFields([
-          {
-            name: "👤 Demissor",
-            value: "Automatizado por Lala",
-          },
-          {
-            name: "📗 Cargo",
-            value: targetJob ?? "N/D",
-          },
-          {
-            name: "🗒️ Motivo",
-            value: "Colaborador saiu do Servidor",
-          },
-          {
-            name: "➕ Extra",
-            value: `Seus CAM pendentes foram diminuídos para: ${MONETARY_INTL.format(amount ?? 0)}`,
-          },
-        ])
-      ]});
+    if (!notificationChannel?.isTextBased()) {
+      throw new Error("Can't send message to non-text channel.");
     }
+
+    await notificationChannel.send({ embeds: [
+      new EmbedBuilder()
+      .setTitle(`Demissão de ${habboName}`)
+      .setColor(EmbedColors.Error)
+      .setFooter({
+        text: `@${member.user.tag} | ${habboName ?? "N/D"}`,
+        iconURL: member.displayAvatarURL(),
+      })
+      .addFields([
+        {
+          name: "👤 Demissor",
+          value: "Automatizado por Lala",
+        },
+        {
+          name: "📗 Cargo",
+          value: targetJob ?? "N/D",
+        },
+        {
+          name: "🗒️ Motivo",
+          value: "Colaborador saiu do Servidor",
+        },
+        {
+          name: "➕ Extra",
+          value: `Seus CAM pendentes foram diminuídos para: ${MONETARY_INTL.format(amount ?? 0)}`,
+        },
+      ])
+    ]});
   }
 }
