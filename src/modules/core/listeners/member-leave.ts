@@ -1,10 +1,10 @@
-import { ApplyOptions } from "@sapphire/decorators";
 import { Listener, Result } from "@sapphire/framework";
 
 import { GuildMember, EmbedBuilder } from "discord.js";
 import { EmbedColors } from "$lib/constants/discord";
 
 import { ENVIRONMENT } from "$lib/env";
+import { ApplyOptions } from "@sapphire/decorators";
 
 const MONETARY_INTL = new Intl.NumberFormat("pt-BR", {
 	style: "currency",
@@ -12,9 +12,10 @@ const MONETARY_INTL = new Intl.NumberFormat("pt-BR", {
 	minimumFractionDigits: 0,
 });
 
-@ApplyOptions<Listener.Options>({
+@ApplyOptions<Listener.Options>( ({ container }) => ({
   event: "guildMemberRemove",
-})
+  emitter: container.client.ws
+}))
 export class OnGuildMemberRemoveListener extends Listener {
   public override async run(member: GuildMember) {
     await this.container.prisma.transaction.updateMany({
