@@ -27,7 +27,7 @@ export class OnGuildMemberRemoveListener extends Listener {
 
     await this.container.prisma.transaction.updateMany({
       where: {
-        user:  { discordId: member.id },
+        user:  { discordId: member.user.id },
       },
       data: {
         amount: 0,
@@ -36,7 +36,7 @@ export class OnGuildMemberRemoveListener extends Listener {
 
     await this.container.prisma.user.findUnique({
       where: {
-        discordId: member.id,
+        discordId: member.user.id,
       },
       select: {
         id: true,
@@ -52,7 +52,7 @@ export class OnGuildMemberRemoveListener extends Listener {
 
     await this.container.prisma.user.update({
 			where: {
-				discordId: member.id,
+				discordId: member.user.id,
 			},
 			data: {
 				latestPromotionDate: new Date(),
@@ -81,7 +81,7 @@ export class OnGuildMemberRemoveListener extends Listener {
     const {
 			_sum: { amount },
 		} = await this.container.prisma.transaction.aggregate({
-			where: { user: { discordId: member.id } },
+			where: { user: { discordId: member.user.id } },
 			_sum: { amount: true },
 		});
 
