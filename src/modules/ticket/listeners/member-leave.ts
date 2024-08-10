@@ -1,10 +1,9 @@
-import { Listener, Result } from "@sapphire/framework";
+import { Listener, Result, container } from "@sapphire/framework";
 
 import { GuildMember, EmbedBuilder } from "discord.js";
 import { EmbedColors } from "$lib/constants/discord";
 
 import { ENVIRONMENT } from "$lib/env";
-import { ApplyOptions } from "@sapphire/decorators";
 
 const MONETARY_INTL = new Intl.NumberFormat("pt-BR", {
 	style: "currency",
@@ -12,12 +11,15 @@ const MONETARY_INTL = new Intl.NumberFormat("pt-BR", {
 	minimumFractionDigits: 0,
 });
 
-@ApplyOptions<Listener.Options>( ({ container }) => ({
-  event: "guildMemberRemove",
-  emitter: container.client.ws,
-  once: false
-}))
 export class OnGuildMemberRemoveListener extends Listener {
+  public constructor(context: Listener.LoaderContext, options: Listener.Options) {
+    super(context, {
+      ...options,
+      emitter: container.client.ws,
+      event: 'GUILD_MEMBER_REMOVE'
+    })
+  }
+
   public override async run(member: GuildMember) {
     this.container.logger.info(
       `Listener guildMemberRemove, a member left the server: ${member.user.tag}`
@@ -73,6 +75,7 @@ export class OnGuildMemberRemoveListener extends Listener {
         habbo: undefined,
       });
       habboName = authorHabbo?.name ?? "N/A";
+
     }
 
     const {
