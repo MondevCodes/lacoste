@@ -22,7 +22,7 @@ export class OnGuildMemberRemoveListener extends Listener {
 
   public override async run(member: GuildMember) {
     this.container.logger.info(
-      `Listener guildMemberRemove, a member left the server: ${member.user.tag}`
+      `Listener guildMemberRemove, a member left the server TAG: ${member.user.tag}, ID: ${member.id}, USER.ID: ${member.user.id}, MEMBER: ${member}`
     );
 
     await this.container.prisma.transaction.updateMany({
