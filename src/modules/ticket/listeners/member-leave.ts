@@ -106,7 +106,6 @@ export class OnGuildMemberRemoveListener extends Listener {
       .setColor(EmbedColors.Error)
       .setFooter({
         text: `@${member.user.tag} | ${habboName ?? "N/D"}`,
-        iconURL: member.displayAvatarURL(),
       })
       .addFields([
         {
