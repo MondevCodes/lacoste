@@ -59,9 +59,9 @@ export class OnGuildMemberRemoveListener extends Listener {
       },
     });
 
-		const targetJob = this.container.utilities.discord.inferHighestJobRole(
-			member.roles.cache.map((r) => r.id),
-		);
+		// const targetJob = this.container.utilities.discord.inferHighestJobRole(
+		// 	member.roles.cache.map((r) => r.id),
+		// );
 
     await this.container.prisma.user.update({
 			where: {
@@ -112,10 +112,6 @@ export class OnGuildMemberRemoveListener extends Listener {
         {
           name: "👤 Demissor",
           value: "Automatizado por Lala",
-        },
-        {
-          name: "📗 Cargo",
-          value: targetJob ?? "N/D",
         },
         {
           name: "🗒️ Motivo",
