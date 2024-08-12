@@ -25,25 +25,35 @@ export class OnGuildMemberRemoveListener extends Listener {
       `Listener guildMemberRemove, a member left the server TAG: ${member.user.tag}, ID: ${member.id}, USER.ID: ${member.user.id}, MEMBER: ${member}, GUILD: ${member.guild}`
     );
 
-    // const guild = member.guild;
-    // const guildMember = await guild.members.fetch(member.user.id)
-
-    await this.container.prisma.transaction.updateMany({
+    const targetDBamount = await this.container.prisma.transaction.findMany({
       where: {
-        user:  { discordId: member.user.id },
+        user: { discordId: member.user.id }
       },
-      data: {
-        amount: 0,
-      },
-    });
+    })
 
-    await this.container.prisma.user.findUnique({
+    if (targetDBamount) {
+      await this.container.prisma.transaction.updateMany({
+        where: {
+          user:  { discordId: member.user.id },
+        },
+        data: {
+          amount: 0,
+        },
+      });
+    } else {
+      this.container.logger.error(
+      `Member don't have any amount in database`
+      );
+    }
+
+    const targetDB = await this.container.prisma.user.findUnique({
       where: {
         discordId: member.user.id,
       },
       select: {
         id: true,
         discordId: true,
+        habboId: true,
         latestPromotionDate: true,
         latestPromotionRoleId: true,
       },
@@ -64,21 +74,14 @@ export class OnGuildMemberRemoveListener extends Listener {
 			},
 		});
 
-    let habboName: string | undefined;
-    const authorResult =
-    (await Result.fromAsync(
-      this.container.utilities.habbo.inferTargetGuildMember(
-        `@${member.user.tag}`,
-        true,
-      ),
-    ));
-    if (authorResult) {
-      const { habbo: authorHabbo } = authorResult.unwrapOr({
-        member: undefined,
-        habbo: undefined,
-      });
-      habboName = authorHabbo?.name ?? "N/A";
-
+    let habboName: string | undefined | unknown;
+    if (targetDB) {
+      habboName =
+      (await Result.fromAsync(
+        this.container.utilities.habbo.inferTargetGuildMember(
+          targetDB?.habboId
+        ),
+      ));
     }
 
     const {
@@ -88,7 +91,7 @@ export class OnGuildMemberRemoveListener extends Listener {
 			_sum: { amount: true },
 		});
 
-    const cachedGuild = member.guild ?? (await this.container.client.guilds.fetch(ENVIRONMENT.GUILD_ID));
+    const cachedGuild = await this.container.client.guilds.fetch(ENVIRONMENT.GUILD_ID);
 		const notificationChannel = await cachedGuild.channels.fetch(
 			ENVIRONMENT.NOTIFICATION_CHANNELS.FORM_FIRE,
 		);
@@ -120,7 +123,7 @@ export class OnGuildMemberRemoveListener extends Listener {
         },
         {
           name: "➕ Extra",
-          value: `Seus CAM pendentes foram diminuídos para: ${MONETARY_INTL.format(amount ?? 0)}`,
+          value: `Seus CAM pendentes foram diminuídos para: ${targetDBamount ? MONETARY_INTL.format(amount ?? 0) : "O usuário não possui CAM acumulados"}`,
         },
       ])
     ]});
