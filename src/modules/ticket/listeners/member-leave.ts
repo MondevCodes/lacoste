@@ -1,4 +1,4 @@
-import { Listener, Result, container } from "@sapphire/framework";
+import { Listener, container } from "@sapphire/framework";
 
 import { GuildMember, EmbedBuilder } from "discord.js";
 import { EmbedColors } from "$lib/constants/discord";
@@ -22,7 +22,7 @@ export class OnGuildMemberRemoveListener extends Listener {
 
   public override async run(member: GuildMember) {
     this.container.logger.info(
-      `Listener guildMemberRemove, a member left the server TAG: ${member.user.tag}, ID: ${member.id}, USER.ID: ${member.user.id}, MEMBER: ${member}, GUILD: ${member.guild}`
+      `Listener guildMemberRemove, a member left the server USER.ID: ${member.user.id}`
     );
 
     const targetDBamount = await this.container.prisma.transaction.findMany({
@@ -52,16 +52,13 @@ export class OnGuildMemberRemoveListener extends Listener {
       },
       select: {
         id: true,
+        habboName: true,
         discordId: true,
         habboId: true,
         latestPromotionDate: true,
         latestPromotionRoleId: true,
       },
     });
-
-		// const targetJob = this.container.utilities.discord.inferHighestJobRole(
-		// 	member.roles.cache.map((r) => r.id),
-		// );
 
     await this.container.prisma.user.update({
 			where: {
@@ -73,16 +70,6 @@ export class OnGuildMemberRemoveListener extends Listener {
 				pendingPromotionRoleId: null,
 			},
 		});
-
-    let habboName: string | undefined | unknown;
-    if (targetDB) {
-      habboName =
-      (await Result.fromAsync(
-        this.container.utilities.habbo.inferTargetGuildMember(
-          targetDB?.habboId
-        ),
-      ));
-    }
 
     const {
 			_sum: { amount },
@@ -102,11 +89,8 @@ export class OnGuildMemberRemoveListener extends Listener {
 
     await notificationChannel.send({ embeds: [
       new EmbedBuilder()
-      .setTitle(`Demissão de ${habboName}`)
+      .setTitle(`Demissão de ${targetDB?.habboName}`)
       .setColor(EmbedColors.Error)
-      .setFooter({
-        text: `@${member.user.tag} | ${habboName ?? "N/D"}`,
-      })
       .addFields([
         {
           name: "👤 Demissor",

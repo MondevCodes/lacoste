@@ -129,13 +129,13 @@ export class LinkCommand extends Command {
 			await this.container.prisma.user
 				.update({
 					where: { discordId: existingUser.discordId },
-					data: { habboId: profile.uniqueId },
+					data: { habboId: profile.uniqueId, habboName: profile.name },
 				})
 				.catch(() => undefined);
 		} else {
 			await this.container.prisma.user
 				.create({
-					data: { habboId: profile.uniqueId, discordId: member.id },
+					data: { habboId: profile.uniqueId, discordId: member.id, habboName: profile.name },
 				})
 				.catch(() => undefined);
 		}

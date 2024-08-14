@@ -120,8 +120,8 @@ export class LinkAllCommand extends Command {
 
 				await this.container.prisma.user.upsert({
 					where: { discordId: member.id },
-					update: { habboId: profile.uniqueId },
-					create: { habboId: profile.uniqueId, discordId: member.id },
+					update: { habboId: profile.uniqueId, habboName: profile.name },
+					create: { habboId: profile.uniqueId, discordId: member.id, habboName: profile.name },
 				});
 
 				const embed = new EmbedBuilder()
