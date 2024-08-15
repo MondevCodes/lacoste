@@ -73,25 +73,27 @@ export class OnGuildMemberRemoveListener extends Listener {
       throw new Error("Can't send message to non-text channel.");
     }
 
-    await notificationChannel.send({ embeds: [
-      new EmbedBuilder()
-      .setTitle(`Demissão de ${targetDB?.habboName}`)
-      .setColor(EmbedColors.Error)
-      .addFields([
-        {
-          name: "👤 Demissor",
-          value: "Automatizado por Lala 🤖",
-        },
-        {
-          name: "🗒️ Motivo",
-          value: "Colaborador saiu do Servidor",
-        },
-        {
-          name: "➕ Extra",
-          value: `Seu saldo pendente foi atualizado para: ${targetDBamount ? MONETARY_INTL.format(amount ?? 0) : "O usuário não possui CAM acumulados"}`,
-        },
-      ])
-    ]});
+    if (targetDB) {
+      await notificationChannel.send({ embeds: [
+        new EmbedBuilder()
+        .setTitle(`Demissão de ${targetDB?.habboName}`)
+        .setColor(EmbedColors.Error)
+        .addFields([
+          {
+            name: "👤 Demissor",
+            value: "Automatizado por Lala 🤖",
+          },
+          {
+            name: "🗒️ Motivo",
+            value: "Colaborador saiu do Servidor",
+          },
+          {
+            name: "➕ Extra",
+            value: `Seu saldo pendente foi atualizado para: ${targetDBamount ? MONETARY_INTL.format(amount ?? 0) : "O usuário não possui CAM acumulados"}`,
+          },
+        ])
+      ]});
+    }
 
     await this.container.prisma.user.delete({
 			where: {
