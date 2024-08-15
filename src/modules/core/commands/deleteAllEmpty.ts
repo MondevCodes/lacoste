@@ -15,7 +15,10 @@ export class LinkCommand extends Command {
     });
     await this.container.prisma.user.deleteMany({
       where: {
-        latestPromotionRoleId: null,
+        OR: [
+          { latestPromotionRoleId: null },
+          { latestPromotionRoleId: { isSet: false } }
+        ]
       }
     });
 
