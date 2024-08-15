@@ -92,20 +92,14 @@ export class LinkAllCommand extends Command {
 				}
 
 				if (!highestSector) {
-					await member.guild.members
-						.addRole({
-							user: member,
-							role: ENVIRONMENT.SECTORS_ROLES.INICIAL.id,
-						})
-						.catch(() => undefined);
+          this.container.logger.error(
+            `O usuário ${profile.name} não possui um setor`,
+          );
 
 					if (!highestJob)
-						await member.guild.members
-							.addRole({
-								user: member,
-								role: ENVIRONMENT.JOBS_ROLES.ESTAGIÁRIO.id,
-							})
-							.catch(() => undefined);
+            this.container.logger.error(
+              `O usuário ${profile.name} não possui um cargo`,
+            );
 				}
 
 				await member.guild.members
