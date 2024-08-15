@@ -345,6 +345,12 @@ export class FireInteractionHandler extends InteractionHandler {
 			return;
 		}
 
+    const targetDBamount = await this.container.prisma.transaction.findMany({
+      where: {
+        user: { id: targetUserId }
+      },
+    })
+
 		const notificationChannel = await cachedGuild.channels.fetch(
 			ENVIRONMENT.NOTIFICATION_CHANNELS.FORM_FIRE,
 		);
@@ -443,11 +449,17 @@ export class FireInteractionHandler extends InteractionHandler {
 			ephemeral: true,
 		});
 
-    await this.container.prisma.transaction.deleteMany({
-      where: {
-        user:  { id: targetUserId },
-      }
-    });
+    if (targetDBamount) {
+      await this.container.prisma.transaction.deleteMany({
+        where: {
+          user:  { id: targetUserId },
+        }
+      });
+    } else {
+      this.container.logger.error(
+      `Member don't have any amount in database`
+      );
+    }
 
     await this.container.prisma.user.delete({
       where: {
