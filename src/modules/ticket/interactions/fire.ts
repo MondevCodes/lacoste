@@ -445,7 +445,7 @@ export class FireInteractionHandler extends InteractionHandler {
 
     await this.container.prisma.transaction.deleteMany({
       where: {
-        user:  { discordId: targetUser.discordId },
+        user:  { id: targetUserId },
       }
     });
 
