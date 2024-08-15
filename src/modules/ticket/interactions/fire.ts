@@ -443,11 +443,17 @@ export class FireInteractionHandler extends InteractionHandler {
 			ephemeral: true,
 		});
 
+    await this.container.prisma.transaction.deleteMany({
+      where: {
+        user:  { discordId: targetUser.discordId },
+      }
+    });
+
     await this.container.prisma.user.delete({
-			where: {
-				id: targetUserId,
-			}
-		});
+      where: {
+        id: targetUserId,
+      }
+    });
 
 		// await interaction.message.delete();
 
