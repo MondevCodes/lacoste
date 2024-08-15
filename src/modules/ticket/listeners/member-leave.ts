@@ -32,13 +32,10 @@ export class OnGuildMemberRemoveListener extends Listener {
     })
 
     if (targetDBamount) {
-      await this.container.prisma.transaction.updateMany({
+      await this.container.prisma.transaction.deleteMany({
         where: {
           user:  { discordId: member.user.id },
-        },
-        data: {
-          amount: 0,
-        },
+        }
       });
     } else {
       this.container.logger.error(
