@@ -403,17 +403,6 @@ export class FireInteractionHandler extends InteractionHandler {
 			});
 		}
 
-		await this.container.prisma.user.update({
-			where: {
-				id: targetUserId,
-			},
-			data: {
-				latestPromotionDate: new Date(),
-				latestPromotionRoleId: null,
-				pendingPromotionRoleId: null,
-			},
-		});
-
     const authorResult =
       (await Result.fromAsync(
         this.container.utilities.habbo.inferTargetGuildMember(
@@ -452,6 +441,12 @@ export class FireInteractionHandler extends InteractionHandler {
     await interaction.reply({
 			content: "✅ Operação concluída.",
 			ephemeral: true,
+		});
+
+    await this.container.prisma.user.delete({
+			where: {
+				id: targetUserId,
+			}
 		});
 
 		// await interaction.message.delete();

@@ -60,17 +60,6 @@ export class OnGuildMemberRemoveListener extends Listener {
       },
     });
 
-    await this.container.prisma.user.update({
-			where: {
-				discordId: member.user.id,
-			},
-			data: {
-				latestPromotionDate: new Date(),
-				latestPromotionRoleId: null,
-				pendingPromotionRoleId: null,
-			},
-		});
-
     const {
 			_sum: { amount },
 		} = await this.container.prisma.transaction.aggregate({
@@ -94,7 +83,7 @@ export class OnGuildMemberRemoveListener extends Listener {
       .addFields([
         {
           name: "👤 Demissor",
-          value: "Automatizado por Lala",
+          value: "Automatizado por Lala 🤖",
         },
         {
           name: "🗒️ Motivo",
@@ -102,9 +91,15 @@ export class OnGuildMemberRemoveListener extends Listener {
         },
         {
           name: "➕ Extra",
-          value: `Seus CAM pendentes foram diminuídos para: ${targetDBamount ? MONETARY_INTL.format(amount ?? 0) : "O usuário não possui CAM acumulados"}`,
+          value: `Seu saldo pendente foi atualizado para: ${targetDBamount ? MONETARY_INTL.format(amount ?? 0) : "O usuário não possui CAM acumulados"}`,
         },
       ])
     ]});
+
+    await this.container.prisma.user.delete({
+			where: {
+				discordId: member.user.id,
+			}
+		});
   }
 }
