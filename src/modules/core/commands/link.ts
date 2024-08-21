@@ -80,7 +80,7 @@ export class LinkCommand extends Command {
 
 		const existingUser = await this.container.prisma.user.findUnique({
 			where: { habboId: profile.uniqueId },
-			select: { habboId: true, discordId: true },
+			select: { habboId: true, discordId: true, latestPromotionRoleId: true, },
 		});
 
 		const highestJob =
@@ -102,7 +102,7 @@ export class LinkCommand extends Command {
       `Sector = ${highestSector}`,
       `Job = ${highestJob}`,
     );
-		if (!highestSector) {
+		if (!highestSector || !existingUser?.latestPromotionRoleId) {
 			await cachedGuild.members
 				.addRole({
 					user: member,
@@ -113,7 +113,7 @@ export class LinkCommand extends Command {
           "Sector Inicial role Added"
         );
 
-			if (!highestJob)
+			if (!highestJob || !existingUser?.latestPromotionRoleId)
 				await cachedGuild.members
 					.addRole({
 						user: member,
