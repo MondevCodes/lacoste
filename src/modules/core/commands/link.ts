@@ -98,7 +98,7 @@ export class LinkCommand extends Command {
 				.catch(() => undefined);
 		}
 
-    this.container.logger.warn(
+    this.container.logger.info(
       `Sector = ${highestSector}`,
       `Job = ${highestJob}`,
     );
@@ -109,9 +109,9 @@ export class LinkCommand extends Command {
 					role: ENVIRONMENT.SECTORS_ROLES.INICIAL.id,
 				})
 				.catch(() => undefined);
-        this.container.logger.warn(
-          "Sector Inicial role Added"
-        );
+			this.container.logger.info(
+			"Sector Inicial role Added"
+			);
 
 			if (!highestJob || !existingUser?.latestPromotionRoleId)
 				await cachedGuild.members
@@ -121,19 +121,22 @@ export class LinkCommand extends Command {
 					})
 					.catch(() => undefined);
 
-          await this.container.prisma.user.update({
-            where: {
-              habboId: profile.uniqueId,
-            },
-            data: {
-              latestPromotionDate: new Date(),
-              latestPromotionRoleId: ENVIRONMENT.JOBS_ROLES.ESTAGIÁRIO.id,
-            },
-          });
+			if (existingUser) {
+				await this.container.prisma.user.update({
+					where: {
+					habboId: profile.uniqueId,
+					},
+					data: {
+					latestPromotionDate: new Date(),
+					latestPromotionRoleId: ENVIRONMENT.JOBS_ROLES.ESTAGIÁRIO.id,
+					},
 
-          this.container.logger.warn(
-            "Job Estagiário role Added"
-          );
+				});
+			}
+
+			this.container.logger.info(
+				"Job Estagiário role Added"
+			);
 		}
 
 		await cachedGuild.members
@@ -156,7 +159,7 @@ export class LinkCommand extends Command {
 		} else {
 			await this.container.prisma.user
 				.create({
-					data: { habboId: profile.uniqueId, discordId: member.id, habboName: profile.name },
+					data: { habboId: profile.uniqueId, discordId: member.id, habboName: profile.name, latestPromotionDate: new Date(), latestPromotionRoleId: ENVIRONMENT.JOBS_ROLES.ESTAGIÁRIO.id },
 				})
 				.catch(() => undefined);
 		}
