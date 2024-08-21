@@ -98,6 +98,10 @@ export class LinkCommand extends Command {
 				.catch(() => undefined);
 		}
 
+    this.container.logger.warn(
+      `Sector = ${highestSector}`,
+      `Job = ${highestJob}`,
+    );
 		if (!highestSector) {
 			await cachedGuild.members
 				.addRole({
@@ -105,6 +109,9 @@ export class LinkCommand extends Command {
 					role: ENVIRONMENT.SECTORS_ROLES.INICIAL.id,
 				})
 				.catch(() => undefined);
+        this.container.logger.warn(
+          "Sector Inicial role Added"
+        );
 
 			if (!highestJob)
 				await cachedGuild.members
@@ -113,6 +120,10 @@ export class LinkCommand extends Command {
 						role: ENVIRONMENT.JOBS_ROLES.ESTAGIÁRIO.id,
 					})
 					.catch(() => undefined);
+
+          this.container.logger.warn(
+            "Job Estagiário role Added"
+          );
 		}
 
 		await cachedGuild.members
