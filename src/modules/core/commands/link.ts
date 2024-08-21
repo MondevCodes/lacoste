@@ -80,7 +80,7 @@ export class LinkCommand extends Command {
 
 		const existingUser = await this.container.prisma.user.findUnique({
 			where: { habboId: profile.uniqueId },
-			select: { habboId: true, discordId: true, latestPromotionRoleId: true, },
+			select: { habboId: true, discordId: true, latestPromotionRoleId: true },
 		});
 
 		const highestJob =
@@ -120,6 +120,16 @@ export class LinkCommand extends Command {
 						role: ENVIRONMENT.JOBS_ROLES.ESTAGIÁRIO.id,
 					})
 					.catch(() => undefined);
+
+          await this.container.prisma.user.update({
+            where: {
+              habboId: profile.uniqueId,
+            },
+            data: {
+              latestPromotionDate: new Date(),
+              latestPromotionRoleId: ENVIRONMENT.JOBS_ROLES.ESTAGIÁRIO.id,
+            },
+          });
 
           this.container.logger.warn(
             "Job Estagiário role Added"
