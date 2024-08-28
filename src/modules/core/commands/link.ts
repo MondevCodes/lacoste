@@ -117,7 +117,7 @@ export class LinkCommand extends Command {
 				await cachedGuild.members
 					.addRole({
 						user: member,
-						role: ENVIRONMENT.JOBS_ROLES.ESTAGIÁRIO.id,
+						role: ENVIRONMENT.JOBS_ROLES.VINCULADO.id,
 					})
 					.catch(() => undefined);
 
@@ -128,14 +128,14 @@ export class LinkCommand extends Command {
 					},
 					data: {
 					latestPromotionDate: new Date(),
-					latestPromotionRoleId: ENVIRONMENT.JOBS_ROLES.ESTAGIÁRIO.id,
+					latestPromotionRoleId: ENVIRONMENT.JOBS_ROLES.VINCULADO.id,
 					},
 
 				});
 			}
 
 			this.container.logger.info(
-				"Job Estagiário role Added"
+				"Job Vinculado role Added"
 			);
 		}
 
@@ -159,7 +159,7 @@ export class LinkCommand extends Command {
 		} else {
 			await this.container.prisma.user
 				.create({
-					data: { habboId: profile.uniqueId, discordId: member.id, habboName: profile.name, latestPromotionDate: new Date(), latestPromotionRoleId: ENVIRONMENT.JOBS_ROLES.ESTAGIÁRIO.id },
+					data: { habboId: profile.uniqueId, discordId: member.id, habboName: profile.name, latestPromotionDate: new Date(), latestPromotionRoleId: ENVIRONMENT.JOBS_ROLES.VINCULADO.id },
 				})
 				.catch(() => undefined);
 		}
