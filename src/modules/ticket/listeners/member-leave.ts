@@ -52,12 +52,6 @@ export class OnGuildMemberRemoveListener extends Listener {
       );
     }
 
-    const targetDBamountNow = await this.container.prisma.transaction.findMany({
-      where: {
-        user: { discordId: member.user.id }
-      },
-    })
-
     const targetDB = await this.container.prisma.user.findUnique({
       where: {
         discordId: member.user.id,
@@ -107,6 +101,12 @@ export class OnGuildMemberRemoveListener extends Listener {
           },
         ])
       ]});
+
+      const targetDBamountNow = await this.container.prisma.transaction.findMany({
+        where: {
+          user: { discordId: member.user.id }
+        },
+      })
 
       await notificationCMBChannel.send({ embeds: [
         new EmbedBuilder()
