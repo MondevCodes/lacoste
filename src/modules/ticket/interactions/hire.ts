@@ -561,7 +561,7 @@ export class HireInteractionHandler extends InteractionHandler {
 			ephemeral: true,
 		});
 
-		// await interaction.message.delete();
+		await interaction.message.delete();
 
 		return;
 	}

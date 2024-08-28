@@ -324,6 +324,8 @@ export class NotesInteractionHandler extends InteractionHandler {
 			ephemeral: true,
 		});
 
+    await interaction.message.delete();
+
 		return;
 	}
 }

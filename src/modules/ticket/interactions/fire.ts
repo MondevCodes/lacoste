@@ -467,7 +467,7 @@ export class FireInteractionHandler extends InteractionHandler {
       }
     });
 
-		// await interaction.message.delete();
+		await interaction.message.delete();
 
 		return;
 	}
