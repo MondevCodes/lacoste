@@ -326,21 +326,12 @@ export class FireInteractionHandler extends InteractionHandler {
 		}
 
 		if (action === "Reject") {
-			await interaction.editReply({
-				components: [],
-				embeds: [
-					EmbedBuilder.from(interaction.message.embeds[0])
-						.setTitle("❌ Demissão Rejeitada")
-						.setColor(EmbedColors.Error),
-				],
-			});
-
       await interaction.followUp({
 				content: "❌ Rejeitada.",
 				ephemeral: true,
 			});
 
-			// await interaction.message.delete();
+			await interaction.message.delete();
 
 			return;
 		}
@@ -432,15 +423,6 @@ export class FireInteractionHandler extends InteractionHandler {
 					.setTitle(`Demissão de ${habboTargetStorage}`)
 					.addFields([{ name: "🛡️ Autorizado Por", value: `${habboInteractionName ?? `@${interaction.user.tag}`}`, }])
 					.setColor(EmbedColors.Error),
-			],
-		});
-
-		await interaction.message.edit({
-			components: [],
-			embeds: [
-				EmbedBuilder.from(interaction.message.embeds[0])
-					.setTitle("✅ Demissão Aprovada")
-					.setColor(EmbedColors.Success),
 			],
 		});
 

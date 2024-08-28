@@ -259,19 +259,12 @@ export class NotesInteractionHandler extends InteractionHandler {
 		// ---------------------
 
 		if (action === "Reject") {
-			await interaction.message.edit({
-				components: [],
-				embeds: [
-					EmbedBuilder.from(interaction.message.embeds[0])
-						.setTitle("❌ Anotação Rejeitada")
-						.setColor(EmbedColors.Error),
-				],
-			});
-
 			await interaction.followUp({
 				content: "❌ Rejeitada.",
 				ephemeral: true,
 			});
+
+      await interaction.message.delete();
 
 			return;
 		}
@@ -307,15 +300,6 @@ export class NotesInteractionHandler extends InteractionHandler {
 					.setTitle(`Anotação para ${habboTargetStorage}`)
 					.addFields([{ name: "🛡️ Autorizado Por", value: `${habboInteractionName ?? `@${interaction.user.tag}`}`, }])
 					.setColor(EmbedColors.Error),
-			],
-		});
-
-		await interaction.message.edit({
-			components: [],
-			embeds: [
-				EmbedBuilder.from(interaction.message.embeds[0])
-					.setTitle("✅ Anotação Aprovada")
-					.setColor(EmbedColors.Success),
 			],
 		});
 
