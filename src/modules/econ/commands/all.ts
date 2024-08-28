@@ -36,7 +36,13 @@ export class AllBalancesCommand extends Command {
 
     for (const [userId, amount] of balances) {
       const formattedAmount = MONETARY_INTL.format(Number(amount) || 0);
-      const userMention = `<@${userId}>`;
+
+      const targetDB = await this.container.prisma.user.findUnique({
+        where: { discordId: userId },
+        select: { habboName: true, },
+      });
+
+      const userMention = targetDB?.habboName;
       const fieldText = `${userMention} -> ${formattedAmount}\n`;
 
       if (fieldValue.length + fieldText.length > 1024) {
