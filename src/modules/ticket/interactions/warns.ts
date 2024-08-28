@@ -259,11 +259,6 @@ export class WarningsInteractionHandler extends InteractionHandler {
 		// ---------------------
 
 		if (action === "Reject") {
-			await interaction.followUp({
-				content: "❌ Rejeitada.",
-				ephemeral: true,
-			});
-
       await interaction.message.delete();
 
 			return;
@@ -301,11 +296,6 @@ export class WarningsInteractionHandler extends InteractionHandler {
 					.addFields([{ name: "🛡️ Autorizado Por", value: `${habboInteractionName ?? `@${interaction.user.tag}`}` }])
 					.setColor(EmbedColors.Error),
 			],
-		});
-
-		await interaction.reply({
-			content: "✅ Operação concluída.",
-			ephemeral: true,
 		});
 
     await interaction.message.delete();

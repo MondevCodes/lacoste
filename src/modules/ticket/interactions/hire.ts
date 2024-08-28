@@ -375,11 +375,6 @@ export class HireInteractionHandler extends InteractionHandler {
 		}
 
 		if (action === "Reject") {
-      await interaction.followUp({
-				content: "❌ Rejeitada.",
-				ephemeral: true,
-			});
-
 			await interaction.message.delete();
 
 			await this.container.prisma.user.update({
@@ -536,11 +531,6 @@ export class HireInteractionHandler extends InteractionHandler {
 					.addFields([{ name: "🛡️ Autorizado Por", value: `${habboInteractionName ?? `@${interaction.user.tag}`}` }])
 					.setColor(EmbedColors.Success),
 			],
-		});
-
-    await interaction.reply({
-			content: "✅ Operação concluída.",
-			ephemeral: true,
 		});
 
 		await interaction.message.delete();
