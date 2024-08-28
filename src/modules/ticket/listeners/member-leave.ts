@@ -31,6 +31,15 @@ export class OnGuildMemberRemoveListener extends Listener {
       },
     })
 
+    let {
+			_sum: { amount },
+		} = await this.container.prisma.transaction.aggregate({
+			where: { user: { discordId: member.user.id } },
+			_sum: { amount: true },
+		});
+
+    const oldAmount = amount ?? 0
+
     if (targetDBamount) {
       await this.container.prisma.transaction.deleteMany({
         where: {
@@ -42,6 +51,12 @@ export class OnGuildMemberRemoveListener extends Listener {
       `Member don't have any amount in database`
       );
     }
+
+    const targetDBamountNow = await this.container.prisma.transaction.findMany({
+      where: {
+        user: { discordId: member.user.id }
+      },
+    })
 
     const targetDB = await this.container.prisma.user.findUnique({
       where: {
@@ -57,24 +72,23 @@ export class OnGuildMemberRemoveListener extends Listener {
       },
     });
 
-    const {
-			_sum: { amount },
-		} = await this.container.prisma.transaction.aggregate({
-			where: { user: { discordId: member.user.id } },
-			_sum: { amount: true },
-		});
-
     const cachedGuild = await this.container.client.guilds.fetch(ENVIRONMENT.GUILD_ID);
-		const notificationChannel = await cachedGuild.channels.fetch(
+		const notificationFireChannel = await cachedGuild.channels.fetch(
 			ENVIRONMENT.NOTIFICATION_CHANNELS.FORM_FIRE,
 		);
+		const notificationCMBChannel = await cachedGuild.channels.fetch(
+			ENVIRONMENT.NOTIFICATION_CHANNELS.CMB_LOGS,
+		);
 
-    if (!notificationChannel?.isTextBased()) {
+    if (!notificationFireChannel?.isTextBased()) {
+      throw new Error("Can't send message to non-text channel.");
+    }
+    if (!notificationCMBChannel?.isTextBased()) {
       throw new Error("Can't send message to non-text channel.");
     }
 
     if (targetDB) {
-      await notificationChannel.send({ embeds: [
+      await notificationFireChannel.send({ embeds: [
         new EmbedBuilder()
         .setTitle(`Demissão de ${targetDB?.habboName}`)
         .setColor(EmbedColors.Error)
@@ -89,7 +103,27 @@ export class OnGuildMemberRemoveListener extends Listener {
           },
           {
             name: "➕ Extra",
-            value: `Seu saldo pendente foi atualizado para: ${targetDBamount ? MONETARY_INTL.format(amount ?? 0) : "O usuário não possui CAM acumulados"}`,
+            value: `Seu saldo pendente foi atualizado, é possível ve-lo no canal "logs-saldos"`,
+          },
+        ])
+      ]});
+
+      await notificationCMBChannel.send({ embeds: [
+        new EmbedBuilder()
+        .setTitle(`Alteração de Saldo de ${targetDB?.habboName}`)
+        .setAuthor({ name: "Automatizado por Lala 🤖" })
+        .setDescription(
+          "Seu saldo foi zerado pelo motivo que o Colaborador deixou o Servidor"
+        )
+        .setColor(EmbedColors.Error)
+        .addFields([
+          {
+            name: "Saldo Anterior",
+            value: `${targetDBamount ? MONETARY_INTL.format(oldAmount ?? 0) : "O usuário não possuia CAM acumulados"}`,
+          },
+          {
+            name: "Saldo Atual",
+            value: `${targetDBamountNow ? "Ocorreu um Erro, o usuário ainda possui saldo restante, contate o Desenvolvedor" : MONETARY_INTL.format(0)}`,
           },
         ])
       ]});
