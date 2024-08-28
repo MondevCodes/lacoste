@@ -102,6 +102,8 @@ export class OnGuildMemberRemoveListener extends Listener {
         ])
       ]});
 
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
       const targetDBamountNow = await this.container.prisma.transaction.findMany({
         where: {
           user: { discordId: member.user.id }
