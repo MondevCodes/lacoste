@@ -31,7 +31,7 @@ export class OnGuildMemberRemoveListener extends Listener {
       },
     })
 
-    let {
+    const {
 			_sum: { amount },
 		} = await this.container.prisma.transaction.aggregate({
 			where: { user: { discordId: member.user.id } },
