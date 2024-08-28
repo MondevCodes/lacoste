@@ -102,14 +102,6 @@ export class OnGuildMemberRemoveListener extends Listener {
         ])
       ]});
 
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      const targetDBamountNow = await this.container.prisma.transaction.findMany({
-        where: {
-          user: { discordId: member.user.id }
-        },
-      })
-
       await notificationCMBChannel.send({ embeds: [
         new EmbedBuilder()
         .setTitle(`Alteração de Saldo de ${targetDB?.habboName}`)
@@ -125,7 +117,7 @@ export class OnGuildMemberRemoveListener extends Listener {
           },
           {
             name: "Saldo Atual",
-            value: `${targetDBamountNow ? "Ocorreu um Erro, o usuário ainda possui saldo restante, contate o Desenvolvedor" : MONETARY_INTL.format(0)}`,
+            value: MONETARY_INTL.format(0),
           },
         ])
       ]});
