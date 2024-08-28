@@ -69,6 +69,7 @@ export const Jobs = z.enum([
 	"SUPERVISOR",
 	"LÍDER_DE_MODELO",
 	"ESTAGIÁRIO",
+  "VINCULADO",
 ]);
 
 export type Job = z.infer<typeof Jobs>;
