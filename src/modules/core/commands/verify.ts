@@ -139,10 +139,12 @@ export default class SendCommand extends Command {
         });
 
       } else {
-        await message.reply({
-          content:
-            `Erro: Função 'minDaysProm': ${minDaysProm} e 'latestPromotionDate': ${latestPromotionDate}, contate o Desenvolvedor.`,
-        });
+        if (currentJob?.name !== "Vinculado") {
+          await message.reply({
+            content:
+              `Erro: Função 'minDaysProm': ${minDaysProm} e 'latestPromotionDate': ${latestPromotionDate}, contate o Desenvolvedor.`,
+          });
+        }
 
         await message.reply({
           embeds: [
