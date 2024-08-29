@@ -90,16 +90,19 @@ export class OmbudsmanInteractionHandler extends InteractionHandler {
       "InteractionHandler Ticket Runned",
     );
     this.container.logger.info(
-      `Channel: ${ENVIRONMENT.TICKETS_CATEGORY}`,
+      `Ticket Channel: ${ENVIRONMENT.TICKETS_CATEGORY}`,
     );
 		if (action === "OpenDefault" || action === "OpenPraise") {
-      this.container.logger.info(
-        "If Approved, = true",
-      );
-
 			this.#ticketsCategory ??= (await this.container.client.channels.fetch(
 				ENVIRONMENT.TICKETS_CATEGORY,
 			)) as CategoryChannel;
+
+      this.container.logger.info(
+        `TicketsCategory: ${this.#ticketsCategory}, TicketsCategoryGuildId: ${this.#ticketsCategory.guildId}`,
+      );
+      this.container.logger.info(
+        `userId: ${interaction.user.id}`,
+      );
 
 			const ticketChannel = await this.#ticketsCategory.children.create({
 				type: ChannelType.GuildText,
