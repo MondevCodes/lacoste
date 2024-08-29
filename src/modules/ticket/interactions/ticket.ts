@@ -86,7 +86,17 @@ export class OmbudsmanInteractionHandler extends InteractionHandler {
 		interaction: ButtonInteraction<"cached" | "raw">,
 		{ id, action }: ActionData,
 	) {
+    this.container.logger.info(
+      "InteractionHandler Ticket Runned",
+    );
+    this.container.logger.info(
+      `Channel: ${ENVIRONMENT.TICKETS_CATEGORY}`,
+    );
 		if (action === "OpenDefault" || action === "OpenPraise") {
+      this.container.logger.info(
+        "If Approved, = true",
+      );
+
 			this.#ticketsCategory ??= (await this.container.client.channels.fetch(
 				ENVIRONMENT.TICKETS_CATEGORY,
 			)) as CategoryChannel;
