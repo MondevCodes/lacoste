@@ -46,7 +46,7 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
 
 		const isAuthorized = this.container.utilities.discord.hasPermissionByRole({
 			category: "SECTOR",
-			checkFor: "DIRETORIA",
+			checkFor: "ADMINISTRATIVO",
 			roles: member.roles,
 		});
 
@@ -70,13 +70,6 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
 							.setPlaceholder("Se desejar, adicione informações extras aqui.")
 							.setCustomId(FeedbackInputIds.Target)
 							.setStyle(TextInputStyle.Short)
-							.setRequired(true),
-
-						new TextInputBuilder()
-							.setLabel("Promovidos")
-							.setPlaceholder("Lista de @Nicks ou Nicks separados por virgula.")
-							.setCustomId(FeedbackInputIds.Promoted)
-							.setStyle(TextInputStyle.Paragraph)
 							.setRequired(true),
 
 						new TextInputBuilder()
@@ -189,6 +182,10 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
 
 		const embed = new EmbedBuilder()
 			.setTitle("Acompanhamento")
+      .setAuthor({
+				name: interaction.user.tag,
+				iconURL: interaction.user.displayAvatarURL(),
+			})
 			.addFields([
         {
           name: "👤 Autor",
@@ -200,11 +197,6 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
 						MarkdownCharactersRegex,
 						"\\$&",
 					)} // ${targetJobRole.toString()}`,
-					inline: true,
-				},
-				{
-					name: "🧑‍🎓 Promovidos",
-					value: targets.join("\n"),
 					inline: true,
 				},
 				{
@@ -227,10 +219,6 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
 					value: new Date().toLocaleString("pt-BR"),
 				},
 			])
-			.setAuthor({
-				name: interaction.user.tag,
-				iconURL: interaction.user.displayAvatarURL(),
-			})
 			.setColor(EmbedColors.Default);
 
 		const guild =

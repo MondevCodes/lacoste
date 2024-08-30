@@ -137,14 +137,43 @@ export default class SendCommand extends Command {
 			});
 		}
 
+		if (type === "acompanhamento") {
+			await message.channel.send({
+				embeds: [
+					new EmbedBuilder()
+						.setColor(EmbedColors.Default)
+						.setTitle("Acompanhamento")
+						.setDescription(
+							"Clique no botão abaixo para abrir o questionário que, ao finalizar, será enviado para o canal de acompanhamentos.",
+						)
+						.setImage(
+							"https://cdn.discordapp.com/attachments/1267288327539916800/1267839457093095566/Banner_Intendente_20240730_103831_0000.png?ex=66d31d81&is=66d1cc01&hm=a4f97d745c179968e5224b39f55cae5fbc34d4038363ef9ada12e73b97a987c3&",
+						),
+				],
+				components: [
+					new ActionRowBuilder<ButtonBuilder>().addComponents(
+						new ButtonBuilder()
+							.setLabel("Acompanhar Gerência")
+							.setStyle(ButtonStyle.Success)
+							.setCustomId(FormIds.Acompanhamento),
+						new ButtonBuilder()
+							.setLabel("Acompanhar Administração")
+							.setStyle(ButtonStyle.Success)
+							.setCustomId(FormIds.Acompanhamento)
+              .setDisabled(true),
+					),
+				],
+			});
+		}
+
 		if (type === "sugestão") {
 			await message.channel.send({
 				embeds: [
 					new EmbedBuilder()
 						.setColor(EmbedColors.Default)
-						.setTitle("Sugestão / Reclamação e Denúncia / Acompanhamento")
+						.setTitle("Sugestão / Reclamação e Denúncia")
 						.setDescription(
-							"Clique no botão abaixo para abrir o questionário que, ao finalizar, será enviado para o canal de acompanhamentos.",
+							"Clique no botão abaixo para abrir o questionário que, ao finalizar, será enviado para o canal de sugestões ou reclamações.",
 						)
 						.setImage(
 							"https://media.discordapp.net/attachments/1217954543417950329/1224064093808365808/image.png?ex=661c2185&is=6609ac85&hm=9ac4561c8ea78258982f3648d5d7d5ba146b3ea7a0be20b99535c2c11d940eef&=&format=webp",
@@ -161,11 +190,6 @@ export default class SendCommand extends Command {
 							.setLabel("Reclamação e Denúncia")
 							.setStyle(ButtonStyle.Danger)
 							.setCustomId(FormIds.Reclamação),
-
-						new ButtonBuilder()
-							.setLabel("Acompanhamento")
-							.setStyle(ButtonStyle.Success)
-							.setCustomId(FormIds.Acompanhamento),
 					),
 				],
 			});
