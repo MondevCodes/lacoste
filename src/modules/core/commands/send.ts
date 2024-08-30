@@ -160,7 +160,7 @@ export default class SendCommand extends Command {
 						new ButtonBuilder()
 							.setLabel("Acompanhar Administração")
 							.setStyle(ButtonStyle.Success)
-							.setCustomId('')
+							.setCustomId("disabled_button")
               .setDisabled(true),
 					),
 				],
