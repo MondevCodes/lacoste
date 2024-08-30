@@ -130,39 +130,6 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
 			return;
 		}
 
-		const targets: string[] = [];
-
-		for (const target of result.Promoted.split(/,/)) {
-			// const [possibleTarget, possibleJob] = target
-			// 	.split("//")
-			// 	.map((r) => r.trim()) as [string, string | undefined];
-
-			// if (!possibleTarget) {
-			// 	this.container.logger.warn(
-			// 		`Target ${target} not found in ${result.Promoted}.`,
-			// 	);
-
-			// 	continue;
-			// }
-
-			targets.push(target.replaceAll(MarkdownCharactersRegex, "\\$&"));
-
-			// const { habbo, member } =
-			// 	await this.container.utilities.habbo.inferTargetGuildMember(target);
-
-			// const jobId =
-			// 	member &&
-			// 	this.container.utilities.discord.inferHighestJobRole(
-			// 		member.roles.cache.map((r) => r.id),
-			// 	);
-
-			// const jobRole = jobId && (await member.guild.roles.fetch(jobId));
-
-			// if (habbo && jobRole)
-			// 	targets.push(`${habbo?.name} // ${jobRole.toString()}`);
-			// else targets.push(`${possibleTarget} // ${possibleJob || "N/A"}`);
-		}
-
     const authorResult =
     (await Result.fromAsync(
       this.container.utilities.habbo.inferTargetGuildMember(
