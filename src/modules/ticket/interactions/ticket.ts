@@ -186,10 +186,23 @@ export class OmbudsmanInteractionHandler extends InteractionHandler {
 				},
 			});
 
-			await interaction.reply({
-				content: `Seu ticket foi criado com sucesso! Clique aqui: ${ticketChannel}`,
-				ephemeral: true,
+      const dmChannel = interaction.user.dmChannel || (await interaction.user.createDM());
+
+      const dmMessage = await dmChannel.send({
+				embeds: [
+					new EmbedBuilder()
+						.setColor(EmbedColors.Default)
+						.setTitle("Criação de Ticket")
+						.setDescription(
+							`Seu ticket foi criado com Sucesso! Clique aqui: ${ticketChannel}`
+						)
+            .setFooter({ text: "Essa mensagem será apagada automaticamente em 1 minuto" })
+				],
 			});
+
+      setTimeout(() => {
+        dmMessage.delete();
+      }, 60000);
 
 			return;
 		}
