@@ -55,6 +55,7 @@ export default class SendCommand extends Command {
 			"retorno",
 			"afastamento",
 			"relink",
+      "acompanhamento",
 		];
 
 		if (!validTypes.includes(type)) {
