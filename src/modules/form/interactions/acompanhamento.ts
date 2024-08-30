@@ -214,10 +214,6 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
 					value: result.Target.length > 0 ? result.NeedsMoreFollowUp : "N/A",
 					inline: true,
 				},
-				{
-					name: "🗓️ Data",
-					value: new Date().toLocaleString("pt-BR"),
-				},
 			])
 			.setColor(EmbedColors.Default);
 

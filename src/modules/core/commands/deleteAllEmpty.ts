@@ -10,7 +10,7 @@ export class LinkCommand extends Command {
 	public override async messageRun(message: Message) {
     await this.container.prisma.transaction.deleteMany({
       where: {
-        amount: 0,
+        amount: { lte: 0 },
       }
     });
     await this.container.prisma.user.deleteMany({
