@@ -134,10 +134,6 @@ export class OmbudsmanInteractionHandler extends InteractionHandler {
 						id: ENVIRONMENT.SECTORS_ROLES.FEDERAÇÃO.id,
 						allow: READ_PERMISSIONS,
 					},
-					{
-						id: ENVIRONMENT.SECTORS_ROLES.SISTEMA.id,
-						allow: READ_PERMISSIONS,
-					},
 				],
 			});
 
