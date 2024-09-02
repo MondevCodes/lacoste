@@ -224,9 +224,6 @@ export class PromotionInteractionHandler extends InteractionHandler {
 			return;
 		}
 
-		const skipRoleManagement =
-			nextTargetJob.id === ENVIRONMENT.JOBS_ROLES.ESTAGIÁRIO.id;
-
 		// Check Cooldown
 		// Check Cooldown
 
@@ -340,7 +337,6 @@ export class PromotionInteractionHandler extends InteractionHandler {
 		// Promotion
 		// Promotion
 
-		if (!skipRoleManagement) {
 			const nextSectorRoleKey = getJobSectorsById(nextTargetJob.id);
 			const previousSectorRoleKey = getJobSectorsById(currentTargetJob.id);
 
@@ -394,7 +390,6 @@ export class PromotionInteractionHandler extends InteractionHandler {
 						latestPromotionRoleId: nextSectorRole.id,
 					},
 				});
-		}
 
 		const notificationChannel = await this.container.client.channels.fetch(
 			ENVIRONMENT.NOTIFICATION_CHANNELS.DEPARTMENT_PROMOTIONS,
