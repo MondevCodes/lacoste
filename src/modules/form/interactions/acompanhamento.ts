@@ -28,6 +28,7 @@ enum FeedbackInputIds {
 	QuestionThree = "QuestionThree",
 	QuestionFour = "QuestionFour",
 	QuestionFive = "QuestionFive",
+	QuestionSix = "QuestionSix",
 }
 
 type FeedbackInput = keyof typeof FeedbackInputIds;
@@ -78,37 +79,44 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
 							.setRequired(true),
 
 						new TextInputBuilder()
-							.setLabel("Apresentou a sede da Lacoste, designadamente, Hall 1, Hall 2, Hall 3, Palco e Ouvidoria, e mostrou sobre as funções referentes ao cargo proposto.")
+							.setLabel("Apresentou a sede da Lacoste")
 							.setPlaceholder("Escolha a nota de 0 a 1")
 							.setCustomId(FeedbackInputIds.QuestionOne)
 							.setStyle(TextInputStyle.Short)
 							.setRequired(true),
 
 						new TextInputBuilder()
-							.setLabel("Tirou dúvidas do participante e questionou sobre o entendimento das diversas funções.")
+							.setLabel("Explicou sobre as suas novas funções")
 							.setPlaceholder("Escolha a nota de 0 a 1")
 							.setCustomId(FeedbackInputIds.QuestionTwo)
 							.setStyle(TextInputStyle.Short)
 							.setRequired(true),
 
 						new TextInputBuilder()
-							.setLabel("Fez uma breve simulação do local onde o colaborador desempenhará o seu papel, também aplicando a prática dos comandos referente aos locais de seu funcionamento.")
+							.setLabel("Tirou dúvidas do aluno.")
 							.setPlaceholder("Escolha a nota de 0 a 1")
 							.setCustomId(FeedbackInputIds.QuestionThree)
 							.setStyle(TextInputStyle.Short)
 							.setRequired(true),
 
 						new TextInputBuilder()
-							.setLabel("Apresentou sobre todas as regras gerais da Lacoste e soube explicar bem sobre o assunto.")
+							.setLabel("Simulou brevemente o local de trabalho")
 							.setPlaceholder("Escolha a nota de 0 a 1")
 							.setCustomId(FeedbackInputIds.QuestionFour)
 							.setStyle(TextInputStyle.Short)
 							.setRequired(true),
 
 						new TextInputBuilder()
-							.setLabel("Trouxe conhecimento extra do funcionamento da sede e reforçou quanto ao pagamento semanal, também citando sobre o Discord, outros comandos na sede, e ou sobre as presenças referente aos relatórios para o iniciante.")
+							.setLabel("Apresentou sobre as regras gerais da Lacoste")
 							.setPlaceholder("Escolha a nota de 0 a 1")
 							.setCustomId(FeedbackInputIds.QuestionFive)
+							.setStyle(TextInputStyle.Short)
+							.setRequired(true),
+
+						new TextInputBuilder()
+							.setLabel("Explicou o funcionamento extra da sede")
+							.setPlaceholder("Escolha a nota de 0 a 1")
+							.setCustomId(FeedbackInputIds.QuestionSix)
 							.setStyle(TextInputStyle.Short)
 							.setRequired(true),
 
@@ -187,7 +195,7 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
       habboInteractionName = authorHabbo?.name ?? "N/A";
     }
 
-    const finalRate = result.QuestionOne + result.QuestionTwo + result.QuestionThree + result.QuestionFour + result.QuestionFive
+    const finalRate = result.QuestionOne + result.QuestionTwo + result.QuestionThree + result.QuestionFour + result.QuestionFive + result.QuestionSix
 
 		const embed = new EmbedBuilder()
 			.setTitle("Acompanhamento")
@@ -210,7 +218,7 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
 				},
 				{
 					name: "🏆 Nota de Desempenho",
-					value: finalRate.replace(/[^0-5]/g, "") || "N/A",
+					value: finalRate.replace(/[^0-6]/g, "") || "N/A",
 					inline: true,
 				},
 				{
