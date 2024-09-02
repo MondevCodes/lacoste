@@ -148,7 +148,7 @@ export default class SendCommand extends Command {
 							"Clique no botão abaixo para abrir o questionário que, ao finalizar, será enviado para o canal de acompanhamentos.",
 						)
 						.setImage(
-							"https://cdn.discordapp.com/attachments/1267288327539916800/1267839457093095566/Banner_Intendente_20240730_103831_0000.png?ex=66d31d81&is=66d1cc01&hm=a4f97d745c179968e5224b39f55cae5fbc34d4038363ef9ada12e73b97a987c3&",
+							"https://cdn.discordapp.com/attachments/1267288327539916800/1280311448106700920/image.png?ex=66d79e74&is=66d64cf4&hm=046f3db2444275d0c3c3d00aae9e91e6bfc2327edea95cee2948c80c81c47e3a&",
 						),
 				],
 				components: [
