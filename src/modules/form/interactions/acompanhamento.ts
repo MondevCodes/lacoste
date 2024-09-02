@@ -17,6 +17,8 @@ import { FormIds } from "$lib/constants/forms";
 import { ENVIRONMENT } from "$lib/env";
 import { MarkdownCharactersRegex } from "$lib/constants/regexes";
 
+import { merge } from "remeda";
+
 enum FeedbackInputIds {
 	Target = "Target",
 	Promoted = "Promoted",
@@ -66,7 +68,7 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
 	}
 
 	public override async run(interaction: ButtonInteraction) {
-		const { result, interaction: i } =
+		const { result: resultPartial, interaction: interactionFromModal } =
 			await this.container.utilities.inquirer.awaitModal<FeedbackInput>(
 				interaction,
 				{
@@ -80,42 +82,52 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
 
 						new TextInputBuilder()
 							.setLabel("Apresentou a sede da Lacoste")
-							.setPlaceholder("Escolha a nota de 0 a 1")
+							.setPlaceholder("Atribua uma nota de 0 a 1")
 							.setCustomId(FeedbackInputIds.QuestionOne)
 							.setStyle(TextInputStyle.Short)
 							.setRequired(true),
 
 						new TextInputBuilder()
 							.setLabel("Explicou sobre as suas novas funções")
-							.setPlaceholder("Escolha a nota de 0 a 1")
+							.setPlaceholder("Atribua uma nota de 0 a 1")
 							.setCustomId(FeedbackInputIds.QuestionTwo)
 							.setStyle(TextInputStyle.Short)
 							.setRequired(true),
 
 						new TextInputBuilder()
 							.setLabel("Tirou dúvidas do aluno.")
-							.setPlaceholder("Escolha a nota de 0 a 1")
+							.setPlaceholder("Atribua uma nota de 0 a 1")
 							.setCustomId(FeedbackInputIds.QuestionThree)
 							.setStyle(TextInputStyle.Short)
 							.setRequired(true),
 
 						new TextInputBuilder()
 							.setLabel("Simulou brevemente o local de trabalho")
-							.setPlaceholder("Escolha a nota de 0 a 1")
+							.setPlaceholder("Atribua uma nota de 0 a 1")
 							.setCustomId(FeedbackInputIds.QuestionFour)
 							.setStyle(TextInputStyle.Short)
 							.setRequired(true),
 
+					],
+					listenInteraction: true,
+					title: "Acompanhamento",
+				},
+			);
+		const { result: resultPartial2, interaction: i } =
+			await this.container.utilities.inquirer.awaitModal<FeedbackInput>(
+				interactionFromModal,
+				{
+					inputs: [
 						new TextInputBuilder()
 							.setLabel("Apresentou sobre as regras gerais da Lacoste")
-							.setPlaceholder("Escolha a nota de 0 a 1")
+							.setPlaceholder("Atribua uma nota de 0 a 1")
 							.setCustomId(FeedbackInputIds.QuestionFive)
 							.setStyle(TextInputStyle.Short)
 							.setRequired(true),
 
 						new TextInputBuilder()
 							.setLabel("Explicou o funcionamento extra da sede")
-							.setPlaceholder("Escolha a nota de 0 a 1")
+							.setPlaceholder("Atribua uma nota de 0 a 1")
 							.setCustomId(FeedbackInputIds.QuestionSix)
 							.setStyle(TextInputStyle.Short)
 							.setRequired(true),
@@ -141,10 +153,12 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
 						// 	.setStyle(TextInputStyle.Short)
 						// 	.setRequired(true),
 					],
-					listenInteraction: true,
 					title: "Acompanhamento",
+          startButtonLabel: "Continuar",
 				},
 			);
+
+    const result = merge(resultPartial, resultPartial2);
 
 		const { member: targetMember, habbo: targetHabbo } =
 			await this.container.utilities.habbo.inferTargetGuildMember(
