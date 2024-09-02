@@ -209,7 +209,7 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
       habboInteractionName = authorHabbo?.name ?? "N/A";
     }
 
-    const finalRate = result.QuestionOne + result.QuestionTwo + result.QuestionThree + result.QuestionFour + result.QuestionFive + result.QuestionSix
+    const finalRate = Number.parseInt(result.QuestionOne + result.QuestionTwo + result.QuestionThree + result.QuestionFour + result.QuestionFive + result.QuestionSix);
 
 		const embed = new EmbedBuilder()
 			.setTitle("Acompanhamento")
@@ -232,7 +232,7 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
 				},
 				{
 					name: "🏆 Nota de Desempenho",
-					value: finalRate.replace(/[^0-6]/g, "") || "N/A",
+					value: finalRate < 7 && finalRate >= 0  ? `${finalRate}` : "N/A",
 					inline: true,
 				},
 				{
