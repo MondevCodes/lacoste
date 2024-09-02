@@ -211,6 +211,10 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
 
     const finalRate = Number.parseInt(result.QuestionOne + result.QuestionTwo + result.QuestionThree + result.QuestionFour + result.QuestionFive + result.QuestionSix);
 
+    this.container.logger.info(
+      `[AcompanhamentoInteractionHandler#run] finalRate: ${finalRate}`,
+    );
+
 		const embed = new EmbedBuilder()
 			.setTitle("Acompanhamento")
       .setAuthor({
