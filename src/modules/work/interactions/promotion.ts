@@ -374,7 +374,17 @@ export class PromotionInteractionHandler extends InteractionHandler {
 					}),
 			]);
 
+      this.container.logger.info(
+        `[PromotionInteractionHandler#run]
+        existingUser: ${existingUser}, \n
+        nextSectorRoleName: ${nextSectorRole?.name}, \n
+        nextSectorRoleId: ${nextSectorRole?.id}, \n
+        nextTargetJobName: ${nextTargetJob.name}, \n
+        nextTargetJobId: ${nextTargetJobId}`,
+      );
+
 			if (existingUser && nextSectorRole)
+
 				await this.container.prisma.user.update({
 					where: {
 						id: existingUser.id,

@@ -36,6 +36,10 @@ export default class SendCommand extends Command {
 				member.roles.cache.map((r) => r.id),
 			);
 
+    this.container.logger.info(
+			`[VerifyCommand#run] currentSectorId: ${currentSectorId}`,
+		);
+
 		if (!currentSectorId) {
 			await message.reply({
 				content:
