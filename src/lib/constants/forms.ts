@@ -7,5 +7,6 @@ export enum FormIds {
 	Entrevista = "LCST::Form/Entrevista",
 	Reclamação = "LCST::Form/Reclamação",
 	Acompanhamento = "LCST::Form/Acompanhamento",
+	AcompanhamentoAdm = "LCST::Form/AcompanhamentoAdm",
 	Organizacional = "LCST::Form/Organizacional",
 }
