@@ -128,7 +128,7 @@ export class LinkCommand extends Command {
 					},
 					data: {
 					latestPromotionDate: new Date(),
-					latestPromotionRoleId: ENVIRONMENT.JOBS_ROLES.VINCULADO.id,
+					latestPromotionRoleId: ENVIRONMENT.SECTORS_ROLES.INICIAL.id,
 					},
 
 				});
@@ -159,7 +159,7 @@ export class LinkCommand extends Command {
 		} else {
 			await this.container.prisma.user
 				.create({
-					data: { habboId: profile.uniqueId, discordId: member.id, habboName: profile.name, latestPromotionDate: new Date(), latestPromotionRoleId: ENVIRONMENT.JOBS_ROLES.VINCULADO.id },
+					data: { habboId: profile.uniqueId, discordId: member.id, habboName: profile.name, latestPromotionDate: new Date(), latestPromotionRoleId: ENVIRONMENT.SECTORS_ROLES.INICIAL.id },
 				})
 				.catch(() => undefined);
 		}
