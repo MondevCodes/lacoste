@@ -95,7 +95,7 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
 							.setRequired(true),
 
 						new TextInputBuilder()
-							.setLabel("Tirou dúvidas do aluno.")
+							.setLabel("Tirou dúvidas do aluno")
 							.setPlaceholder("Atribua uma nota de 0 a 1")
 							.setCustomId(FeedbackInputIds.QuestionThree)
 							.setStyle(TextInputStyle.Short)
@@ -110,7 +110,7 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
 
 					],
 					listenInteraction: true,
-					title: "Acompanhamento",
+					title: "Acompanhamento de Gerência",
 				},
 			);
 		const { result: resultPartial2, interaction: i } =
@@ -153,7 +153,7 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
 						// 	.setStyle(TextInputStyle.Short)
 						// 	.setRequired(true),
 					],
-					title: "Acompanhamento",
+					title: "Acompanhamento de Gerência",
           startButtonLabel: "Continuar",
 				},
 			);
@@ -216,7 +216,7 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
     );
 
 		const embed = new EmbedBuilder()
-			.setTitle("Acompanhamento")
+			.setTitle("Acompanhamento de Gerência")
       .setAuthor({
 				name: interaction.user.tag,
 				iconURL: interaction.user.displayAvatarURL(),
@@ -232,6 +232,36 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
 						MarkdownCharactersRegex,
 						"\\$&",
 					)} // ${targetJobRole.toString()}`,
+					inline: true,
+				},
+				{
+					name: "🖊️ Apresentou a sede da Lacoste",
+					value: Number.parseInt(result.QuestionOne) < 2 && Number.parseInt(result.QuestionOne) >= 0  ? `${result.QuestionOne}/1` : "N/A",
+					inline: true,
+				},
+				{
+					name: "🖊️ Explicou sobre as suas novas funções",
+					value: Number.parseInt(result.QuestionTwo) < 2 && Number.parseInt(result.QuestionTwo) >= 0  ? `${result.QuestionTwo}/1` : "N/A",
+					inline: true,
+				},
+				{
+					name: "🖊️ Tirou dúvidas do aluno",
+					value: Number.parseInt(result.QuestionThree) < 2 && Number.parseInt(result.QuestionThree) >= 0  ? `${result.QuestionThree}/1` : "N/A",
+					inline: true,
+				},
+				{
+					name: "🖊️ Simulou brevemente o local de trabalho",
+					value: Number.parseInt(result.QuestionFour) < 2 && Number.parseInt(result.QuestionFour) >= 0  ? `${result.QuestionFour}/1` : "N/A",
+					inline: true,
+				},
+				{
+					name: "🖊️ Apresentou sobre as regras gerais da Lacoste",
+					value: Number.parseInt(result.QuestionFive) < 2 && Number.parseInt(result.QuestionFive) >= 0  ? `${result.QuestionFive}/1` : "N/A",
+					inline: true,
+				},
+				{
+					name: "🖊️ Explicou o funcionamento extra da sede",
+					value: Number.parseInt(result.QuestionSix) < 2 && Number.parseInt(result.QuestionSix) >= 0  ? `${result.QuestionSix}/1` : "N/A",
 					inline: true,
 				},
 				{
