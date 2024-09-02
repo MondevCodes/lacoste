@@ -22,7 +22,12 @@ enum FeedbackInputIds {
 	Promoted = "Promoted",
 	Performance = "Performance",
 	PerformanceRate = "PerformanceRate",
-	NeedsMoreFollowUp = "NeedsMoreFollowUp",
+	// NeedsMoreFollowUp = "NeedsMoreFollowUp",
+	QuestionOne = "QuestionOne",
+	QuestionTwo = "QuestionTwo",
+	QuestionThree = "QuestionThree",
+	QuestionFour = "QuestionFour",
+	QuestionFive = "QuestionFive",
 }
 
 type FeedbackInput = keyof typeof FeedbackInputIds;
@@ -73,25 +78,60 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
 							.setRequired(true),
 
 						new TextInputBuilder()
-							.setLabel("Nota de desempenho")
-							.setPlaceholder("Ex.: 1, 2, 3, 4 ou 5")
-							.setCustomId(FeedbackInputIds.PerformanceRate)
+							.setLabel("Apresentou a sede da Lacoste, designadamente, Hall 1, Hall 2, Hall 3, Palco e Ouvidoria, e mostrou sobre as funções referentes ao cargo proposto.")
+							.setPlaceholder("Escolha a nota de 0 a 1")
+							.setCustomId(FeedbackInputIds.QuestionOne)
 							.setStyle(TextInputStyle.Short)
 							.setRequired(true),
 
 						new TextInputBuilder()
-							.setLabel("Motivo da nota")
+							.setLabel("Tirou dúvidas do participante e questionou sobre o entendimento das diversas funções.")
+							.setPlaceholder("Escolha a nota de 0 a 1")
+							.setCustomId(FeedbackInputIds.QuestionTwo)
+							.setStyle(TextInputStyle.Short)
+							.setRequired(true),
+
+						new TextInputBuilder()
+							.setLabel("Fez uma breve simulação do local onde o colaborador desempenhará o seu papel, também aplicando a prática dos comandos referente aos locais de seu funcionamento.")
+							.setPlaceholder("Escolha a nota de 0 a 1")
+							.setCustomId(FeedbackInputIds.QuestionThree)
+							.setStyle(TextInputStyle.Short)
+							.setRequired(true),
+
+						new TextInputBuilder()
+							.setLabel("Apresentou sobre todas as regras gerais da Lacoste e soube explicar bem sobre o assunto.")
+							.setPlaceholder("Escolha a nota de 0 a 1")
+							.setCustomId(FeedbackInputIds.QuestionFour)
+							.setStyle(TextInputStyle.Short)
+							.setRequired(true),
+
+						new TextInputBuilder()
+							.setLabel("Trouxe conhecimento extra do funcionamento da sede e reforçou quanto ao pagamento semanal, também citando sobre o Discord, outros comandos na sede, e ou sobre as presenças referente aos relatórios para o iniciante.")
+							.setPlaceholder("Escolha a nota de 0 a 1")
+							.setCustomId(FeedbackInputIds.QuestionFive)
+							.setStyle(TextInputStyle.Short)
+							.setRequired(true),
+
+						// new TextInputBuilder()
+						// 	.setLabel("Nota de desempenho")
+						// 	.setPlaceholder("Ex.: 1, 2, 3, 4 ou 5")
+						// 	.setCustomId(FeedbackInputIds.PerformanceRate)
+						// 	.setStyle(TextInputStyle.Short)
+						// 	.setRequired(true),
+
+						new TextInputBuilder()
+							.setLabel("Observação")
 							.setPlaceholder("Ex.: Muito bom")
 							.setCustomId(FeedbackInputIds.Performance)
 							.setStyle(TextInputStyle.Short)
 							.setRequired(true),
 
-						new TextInputBuilder()
-							.setLabel("Precisa de mais acompanhamento?")
-							.setPlaceholder("Ex.: Sim ou Não")
-							.setCustomId(FeedbackInputIds.NeedsMoreFollowUp)
-							.setStyle(TextInputStyle.Short)
-							.setRequired(true),
+						// new TextInputBuilder()
+						// 	.setLabel("Precisa de mais acompanhamento?")
+						// 	.setPlaceholder("Ex.: Sim ou Não")
+						// 	.setCustomId(FeedbackInputIds.NeedsMoreFollowUp)
+						// 	.setStyle(TextInputStyle.Short)
+						// 	.setRequired(true),
 					],
 					listenInteraction: true,
 					title: "Acompanhamento",
@@ -147,6 +187,8 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
       habboInteractionName = authorHabbo?.name ?? "N/A";
     }
 
+    const finalRate = result.QuestionOne + result.QuestionTwo + result.QuestionThree + result.QuestionFour + result.QuestionFive
+
 		const embed = new EmbedBuilder()
 			.setTitle("Acompanhamento")
       .setAuthor({
@@ -168,17 +210,12 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
 				},
 				{
 					name: "🏆 Nota de Desempenho",
-					value: result.PerformanceRate.replace(/[^0-9]/g, "") || "N/A",
+					value: finalRate.replace(/[^0-5]/g, "") || "N/A",
 					inline: true,
 				},
 				{
-					name: "🗒️ Motivo da Nota",
-					value: result.Target.length > 0 ? result.Performance : "N/A",
-					inline: true,
-				},
-				{
-					name: "⚠️ Precisa de mais acompanhamento?",
-					value: result.Target.length > 0 ? result.NeedsMoreFollowUp : "N/A",
+					name: "🗒️ Observação",
+					value: result.Performance,
 					inline: true,
 				},
 			])
