@@ -132,26 +132,12 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
 							.setStyle(TextInputStyle.Short)
 							.setRequired(true),
 
-						// new TextInputBuilder()
-						// 	.setLabel("Nota de desempenho")
-						// 	.setPlaceholder("Ex.: 1, 2, 3, 4 ou 5")
-						// 	.setCustomId(FeedbackInputIds.PerformanceRate)
-						// 	.setStyle(TextInputStyle.Short)
-						// 	.setRequired(true),
-
 						new TextInputBuilder()
 							.setLabel("Observação")
 							.setPlaceholder("Ex.: Muito bom")
 							.setCustomId(FeedbackInputIds.Performance)
 							.setStyle(TextInputStyle.Short)
 							.setRequired(true),
-
-						// new TextInputBuilder()
-						// 	.setLabel("Precisa de mais acompanhamento?")
-						// 	.setPlaceholder("Ex.: Sim ou Não")
-						// 	.setCustomId(FeedbackInputIds.NeedsMoreFollowUp)
-						// 	.setStyle(TextInputStyle.Short)
-						// 	.setRequired(true),
 					],
 					title: "Acompanhamento de Gerência",
           startButtonLabel: "Continuar",
@@ -266,7 +252,7 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
 				},
 				{
 					name: "🏆 Nota de Desempenho",
-					value: finalRate < 7 && finalRate >= 0  ? `${finalRate}` : "N/A",
+					value: finalRate < 7 && finalRate >= 0  ? `${finalRate}/6` : "N/A",
 					inline: true,
 				},
 				{
@@ -275,7 +261,10 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
 					inline: true,
 				},
 			])
-			.setColor(EmbedColors.Default);
+			.setColor(EmbedColors.Default)
+      .setThumbnail(
+        `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`,
+      );
 
 		const guild =
 			interaction.guild ??
@@ -285,12 +274,52 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
 			ENVIRONMENT.NOTIFICATION_CHANNELS.FORM_FOLLOWUP,
 		);
 
-		if (!channel?.isTextBased()) {
-			throw new Error("Form followUp channel not found or not a text channel.");
+    const promotionChannel = await this.container.client.channels.fetch(
+			ENVIRONMENT.NOTIFICATION_CHANNELS.DEPARTMENT_PROMOTIONS,
+		);
+
+		if (!channel?.isTextBased() || !promotionChannel?.isTextBased()) {
+			throw new Error("Form followUp or promotion channel not found or not a text channel.");
 		}
 
 		await channel.send({
 			embeds: [embed],
+		});
+
+		await promotionChannel.send({
+			embeds: [
+				new EmbedBuilder()
+					.setDescription(
+						"### Simulação de Promoção\n\n",
+					)
+					.setAuthor({
+					  name: targetMember.user.tag,
+						iconURL: targetMember.user.displayAvatarURL(),
+					})
+					.addFields([
+            {
+              name: "👤 Promotor ",
+              value: `${targetHabbo.name ?? `@${targetMember.user.tag}`}`,
+            },
+						{
+							name: "📝 Cargo Anterior",
+							value: "@Vinculado",
+							inline: false,
+						},
+						{
+						  name: "📗 Cargo Promovido",
+							value: "@Estagiário",
+						},
+            {
+              name: "🔍 Supervisionado por",
+              value: `${habboInteractionName ?? `@${interaction.user.tag}`}`,
+            }
+					])
+					.setColor(EmbedColors.Success)
+					.setThumbnail(
+						`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`,
+					),
+			],
 		});
 
 		await i.deleteReply();
