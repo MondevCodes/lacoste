@@ -209,7 +209,7 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
       habboInteractionName = authorHabbo?.name ?? "N/A";
     }
 
-    const finalRate = Number.parseInt(result.QuestionOne + result.QuestionTwo + result.QuestionThree + result.QuestionFour + result.QuestionFive + result.QuestionSix);
+    const finalRate = Number.parseInt(result.QuestionOne) + Number.parseInt(result.QuestionTwo) + Number.parseInt(result.QuestionThree) + Number.parseInt(result.QuestionFour) + Number.parseInt(result.QuestionFive) + Number.parseInt(result.QuestionSix);
 
     this.container.logger.info(
       `[AcompanhamentoInteractionHandler#run] finalRate: ${finalRate}`,
