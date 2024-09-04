@@ -415,11 +415,13 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
           where: {
             AND: [
               { activeRenewal: null },
-              { latestPromotionRoleId: { not: "788612423363330086" } },
-              { latestPromotionRoleId: { not: "788612423363330085" } },
-              { latestPromotionRoleId: { not: "1010766202131451995" } },
-              { latestPromotionRoleId: { not: "788612423355334664" } },
               { habboName: { not: "" } }
+            ],
+            OR: [
+              { latestPromotionRoleId: "1213993987384545400" },
+              { latestPromotionRoleId: "788612423363330081" },
+              { latestPromotionRoleId: "1016542462468173884" },
+              { latestPromotionRoleId: "788612423363330083" },
             ],
           },
         });
