@@ -190,16 +190,16 @@ export class DepartmentInteractionHandler extends InteractionHandler {
 						? 1000 * 60 * 60 * 24 * 15
 						: 1000 * 60 * 60 * 24 * 30;
 
-				await interaction.message.edit({
-					embeds: [
-						EmbedBuilder.from(interaction.message.embeds[0]).setDescription(
-							`${targetMember} foi afastado até ${time(
-								new Date(Date.now() + renewalPeriodInMilliseconds),
-								"D",
-							)}.`,
-						),
-					],
-				});
+				// await interaction.message.edit({
+				// 	embeds: [
+				// 		EmbedBuilder.from(interaction.message.embeds[0]).setDescription(
+				// 			`${targetMember} foi afastado até ${time(
+				// 				new Date(Date.now() + renewalPeriodInMilliseconds),
+				// 				"D",
+				// 			)}.`,
+				// 		),
+				// 	],
+				// });
 
 				await interactionFromModal.editReply({
 					content: `Operação concluída, ${targetMember} receberá uma notificação quando seu afastamento estiver perto de expirar.`,
