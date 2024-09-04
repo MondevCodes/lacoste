@@ -411,27 +411,6 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
           "[OrganizacionalFormInteractionHandler#run] Auto/schedule: 'Relatório Organizacional', day 1 or 15 runned"
         );
 
-        try {
-          const testUsers = await this.container.prisma.user.findMany({
-            where: {
-              AND: [
-                { activeRenewal: null },
-                { latestPromotionRoleId: { not: "788612423363330086" } },
-                { latestPromotionRoleId: { not: "788612423363330085" } },
-                { latestPromotionRoleId: { not: "1010766202131451995" } },
-                { latestPromotionRoleId: { not: "788612423355334664" } },
-                { habboName: { not: "" } }
-              ],
-            },
-          });
-
-          this.container.logger.info(
-            `[OrganizacionalFormInteractionHandler#run] Tests User Sucess: Fetched ${testUsers.length}`
-          );
-        } catch (error) {
-          this.container.logger.error(`[OrganizacionalFormInteractionHandler#run] Error fetching users: ${error}`);
-        }
-
         const users = await this.container.prisma.user.findMany({
           where: {
             AND: [
@@ -443,6 +422,12 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
               { habboName: { not: "" } }
             ],
           },
+        });
+
+        users.filter((user) => {
+          this.container.logger.info(
+            `[OrganizacionalFormInteractionHandler#run] userPrisma catch: ${user.habboName}`
+          );
         });
 
         this.container.logger.info(
@@ -488,10 +473,6 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
             );
           }
 				}
-
-        this.container.logger.info(
-          "[OrganizacionalFormInteractionHandler#run] Auto/schedule: 'Relatório Organizacional', end runned"
-        );
 			},
 			{ recoverMissedExecutions: true },
 		);
