@@ -97,7 +97,7 @@ export class OnGuildMemberRemoveListener extends Listener {
           },
           {
             name: "➕ Extra",
-            value: `Seu saldo pendente foi atualizado, é possível ve-lo no canal "logs-saldos"`,
+            value: "O saldo do colaborador foi zerado",
           },
         ])
       ]});
