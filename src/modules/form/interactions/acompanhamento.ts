@@ -322,6 +322,16 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
 			],
 		});
 
-		await i.deleteReply();
+    await i
+    .deleteReply()
+    .catch(() =>
+      this.container.logger.error("[FormAcompanhamento] Couldn't delete reply."),
+    );
+
+    await interactionFromModal
+    .deleteReply()
+    .catch(() =>
+      this.container.logger.error("[FormAcompanhamento] Couldn't delete reply."),
+    );
 	}
 }
