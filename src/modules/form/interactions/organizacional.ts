@@ -423,6 +423,10 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
           },
 				});
 
+        this.container.logger.info(
+          `[OrganizacionalFormInteractionHandler#run] Fetched ${users.length} users`
+        );
+
 				const filteredUsers = users.filter((user) => {
 					return user.reportsHistory.every((report) => {
 						const reportDate = new Date(report).getTime();
@@ -431,6 +435,10 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 						return reportDate < fifteenDaysAgo;
 					});
 				});
+
+        this.container.logger.info(
+          `[OrganizacionalFormInteractionHandler#run] Filtered ${filteredUsers.length} users`
+        );
 
 				const notificationChannel = await this.container.client.channels.fetch(
 					ENVIRONMENT.NOTIFICATION_CHANNELS.FORM_ANALYTICS,
