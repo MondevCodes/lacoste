@@ -404,8 +404,8 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 
 	public override onLoad() {
 		schedule(
-			// "30 15 1,15 * *",
-			"*/1 * * * *",
+			"30 15 1,15 * *",
+			// "*/1 * * * *", <- A cada minuto para testes
 			async () => {
         this.container.logger.info(
           "[OrganizacionalFormInteractionHandler#run] Auto/schedule: 'Relatório Organizacional', day 1 or 15 runned"
