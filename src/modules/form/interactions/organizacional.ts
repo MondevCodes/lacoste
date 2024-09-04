@@ -31,6 +31,8 @@ enum OrganizationalFormInputIds {
 	TopPosition = "TopPosition",
 	GeneralCommand = "GeneralCommand",
 	CommandAssistance = "CommandAssistance",
+  Promotional = "Promotional",
+  Training = "Training",
 }
 
 type OrganizationalFormInput = keyof typeof OrganizationalFormInputIds;
@@ -155,11 +157,36 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 							.setRequired(false),
 					],
 					title: "Formulário Organizacional",
-					startButtonLabel: "Continuar",
+					startButtonLabel: "Continuar - 1",
 				},
 			);
 
-		const result = merge(resultPartial, resultPartial2);
+		const { result: resultPartial3 } =
+			await this.container.utilities.inquirer.awaitModal<OrganizationalFormInput>(
+				i,
+				{
+					inputs: [
+						new TextInputBuilder()
+							.setLabel("Sala Promocional")
+							.setPlaceholder("Sala Promocional")
+							.setCustomId(OrganizationalFormInputIds.Promotional)
+							.setStyle(TextInputStyle.Paragraph)
+							.setRequired(false),
+
+						new TextInputBuilder()
+							.setLabel("Sala de Treinamento")
+							.setPlaceholder("Sala de Treinamento")
+							.setCustomId(OrganizationalFormInputIds.Training)
+							.setStyle(TextInputStyle.Paragraph)
+							.setRequired(false),
+					],
+					title: "Formulário Organizacional",
+					startButtonLabel: "Continuar - 2",
+				},
+			);
+
+		const resultFirst = merge(resultPartial, resultPartial2);
+		const result = merge(resultFirst, resultPartial3);
 
 		for (const [key, value] of Object.entries(result)) {
 			if (isTruthy(value)) continue;
@@ -174,6 +201,8 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 			Hall1: result.Hall1,
 			Hall2: result.Hall2,
 			Hall3: result.Hall3,
+			Promotional: result.Promotional,
+			Training: result.Training,
 		};
 
 		type Targets = keyof typeof targets;
@@ -191,6 +220,8 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 			Hall2: [],
 			Hall3: [],
 			Stage: [],
+      Promotional: [],
+      Training: [],
 		};
 
 		const unparsedTargets: [keyof typeof targets, string][] = [];
@@ -323,6 +354,22 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 						),
 					),
 				},
+				{
+					name: "💼 Sala Promocional",
+					value: this.#joinList(
+						members.Promotional.map((x) =>
+							typeof x === "string" ? x : x.user.toString(),
+						),
+					),
+				},
+				{
+					name: "🎯 Sala de Treinamento",
+					value: this.#joinList(
+						members.Training.map((x) =>
+							typeof x === "string" ? x : x.user.toString(),
+						),
+					),
+				},
 			)
 			.setColor(EmbedColors.Default);
 
@@ -357,10 +404,23 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 
 	public override onLoad() {
 		schedule(
-			"30 15 1,15 * *",
+			// "30 15 1,15 * *",
+			"*/1 * * * *",
 			async () => {
+        this.container.logger.info(
+          "[OrganizationalFormInteractionHandler#run] Auto/schedule: 'Relatório Organizacional', day 1 or 15 runned"
+        );
+
 				const users = await this.container.prisma.user.findMany({
-					where: { activeRenewal: null },
+					where: {
+            AND: [
+              { activeRenewal: null },
+              { latestPromotionRoleId: { not: "788612423363330086" } },
+              { latestPromotionRoleId: { not: "788612423363330085" } },
+              { latestPromotionRoleId: { not: "1010766202131451995" } },
+              { latestPromotionRoleId: { not: "788612423355334664" } },
+            ],
+          },
 				});
 
 				const filteredUsers = users.filter((user) => {
@@ -386,7 +446,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 									`**${
 										filteredUsers.length
 									}** usuários que tiveram o relatório pendente.\n\n${filteredUsers
-										.map((user) => `- <@${user.discordId}>`)
+										.map((user) => `- ${user.habboName}`)
 										.join("\n")}`,
 								),
 						],
