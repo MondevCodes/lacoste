@@ -414,7 +414,12 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
         const users = await this.container.prisma.user.findMany({
           where: {
             AND: [
-              { activeRenewal: null },
+              {
+                OR: [
+                  { activeRenewal: null },
+                  { activeRenewal: { isSet: false } },
+                ],
+              },
               { habboName: { not: "" } }
             ],
             OR: [
