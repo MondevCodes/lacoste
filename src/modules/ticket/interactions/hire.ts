@@ -492,11 +492,21 @@ export class HireInteractionHandler extends InteractionHandler {
 			});
 		}
 
+    if (!sectorRole) {
+      await interaction.reply({
+				content:
+					"Não consegui encontrar o setor da contratação, contate o desenvolvedor.",
+				ephemeral: true,
+			});
+
+			return;
+    }
+
 		await this.container.prisma.user.update({
 			where: { id: targetUserId },
 			data: {
 				latestPromotionDate: new Date(),
-				latestPromotionRoleId: targetUser.pendingPromotionRoleId,
+				latestPromotionRoleId: sectorRole?.id,
 				pendingPromotionRoleId: null,
 			},
 		});
