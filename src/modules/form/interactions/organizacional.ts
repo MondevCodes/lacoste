@@ -420,16 +420,9 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
                 { latestPromotionRoleId: { not: "788612423363330085" } },
                 { latestPromotionRoleId: { not: "1010766202131451995" } },
                 { latestPromotionRoleId: { not: "788612423355334664" } },
+                { habboName: { not: "" } }
               ],
             },
-            select: {
-              id: true,
-              discordId: true,
-              habboId: true,
-              habboName: true,
-              reportsHistory: true,
-              latestPromotionRoleId: true,
-            }
           });
 
           this.container.logger.info(
@@ -447,16 +440,9 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
               { latestPromotionRoleId: { not: "788612423363330085" } },
               { latestPromotionRoleId: { not: "1010766202131451995" } },
               { latestPromotionRoleId: { not: "788612423355334664" } },
+              { habboName: { not: "" } }
             ],
           },
-          select: {
-            id: true,
-            discordId: true,
-            habboId: true,
-            habboName: true,
-            reportsHistory: true,
-            latestPromotionRoleId: true,
-          }
         });
 
         this.container.logger.info(
