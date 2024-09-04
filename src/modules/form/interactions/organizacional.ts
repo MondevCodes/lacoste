@@ -408,7 +408,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 			"*/1 * * * *",
 			async () => {
         this.container.logger.info(
-          "[OrganizationalFormInteractionHandler#run] Auto/schedule: 'Relatório Organizacional', day 1 or 15 runned"
+          "[OrganizacionalFormInteractionHandler#run] Auto/schedule: 'Relatório Organizacional', day 1 or 15 runned"
         );
 
 				const users = await this.container.prisma.user.findMany({
@@ -437,21 +437,31 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 				);
 
 				if (notificationChannel?.isTextBased()) {
-					await notificationChannel.send({
-						embeds: [
-							new EmbedBuilder()
-								.setColor(EmbedColors.Default)
-								.setTitle("Relatório Organizacional - 15 dias")
-								.setDescription(
-									`**${
-										filteredUsers.length
-									}** usuários que tiveram o relatório pendente.\n\n${filteredUsers
-										.map((user) => `- ${user.habboName}`)
-										.join("\n")}`,
-								),
-						],
-					});
+          try {
+            await notificationChannel.send({
+              embeds: [
+                new EmbedBuilder()
+                  .setColor(EmbedColors.Default)
+                  .setTitle("Relatório Organizacional - 15 dias")
+                  .setDescription(
+                    `**${
+                      filteredUsers.length
+                    }** usuários que tiveram o relatório pendente.\n\n${filteredUsers
+                      .map((user) => `- ${user.habboName}`)
+                      .join("\n")}`,
+                  ),
+              ],
+            });
+          } catch (error) {
+            this.container.logger.error(
+              `[OrganizacionalFormInteractionHandler#run] Error to send embed: ${error} `
+            );
+          }
 				}
+
+        this.container.logger.info(
+          "[OrganizacionalFormInteractionHandler#run] Auto/schedule: 'Relatório Organizacional', end runned"
+        );
 			},
 			{ recoverMissedExecutions: true },
 		);
