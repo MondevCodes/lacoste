@@ -25,7 +25,7 @@ export default class SendCommand extends Command {
 		if (!habbo?.name || !member) {
 			await message.reply({
 				content:
-					"Não consegui encontrar o perfil do usuário, talvez sua conta esteja deletada ou renomeada?",
+					"Não consegui encontrar o perfil do usuário, talvez sua conta esteja deletada ou renomeada? Veja se o perfil do usuário no Habbo está como público.",
 			});
 
 			return;
