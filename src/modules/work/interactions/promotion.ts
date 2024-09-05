@@ -146,63 +146,79 @@ export class PromotionInteractionHandler extends InteractionHandler {
 			interaction.guild ??
 			(await interaction.client.guilds.fetch(interaction.guildId));
 
-		// const jobRolesChoices = await Promise.all(
-		// 	values(ENVIRONMENT.JOBS_ROLES).map(
-		// 		async (value) =>
-		// 			value.id &&
-		// 			(guild.roles.cache.get(value.id) ??
-		// 				(await guild.roles.fetch(value.id))),
-		// 	),
-		// );
-
-		// const [nextTargetJobId] = "AUTO";
-			// await this.container.utilities.inquirer.awaitSelectMenu(
-			// 	interactionFromModal,
-			// 	{
-			// 		choices: [
-			// 			{
-			// 				id: "AUTO",
-			// 				label: "Automático",
-			// 				description: "Infere o próximo cargo na lista.",
-			// 				emoji: "🤖",
-			// 			},
-			// 			...jobRolesChoices.filter(Boolean).map((role) => ({
-			// 				id: role.id,
-			// 				label: role.name,
-			// 			})),
-			// 		],
-			// 		placeholder: "Selecionar",
-			// 		question: "Selecione o cargo que deseja promover.",
-			// 	},
-			// );
-		// Authorized
-		// Authorized
-
-
-		// Infer Roles
-		// Infer Roles
-
-		const nextTargetJob = this.#inferNextJobRole(
-			targetMember.roles,
-			currentTargetJob,
+		const jobRolesChoices = await Promise.all(
+			values(ENVIRONMENT.JOBS_ROLES).map(
+				async (value) =>
+					value.id &&
+					(guild.roles.cache.get(value.id) ??
+						(await guild.roles.fetch(value.id))),
+			),
 		);
+
+		const [nextTargetJobId] =
+			await this.container.utilities.inquirer.awaitSelectMenu(
+				interactionFromModal,
+				{
+					choices: [
+						{
+							id: "AUTO",
+							label: "Automático",
+							description: "Infere o próximo cargo na lista.",
+							emoji: "🤖",
+						},
+						...jobRolesChoices.filter(Boolean).map((role) => ({
+							id: role.id,
+							label: role.name,
+						})),
+					],
+					placeholder: "Selecionar",
+					question: "Selecione o cargo que deseja promover.",
+				},
+			);
+
+		// Authorized
+		// Authorized
+
+
+
+		// Infer Roles
+		// Infer Roles
+
+		let nextTargetJob: Role | null | undefined;
+
+		if (nextTargetJobId === "AUTO")
+			nextTargetJob = this.#inferNextJobRole(
+				targetMember.roles,
+				currentTargetJob,
+			);
+		else
+			nextTargetJob =
+				guild.roles.cache.get(nextTargetJobId) ??
+				(await guild.roles.fetch(nextTargetJobId));
+
+  this.container.logger.info(
+  `[PromotionInteractionHandler#run]
+    nextTargetJob: ${nextTargetJob}, \n
+    nextTargetJobId: ${nextTargetJobId}, \n
+  `,
+  );
 
 		if (!nextTargetJob) {
 			await interactionFromModal.editReply({
 				content:
-					`||P132N|| O usuário selecionado já está no ápice possível em que você pode promover. Se não, contate o desenvolvedor: ${nextTargetJob}`,
+					"||P132N|| O usuário selecionado já está no ápice possível em que você pode promover. Se não, contate o desenvolvedor.",
 			});
 
 			this.container.logger.info(
 				`[PromotionInteractionHandler#run/${interaction.id}] ${interaction.user.tag} tried to promote ${result.target} but failed because they are not authorized to promote.`,
-				{ nextTargetJob, previousTargetJobId: currentTargetJob.id },
+				{ nextTargetJobId, previousTargetJobId: currentTargetJob.id },
 			);
 
 			return;
 		}
 
     const [isPromotionPossible, registrationType] =
-    await this.#isPromotionPossible(interactionFromModal, targetMember.id, nextTargetJob.id);
+    await this.#isPromotionPossible(interactionFromModal, targetMember.id, nextTargetJobId);
 
     this.container.logger.info(
       `[PromotionInteractionHandler#run] isPromotionPossible: ${isPromotionPossible}`,
@@ -376,7 +392,7 @@ export class PromotionInteractionHandler extends InteractionHandler {
         nextSectorRoleName: ${nextSectorRole?.name}, \n
         nextSectorRoleId: ${nextSectorRole?.id}, \n
         nextTargetJobName: ${nextTargetJob.name}, \n
-        nextTargetJobId: ${nextTargetJob.id}`,
+        nextTargetJobId: ${nextTargetJobId}`,
       );
 
 			if (existingUser && nextSectorRole)
