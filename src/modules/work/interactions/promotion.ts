@@ -615,15 +615,22 @@ export class PromotionInteractionHandler extends InteractionHandler {
 	}
 
 	#inferNextJobRole(roles: GuildMemberRoleManager, currentRole: Role) {
-		const currentRoleIndex =
+		const currentRoleSearch =
 			Object.values(ENVIRONMENT.JOBS_ROLES).find((r) => r.id === currentRole.id)
-				?.index ?? 0;
 
-		if (!currentRoleIndex) return null;
+		if (!currentRoleSearch) return null;
 
 		const nextRole = Object.values(ENVIRONMENT.JOBS_ROLES)
 			.sort((a, b) => a.index - b.index)
-			.find((role) => role.index > currentRoleIndex);
+			.find((role) => role.index > currentRoleSearch.index);
+
+    this.container.logger.info(
+      `[PromotionInteractionHandler#inferNextJobRole] \n
+      currentRole: ${currentRole} \n
+      currentRoleSearch: ${currentRoleSearch} \n
+      nextRole: ${nextRole} \n
+      `,
+    );
 
 		return nextRole ? roles.cache.find((r) => r.id === nextRole.id) : null;
 	}
