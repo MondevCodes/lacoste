@@ -178,17 +178,14 @@ export class PromotionInteractionHandler extends InteractionHandler {
 		// Authorized
 		// Authorized
 
-    
+
 		// Infer Roles
 		// Infer Roles
 
-		let nextTargetJob: Role | null | undefined;
-
-		if (nextTargetJobId === "AUTO")
-			nextTargetJob = this.#inferNextJobRole(
-				targetMember.roles,
-				currentTargetJob,
-			);
+		const nextTargetJob = this.#inferNextJobRole(
+			targetMember.roles,
+			currentTargetJob,
+		);
 
 		if (!nextTargetJob) {
 			await interactionFromModal.editReply({
