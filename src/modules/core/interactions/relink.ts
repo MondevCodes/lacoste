@@ -50,6 +50,15 @@ export class EvaluationFormInteractionHandler extends InteractionHandler {
 			return;
 		}
 
+    await this.container.prisma.user.update({
+      where: {
+        id: existingUser.id,
+      },
+      data: {
+        habboName: habbo.name
+      },
+    });
+
 		await member?.setNickname(`· ${habbo.name}`).catch(() => null);
 
 		await interaction.reply({
