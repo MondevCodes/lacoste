@@ -155,7 +155,7 @@ export class PromotionInteractionHandler extends InteractionHandler {
 		// 	),
 		// );
 
-		const [nextTargetJobId] = "AUTO";
+		// const [nextTargetJobId] = "AUTO";
 			// await this.container.utilities.inquirer.awaitSelectMenu(
 			// 	interactionFromModal,
 			// 	{
@@ -190,12 +190,12 @@ export class PromotionInteractionHandler extends InteractionHandler {
 		if (!nextTargetJob) {
 			await interactionFromModal.editReply({
 				content:
-					"||P132N|| O usuário selecionado já está no ápice possível em que você pode promover. Se não, contate o desenvolvedor.",
+					`||P132N|| O usuário selecionado já está no ápice possível em que você pode promover. Se não, contate o desenvolvedor: ${nextTargetJob}`,
 			});
 
 			this.container.logger.info(
 				`[PromotionInteractionHandler#run/${interaction.id}] ${interaction.user.tag} tried to promote ${result.target} but failed because they are not authorized to promote.`,
-				{ nextTargetJobId, previousTargetJobId: currentTargetJob.id },
+				{ nextTargetJob, previousTargetJobId: currentTargetJob.id },
 			);
 
 			return;
@@ -376,7 +376,7 @@ export class PromotionInteractionHandler extends InteractionHandler {
         nextSectorRoleName: ${nextSectorRole?.name}, \n
         nextSectorRoleId: ${nextSectorRole?.id}, \n
         nextTargetJobName: ${nextTargetJob.name}, \n
-        nextTargetJobId: ${nextTargetJobId}`,
+        nextTargetJobId: ${nextTargetJob.id}`,
       );
 
 			if (existingUser && nextSectorRole)
