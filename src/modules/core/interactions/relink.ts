@@ -80,11 +80,11 @@ export class EvaluationFormInteractionHandler extends InteractionHandler {
         .setFields([
           {
             name: "De",
-            value: `${oldHabboName} ?? Nick antigo não cadastrado`,
+            value: oldHabboName,
           },
           {
             name: "Para",
-            value: `${habbo.name} ?? Ocorreu um erro, contate o Desenvolvedor`
+            value: habbo.name
           },
         ])
         .setAuthor({
@@ -98,9 +98,9 @@ export class EvaluationFormInteractionHandler extends InteractionHandler {
     ],
 		});
 
-		await interaction.reply({
-			content: "Seu perfil foi renomeado com sucesso.",
-			ephemeral: true,
-		});
+		// await interaction.reply({
+		// 	content: "Seu perfil foi renomeado com sucesso.",
+		// 	ephemeral: true,
+		// });
 	}
 }
