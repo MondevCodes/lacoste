@@ -334,9 +334,11 @@ export class PromotionInteractionHandler extends InteractionHandler {
 		);
 
 		if (isConfirmed.result === "false") {
-			await interactionFromModal.editReply({
-				content: "Operação cancelada.",
-			});
+      await interactionFromModal
+      .deleteReply()
+      .catch(() =>
+        this.container.logger.error("[PromotionInteractionHandler] Couldn't delete reply."),
+      );;
 
 			return;
 		}
@@ -542,7 +544,7 @@ export class PromotionInteractionHandler extends InteractionHandler {
     );
 
 		const hasEnoughHierarchy =
-			(targetJob?.index ?? 0) >= (authorJob?.index ?? 0) &&
+			(targetJob?.index ?? 0) < (authorJob?.index ?? 0) &&
 			interaction.user.id !== user;
 
     this.container.logger.info(
