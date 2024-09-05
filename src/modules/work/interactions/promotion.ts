@@ -146,41 +146,39 @@ export class PromotionInteractionHandler extends InteractionHandler {
 			interaction.guild ??
 			(await interaction.client.guilds.fetch(interaction.guildId));
 
-		const jobRolesChoices = await Promise.all(
-			values(ENVIRONMENT.JOBS_ROLES).map(
-				async (value) =>
-					value.id &&
-					(guild.roles.cache.get(value.id) ??
-						(await guild.roles.fetch(value.id))),
-			),
-		);
+		// const jobRolesChoices = await Promise.all(
+		// 	values(ENVIRONMENT.JOBS_ROLES).map(
+		// 		async (value) =>
+		// 			value.id &&
+		// 			(guild.roles.cache.get(value.id) ??
+		// 				(await guild.roles.fetch(value.id))),
+		// 	),
+		// );
 
-		const [nextTargetJobId] =
-			await this.container.utilities.inquirer.awaitSelectMenu(
-				interactionFromModal,
-				{
-					choices: [
-						{
-							id: "AUTO",
-							label: "Automático",
-							description: "Infere o próximo cargo na lista.",
-							emoji: "🤖",
-						},
-						...jobRolesChoices.filter(Boolean).map((role) => ({
-							id: role.id,
-							label: role.name,
-						})),
-					],
-					placeholder: "Selecionar",
-					question: "Selecione o cargo que deseja promover.",
-				},
-			);
-
+		const [nextTargetJobId] = "AUTO";
+			// await this.container.utilities.inquirer.awaitSelectMenu(
+			// 	interactionFromModal,
+			// 	{
+			// 		choices: [
+			// 			{
+			// 				id: "AUTO",
+			// 				label: "Automático",
+			// 				description: "Infere o próximo cargo na lista.",
+			// 				emoji: "🤖",
+			// 			},
+			// 			...jobRolesChoices.filter(Boolean).map((role) => ({
+			// 				id: role.id,
+			// 				label: role.name,
+			// 			})),
+			// 		],
+			// 		placeholder: "Selecionar",
+			// 		question: "Selecione o cargo que deseja promover.",
+			// 	},
+			// );
 		// Authorized
 		// Authorized
 
-
-
+    
 		// Infer Roles
 		// Infer Roles
 
@@ -191,10 +189,6 @@ export class PromotionInteractionHandler extends InteractionHandler {
 				targetMember.roles,
 				currentTargetJob,
 			);
-		else
-			nextTargetJob =
-				guild.roles.cache.get(nextTargetJobId) ??
-				(await guild.roles.fetch(nextTargetJobId));
 
 		if (!nextTargetJob) {
 			await interactionFromModal.editReply({
@@ -211,7 +205,7 @@ export class PromotionInteractionHandler extends InteractionHandler {
 		}
 
     const [isPromotionPossible, registrationType] =
-    await this.#isPromotionPossible(interactionFromModal, targetMember.id, nextTargetJobId);
+    await this.#isPromotionPossible(interactionFromModal, targetMember.id, nextTargetJob.id);
 
     this.container.logger.info(
       `[PromotionInteractionHandler#run] isPromotionPossible: ${isPromotionPossible}`,
