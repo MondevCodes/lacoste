@@ -183,12 +183,7 @@ export class PromotionInteractionHandler extends InteractionHandler {
 			await this.#isPromotionPossible(interactionFromModal, targetMember.id);
 
       this.container.logger.info(
-        `[PromotionInteractionHandler#run] \n
-        isPromotionPossible: ${isPromotionPossible} \n
-        interactionFromModal: ${interactionFromModal} \n
-        interactionFromModalUserID: ${interactionFromModal.user.id} \n
-        targetMemberID: ${targetMember.id} \n
-        `,
+        `[PromotionInteractionHandler#run] isPromotionPossible: ${isPromotionPossible}`,
       );
 
 		if (!isPromotionPossible) {
@@ -536,10 +531,8 @@ export class PromotionInteractionHandler extends InteractionHandler {
     this.container.logger.info(
       `[PromotionInteractionHandler#isPromotionPossible] \n
       targetJobRole: ${targetJobRole} \n
-      targetJob: ${targetJob} \n
       targetJobIndex: ${targetJob?.index} \n
       authorJobRole: ${authorJobRole} \n
-      authorJob: ${authorJob} \n
       authorJobIndex: ${authorJob?.index} \n
       `,
     );
@@ -547,6 +540,10 @@ export class PromotionInteractionHandler extends InteractionHandler {
 		const hasEnoughHierarchy =
 			(targetJob?.index ?? 0) >= (authorJob?.index ?? 0) &&
 			interaction.user.id !== user;
+      
+    this.container.logger.info(
+      `[PromotionInteractionHandler#isPromotionPossible] hasEnoughHierarchy: ${hasEnoughHierarchy}`,
+    );
 
 		const isNotSelfPromotion = interaction.user.id !== user;
 
