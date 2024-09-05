@@ -179,25 +179,7 @@ export class PromotionInteractionHandler extends InteractionHandler {
 		// Authorized
 		// Authorized
 
-		const [isPromotionPossible, registrationType] =
-			await this.#isPromotionPossible(interactionFromModal, targetMember.id);
 
-      this.container.logger.info(
-        `[PromotionInteractionHandler#run] isPromotionPossible: ${isPromotionPossible}`,
-      );
-
-		if (!isPromotionPossible) {
-			await interactionFromModal.editReply({
-				content:
-					"Você não pode promover este usuário, pois ele já possui um cargo de maior autoridade permitido para realizar promoções.",
-			});
-
-			this.container.logger.info(
-				`[PromotionInteractionHandler#run/${interaction.id}] ${interaction.user.tag} tried to promote ${result.target} but failed because they are not authorized to promote.`,
-			);
-
-			return;
-		}
 
 		// Infer Roles
 		// Infer Roles
@@ -227,6 +209,27 @@ export class PromotionInteractionHandler extends InteractionHandler {
 
 			return;
 		}
+
+    const [isPromotionPossible, registrationType] =
+    await this.#isPromotionPossible(interactionFromModal, targetMember.id, nextTargetJobId);
+
+    this.container.logger.info(
+      `[PromotionInteractionHandler#run] isPromotionPossible: ${isPromotionPossible}`,
+    );
+
+    if (!isPromotionPossible) {
+      await interactionFromModal.editReply({
+        content:
+          // "Você não pode promover este usuário, pois ele já possui um cargo de maior autoridade permitido para realizar promoções.",
+          `Você não pode promover este usuário para o cargo ${nextTargetJob}, pois o cargo é superior ao que você possui`,
+      });
+
+      this.container.logger.info(
+        `[PromotionInteractionHandler#run/${interaction.id}] ${interaction.user.tag} tried to promote ${result.target} but failed because they are not authorized to promote.`,
+      );
+
+      return;
+    }
 
 		// Check Cooldown
 		// Check Cooldown
@@ -484,12 +487,13 @@ export class PromotionInteractionHandler extends InteractionHandler {
 	async #isPromotionPossible(
 		interaction: RepliableInteraction,
 		user: Snowflake,
+    selectedJob: Snowflake,
 	): Promise<[boolean, "REGISTERED" | "UNREGISTERED"]> {
 		const guild =
 			interaction.guild ??
 			(await interaction.client.guilds.fetch(ENVIRONMENT.GUILD_ID));
 
-		const target = await guild.members.fetch(user);
+		// const target = await guild.members.fetch(user);
 		const author = await guild.members.fetch(interaction.user.id);
 
 		const userDb = await this.container.prisma.user.findUnique({
@@ -510,10 +514,10 @@ export class PromotionInteractionHandler extends InteractionHandler {
 			return [true, "REGISTERED"];
 		}
 
-		const targetJobRole =
-			this.container.utilities.discord.inferHighestJobRole(
-				target.roles.cache.map((r) => r.id),
-			);
+		// const targetJobRole =
+		// 	this.container.utilities.discord.inferHighestJobRole(
+		// 		target.roles.cache.map((r) => r.id),
+		// 	);
 
 		const authorJobRole =
 			this.container.utilities.discord.inferHighestJobRole(
@@ -521,7 +525,7 @@ export class PromotionInteractionHandler extends InteractionHandler {
 			);
 
 		const targetJob = Object.values(ENVIRONMENT.JOBS_ROLES).find(
-			(job) => job.id === targetJobRole,
+			(job) => job.id === selectedJob
 		);
 
 		const authorJob = Object.values(ENVIRONMENT.JOBS_ROLES).find(
@@ -530,7 +534,7 @@ export class PromotionInteractionHandler extends InteractionHandler {
 
     this.container.logger.info(
       `[PromotionInteractionHandler#isPromotionPossible] \n
-      targetJobRole: ${targetJobRole} \n
+      targetJobSelected: ${selectedJob} \n
       targetJobIndex: ${targetJob?.index} \n
       authorJobRole: ${authorJobRole} \n
       authorJobIndex: ${authorJob?.index} \n
@@ -540,7 +544,7 @@ export class PromotionInteractionHandler extends InteractionHandler {
 		const hasEnoughHierarchy =
 			(targetJob?.index ?? 0) >= (authorJob?.index ?? 0) &&
 			interaction.user.id !== user;
-      
+
     this.container.logger.info(
       `[PromotionInteractionHandler#isPromotionPossible] hasEnoughHierarchy: ${hasEnoughHierarchy}`,
     );
