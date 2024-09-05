@@ -537,8 +537,10 @@ export class PromotionInteractionHandler extends InteractionHandler {
       `[PromotionInteractionHandler#isPromotionPossible] \n
       targetJobRole: ${targetJobRole} \n
       targetJob: ${targetJob} \n
+      targetJobIndex: ${targetJob?.index} \n
       authorJobRole: ${authorJobRole} \n
       authorJob: ${authorJob} \n
+      authorJobIndex: ${authorJob?.index} \n
       `,
     );
 
