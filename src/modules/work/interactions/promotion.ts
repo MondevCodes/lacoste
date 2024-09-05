@@ -573,6 +573,10 @@ export class PromotionInteractionHandler extends InteractionHandler {
 			];
 		}
 
+    this.container.logger.info(
+      `[PromotionInteractionHandler#isPromotionPossible] hasEnoughHierarchy: ${hasEnoughHierarchy}`,
+    );
+
 		return [isNotSelfPromotion && hasEnoughHierarchy, "REGISTERED"];
 	}
 
