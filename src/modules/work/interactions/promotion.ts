@@ -182,6 +182,15 @@ export class PromotionInteractionHandler extends InteractionHandler {
 		const [isPromotionPossible, registrationType] =
 			await this.#isPromotionPossible(interactionFromModal, targetMember.id);
 
+      this.container.logger.info(
+        `[PromotionInteractionHandler#run] \n
+        isPromotionPossible: ${isPromotionPossible} \n
+        interactionFromModal: ${interactionFromModal} \n
+        interactionFromModalUserID: ${interactionFromModal.user.id} \n
+        targetMemberID: ${targetMember.id} \n
+        `,
+      );
+
 		if (!isPromotionPossible) {
 			await interactionFromModal.editReply({
 				content:
@@ -507,12 +516,12 @@ export class PromotionInteractionHandler extends InteractionHandler {
 		}
 
 		const targetJobRole =
-			this.container.utilities.discord.inferHighestSectorRole(
+			this.container.utilities.discord.inferHighestJobRole(
 				target.roles.cache.map((r) => r.id),
 			);
 
 		const authorJobRole =
-			this.container.utilities.discord.inferHighestSectorRole(
+			this.container.utilities.discord.inferHighestJobRole(
 				author.roles.cache.map((r) => r.id),
 			);
 
@@ -523,6 +532,15 @@ export class PromotionInteractionHandler extends InteractionHandler {
 		const authorJob = Object.values(ENVIRONMENT.JOBS_ROLES).find(
 			(job) => job.id === authorJobRole,
 		);
+
+    this.container.logger.info(
+      `[PromotionInteractionHandler#isPromotionPossible] \n
+      targetJobRole: ${targetJobRole} \n
+      targetJob: ${targetJob} \n
+      authorJobRole: ${authorJobRole} \n
+      authorJob: ${authorJob} \n
+      `,
+    );
 
 		const hasEnoughHierarchy =
 			(targetJob?.index ?? 0) >= (authorJob?.index ?? 0) &&
