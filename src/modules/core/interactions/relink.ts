@@ -4,9 +4,11 @@ import {
 } from "@sapphire/framework";
 
 import { ApplyOptions } from "@sapphire/decorators";
-import { ButtonInteraction } from "discord.js";
+import { ButtonInteraction, EmbedBuilder } from "discord.js";
 
+import { EmbedColors } from "$lib/constants/discord";
 import { FormIds } from "$lib/constants/forms";
+import { ENVIRONMENT } from "$lib/env";
 
 @ApplyOptions<InteractionHandler.Options>({
 	interactionHandlerType: InteractionHandlerTypes.Button,
@@ -50,6 +52,8 @@ export class EvaluationFormInteractionHandler extends InteractionHandler {
 			return;
 		}
 
+    const oldHabboName = existingUser.habboName;
+
     await this.container.prisma.user.update({
       where: {
         id: existingUser.id,
@@ -61,8 +65,41 @@ export class EvaluationFormInteractionHandler extends InteractionHandler {
 
 		await member?.setNickname(`· ${habbo.name}`).catch(() => null);
 
+    const cachedGuild = await this.container.client.guilds.fetch(ENVIRONMENT.GUILD_ID);
+    const notificationChannel = await cachedGuild.channels.fetch(
+			ENVIRONMENT.NOTIFICATION_CHANNELS.HABBO_USERNAME_CHANGED,
+		);
+
+    if (!notificationChannel?.isTextBased()) {
+			throw new Error("Can't send message to non-text channel.");
+		}
+
+		await notificationChannel.send({embeds: [
+      new EmbedBuilder()
+        .setTitle("Mudança de nick no Habbo")
+        .setFields([
+          {
+            name: "De",
+            value: `${oldHabboName} ?? Nick antigo não cadastrado`,
+          },
+          {
+            name: "Para",
+            value: `${habbo.name} ?? Ocorreu um erro, contate o Desenvolvedor`
+          },
+        ])
+        .setAuthor({
+          name: interaction.user.tag,
+          iconURL: interaction.user.displayAvatarURL(),
+        })
+        .setColor(EmbedColors.Default)
+        .setThumbnail(
+          `https://www.habbo.com/habbo-imaging/avatarimage?figure=${habbo.figureString}&size=b`,
+        ),
+    ],
+		});
+
 		await interaction.reply({
-			content: "Seu perfil foi renomeado.",
+			content: "Seu perfil foi renomeado com sucesso.",
 			ephemeral: true,
 		});
 	}
