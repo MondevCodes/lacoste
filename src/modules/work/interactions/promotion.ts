@@ -126,6 +126,10 @@ export class PromotionInteractionHandler extends InteractionHandler {
 
 		const currentTargetJob = this.#inferHighestJobRole(targetMember.roles);
 
+    this.container.logger.info(
+      `[PromotionInteractionHandler#run] CurrentTargetJob #inferHighestJobRole: ${currentTargetJob}`,
+    );
+
 		if (!currentTargetJob) {
 			await interactionFromModal.editReply({
 				content:
@@ -184,7 +188,7 @@ export class PromotionInteractionHandler extends InteractionHandler {
 		// Infer Roles
 		// Infer Roles
 
-		let nextTargetJob: Role | null | undefined;
+		let nextTargetJob: any;
 
 		if (nextTargetJobId === "AUTO")
 			nextTargetJob = this.#inferNextJobRole(
@@ -196,12 +200,12 @@ export class PromotionInteractionHandler extends InteractionHandler {
 				guild.roles.cache.get(nextTargetJobId) ??
 				(await guild.roles.fetch(nextTargetJobId));
 
-  this.container.logger.info(
-  `[PromotionInteractionHandler#run]
-    nextTargetJob: ${nextTargetJob}, \n
-    nextTargetJobId: ${nextTargetJobId}, \n
-  `,
-  );
+    this.container.logger.info(
+    `[PromotionInteractionHandler#run]
+      nextTargetJob: ${nextTargetJob}, \n
+      nextTargetJobId: ${nextTargetJobId}, \n
+    `,
+    );
 
 		if (!nextTargetJob) {
 			await interactionFromModal.editReply({
@@ -218,7 +222,7 @@ export class PromotionInteractionHandler extends InteractionHandler {
 		}
 
     const [isPromotionPossible, registrationType] =
-    await this.#isPromotionPossible(interactionFromModal, targetMember.id, nextTargetJobId);
+    await this.#isPromotionPossible(interactionFromModal, targetMember.id, nextTargetJob.id);
 
     this.container.logger.info(
       `[PromotionInteractionHandler#run] isPromotionPossible: ${isPromotionPossible}`,
@@ -391,7 +395,7 @@ export class PromotionInteractionHandler extends InteractionHandler {
         existingUser: ${existingUser}, \n
         nextSectorRoleName: ${nextSectorRole?.name}, \n
         nextSectorRoleId: ${nextSectorRole?.id}, \n
-        nextTargetJobName: ${nextTargetJob.name}, \n
+        nextTargetJobName: ${nextTargetJob}, \n
         nextTargetJobId: ${nextTargetJobId}`,
       );
 
@@ -619,6 +623,7 @@ export class PromotionInteractionHandler extends InteractionHandler {
 			Object.values(ENVIRONMENT.JOBS_ROLES).find((r) => r.id === currentRole.id)
 
 		if (!currentRoleSearch) return null;
+    if (!roles) return null;
 
 		const nextRole = Object.values(ENVIRONMENT.JOBS_ROLES)
 			.sort((a, b) => a.index - b.index)
@@ -630,9 +635,9 @@ export class PromotionInteractionHandler extends InteractionHandler {
       currentRoleSearch: ${currentRoleSearch} \n
       nextRole: ${nextRole} \n
       `,
-    );
+      );
 
-		return nextRole ? roles.cache.find((r) => r.id === nextRole.id) : null;
+		return nextRole;
 	}
 
 	#isTargetRoleInferior(
