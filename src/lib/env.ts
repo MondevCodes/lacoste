@@ -35,6 +35,7 @@ export const EnvironmentSchema = z.object({
 		Jobs,
 		OrderedSnowflake.extend({
 			minDaysProm: z.number().default(0),
+      promoteIndex: z.number().default(-1),
 		}),
 	),
 	JOBS_PAYMENT: typedRecord(Jobs, z.number().default(0)),
