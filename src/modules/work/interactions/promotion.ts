@@ -313,13 +313,7 @@ export class PromotionInteractionHandler extends InteractionHandler {
 
 				return;
 			}
-		} else {
-      await interactionFromModal.editReply({
-        content: `||WP158|| O usuário não possui latestPromotionDate: ${latestPromotionDate}, ou não possui MinDaysProm: ${minDaysProm}, contate o Desenvolvedor.`,
-      });
-
-      return;
-    }
+		}
 
 		// Confirmation
 		// Confirmation
