@@ -244,7 +244,7 @@ export class PromotionInteractionHandler extends InteractionHandler {
       await interactionFromModal.editReply({
         content:
           // "Você não pode promover este usuário, pois ele já possui um cargo de maior autoridade permitido para realizar promoções.",
-          `Seu cargo de ${authorJobRole} não tem permissão de promover alguém para o cargo de ${targetJobRole}`,
+          `Seu cargo de ${authorJobRole} não tem permissão para promover alguém para o cargo de ${targetJobRole}`,
       });
 
       this.container.logger.info(
