@@ -229,11 +229,19 @@ export class PromotionInteractionHandler extends InteractionHandler {
       `[PromotionInteractionHandler#run] isPromotionPossible: ${isPromotionPossible}`,
     );
 
+
     if (!isPromotionPossible) {
+      const author = await guild.members.fetch(interaction.user.id);
+
+      const authorJobRole =
+			this.container.utilities.discord.inferHighestJobRole(
+				author.roles.cache.map((r) => r.id),
+			);
+
       await interactionFromModal.editReply({
         content:
           // "Você não pode promover este usuário, pois ele já possui um cargo de maior autoridade permitido para realizar promoções.",
-          `Você não pode promover este usuário para o cargo ${targetJobRole}, pois o cargo é superior ao que você possui`,
+          `Seu cargo de ${authorJobRole} não tem permissão de promover alguém para o cargo de ${targetJobRole}`,
       });
 
       this.container.logger.info(
@@ -262,10 +270,10 @@ export class PromotionInteractionHandler extends InteractionHandler {
 			nextTargetJob.id,
 		);
 
-		this.container.logger.info(
-			`[PromotionInteractionHandler#run/${interaction.id}] ${interaction.user.tag} tried to promote ${result.target} but failed because they are not authorized to promote.`,
-			{ authorizedHigherRoleId },
-		);
+		// this.container.logger.info(
+		// 	`[PromotionInteractionHandler#run/${interaction.id}] ${interaction.user.tag} tried to promote ${result.target} but failed because they are not authorized to promote.`,
+		// 	{ authorizedHigherRoleId },
+		// );
 
 		if (!existingUser && !authorizedHigherRoleId) {
 			await interactionFromModal.editReply({
@@ -295,16 +303,16 @@ export class PromotionInteractionHandler extends InteractionHandler {
 
 			if (!shouldPromote) {
 				await interactionFromModal.editReply({
-					content: `||WP158|| O usuário tem que aguardar pelo menos ${
+					content: `🕝 O usuário tem que aguardar pelo menos ${
 						minDaysProm - daysSinceLastPromotion
-					} dia para poder promover o cargo.`,
+					} dia para poder promover de cargo.`,
 				});
 
 				return;
 			}
 		} else {
       await interactionFromModal.editReply({
-        content: `Erro: O usuário não possui latestPromotionDate: ${latestPromotionDate}, ou não possui MinDaysProm: ${minDaysProm}`,
+        content: `||WP158|| O usuário não possui latestPromotionDate: ${latestPromotionDate}, ou não possui MinDaysProm: ${minDaysProm}, contate o Desenvolvedor.`,
       });
 
       return;
@@ -550,19 +558,22 @@ export class PromotionInteractionHandler extends InteractionHandler {
       targetJobSelected: ${selectedJob} \n
       targetJobIndex: ${targetJob?.index} \n
       authorJobRole: ${authorJobRole} \n
-      authorJobIndex: ${authorJob?.index} \n
+      authorJobPromoteIndex: ${authorJob?.promoteIndex} \n
       `,
     );
 
 		const hasEnoughHierarchy =
-			(targetJob?.index ?? 0) < (authorJob?.index ?? 0) &&
+			(targetJob?.index ?? 0) <= (authorJob?.promoteIndex ?? -1) &&
 			interaction.user.id !== user;
 
-    this.container.logger.info(
-      `[PromotionInteractionHandler#isPromotionPossible] hasEnoughHierarchy: ${hasEnoughHierarchy}`,
-    );
+      const isNotSelfPromotion = interaction.user.id !== user;
 
-		const isNotSelfPromotion = interaction.user.id !== user;
+      this.container.logger.info(
+        `[PromotionInteractionHandler#isPromotionPossible] \n
+        hasEnoughHierarchy: ${hasEnoughHierarchy} \n
+        isNotSelfPromotion: ${isNotSelfPromotion}
+        `,
+      );
 
 		// const isAuthorizedUnregistered =
 		// 	targetJob?.index ?? 0 <= MAX_PROMOTABLE_UNREGISTERED_ROLES;
@@ -570,10 +581,6 @@ export class PromotionInteractionHandler extends InteractionHandler {
 		if (!targetJob?.index) {
 			return [true, "UNREGISTERED"];
 		}
-
-    this.container.logger.info(
-      `[PromotionInteractionHandler#isPromotionPossible] hasEnoughHierarchy: ${hasEnoughHierarchy}`,
-    );
 
 		return [isNotSelfPromotion && hasEnoughHierarchy, "REGISTERED"];
 	}
