@@ -276,40 +276,39 @@ export class PromotionInteractionHandler extends InteractionHandler {
 			return;
 		}
 
-		let shouldPromote =
-			/** isFirstPromotion */
-			!existingUser?.latestPromotionRoleId ||
-			!existingUser?.latestPromotionDate;
+		const latestPromotionDate =
+			existingUser?.latestPromotionDate &&
+			new Date(existingUser?.latestPromotionDate);
 
-		if (!shouldPromote) {
-			const latestPromotionDate =
-				existingUser?.latestPromotionDate &&
-				new Date(existingUser?.latestPromotionDate);
+		const minDaysProm = find(
+			values(ENVIRONMENT.JOBS_ROLES),
+			(x) => x.id === existingUser?.latestPromotionRoleId,
+		)?.minDaysProm;
 
-			const minDaysProm = find(
-				values(ENVIRONMENT.JOBS_ROLES),
-				(x) => x.id === existingUser?.latestPromotionRoleId,
-			)?.minDaysProm;
+		if (latestPromotionDate && minDaysProm) {
+			const daysSinceLastPromotion = Math.floor(
+				(new Date().getTime() - latestPromotionDate.getTime()) /
+					(1000 * 3600 * 24),
+			);
 
-			if (latestPromotionDate && minDaysProm) {
-				const daysSinceLastPromotion = Math.floor(
-					(new Date().getTime() - latestPromotionDate.getTime()) /
-						(1000 * 3600 * 24),
-				);
+			const shouldPromote = daysSinceLastPromotion >= minDaysProm;
 
-				shouldPromote = daysSinceLastPromotion >= minDaysProm;
+			if (!shouldPromote) {
+				await interactionFromModal.editReply({
+					content: `||WP158|| O usuário tem que aguardar pelo menos ${
+						minDaysProm - daysSinceLastPromotion
+					} dia para poder promover o cargo.`,
+				});
 
-				if (!shouldPromote) {
-					await interactionFromModal.editReply({
-						content: `||WP158|| O usuário tem que aguardar pelo menos ${
-							minDaysProm - daysSinceLastPromotion
-						} dia para poder promover o cargo.`,
-					});
-
-					return;
-				}
+				return;
 			}
-		}
+		} else {
+      await interactionFromModal.editReply({
+        content: `Erro: O usuário não possui latestPromotionDate: ${latestPromotionDate}, ou não possui MinDaysProm: ${minDaysProm}`,
+      });
+
+      return;
+    }
 
 		// Confirmation
 		// Confirmation
