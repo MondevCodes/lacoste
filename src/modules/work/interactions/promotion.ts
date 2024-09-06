@@ -26,9 +26,6 @@ import { getJobSectorsById } from "$lib/constants/jobs";
 
 type InGuild = "cached" | "raw";
 
-const MAX_PROMOTABLE_UNREGISTERED_ROLES =
-	ENVIRONMENT.JOBS_ROLES.SUPERVISOR.index;
-
 @ApplyOptions<InteractionHandler.Options>({
 	interactionHandlerType: InteractionHandlerTypes.Button,
 })
@@ -221,6 +218,9 @@ export class PromotionInteractionHandler extends InteractionHandler {
 			return;
 		}
 
+    const targetJobRole =
+    nextTargetJob.id && (await targetMember.guild.roles.fetch(nextTargetJob.id));
+
     const [isPromotionPossible, registrationType] =
     await this.#isPromotionPossible(interactionFromModal, targetMember.id, nextTargetJob.id);
 
@@ -232,7 +232,7 @@ export class PromotionInteractionHandler extends InteractionHandler {
       await interactionFromModal.editReply({
         content:
           // "Você não pode promover este usuário, pois ele já possui um cargo de maior autoridade permitido para realizar promoções.",
-          `Você não pode promover este usuário para o cargo ${nextTargetJob}, pois o cargo é superior ao que você possui`,
+          `Você não pode promover este usuário para o cargo ${targetJobRole}, pois o cargo é superior ao que você possui`,
       });
 
       this.container.logger.info(
@@ -333,7 +333,7 @@ export class PromotionInteractionHandler extends InteractionHandler {
 						new EmbedBuilder()
 							.setTitle("Promover")
 							.setDescription(
-								`Promover <@${targetMember.user.id}> para ${nextTargetJob}?`,
+								`Promover <@${targetMember.user.id}> para ${targetJobRole}?`,
 							)
 							.setThumbnail(
 								`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`,
@@ -470,7 +470,7 @@ export class PromotionInteractionHandler extends InteractionHandler {
 							},
 							{
 								name: "📗 Cargo Promovido",
-								value: nextTargetJob.toString(),
+								value: targetJobRole.toString(),
 							},
               {
                 name: "🗒️ Observação",
@@ -564,10 +564,10 @@ export class PromotionInteractionHandler extends InteractionHandler {
 
 		const isNotSelfPromotion = interaction.user.id !== user;
 
-		const isAuthorizedUnregistered =
-			targetJob?.index ?? 0 <= MAX_PROMOTABLE_UNREGISTERED_ROLES;
+		// const isAuthorizedUnregistered =
+		// 	targetJob?.index ?? 0 <= MAX_PROMOTABLE_UNREGISTERED_ROLES;
 
-		if (!isAuthorizedUnregistered) {
+		if (!targetJob?.index) {
 			return [true, "UNREGISTERED"];
 		}
 
