@@ -282,7 +282,7 @@ export class PromotionInteractionHandler extends InteractionHandler {
 
 		const minDaysProm = find(
 			values(ENVIRONMENT.JOBS_ROLES),
-			(x) => x.id === existingUser?.latestPromotionRoleId,
+			(x) => x.id === currentTargetJob.id,
 		)?.minDaysProm;
 
 		if (latestPromotionDate && minDaysProm) {
