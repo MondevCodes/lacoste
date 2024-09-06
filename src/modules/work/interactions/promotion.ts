@@ -233,10 +233,13 @@ export class PromotionInteractionHandler extends InteractionHandler {
     if (!isPromotionPossible) {
       const author = await guild.members.fetch(interaction.user.id);
 
-      const authorJobRole =
+      const authorJobRoleId =
 			this.container.utilities.discord.inferHighestJobRole(
 				author.roles.cache.map((r) => r.id),
 			);
+
+      const authorJobRole =
+      authorJobRoleId && (await author.guild.roles.fetch(authorJobRoleId));
 
       await interactionFromModal.editReply({
         content:
