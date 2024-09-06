@@ -147,35 +147,35 @@ export class PromotionInteractionHandler extends InteractionHandler {
 			interaction.guild ??
 			(await interaction.client.guilds.fetch(interaction.guildId));
 
-		const jobRolesChoices = await Promise.all(
-			values(ENVIRONMENT.JOBS_ROLES).map(
-				async (value) =>
-					value.id &&
-					(guild.roles.cache.get(value.id) ??
-						(await guild.roles.fetch(value.id))),
-			),
-		);
+		// const jobRolesChoices = await Promise.all(
+		// 	values(ENVIRONMENT.JOBS_ROLES).map(
+		// 		async (value) =>
+		// 			value.id &&
+		// 			(guild.roles.cache.get(value.id) ??
+		// 				(await guild.roles.fetch(value.id))),
+		// 	),
+		// );
 
-		const [nextTargetJobId] =
-			await this.container.utilities.inquirer.awaitSelectMenu(
-				interactionFromModal,
-				{
-					choices: [
-						{
-							id: "AUTO",
-							label: "Automático",
-							description: "Infere o próximo cargo na lista.",
-							emoji: "🤖",
-						},
-						...jobRolesChoices.filter(Boolean).map((role) => ({
-							id: role.id,
-							label: role.name,
-						})),
-					],
-					placeholder: "Selecionar",
-					question: "Selecione o cargo que deseja promover.",
-				},
-			);
+		// const [nextTargetJobId] =
+		// 	await this.container.utilities.inquirer.awaitSelectMenu(
+		// 		interactionFromModal,
+		// 		{
+		// 			choices: [
+		// 				{
+		// 					id: "AUTO",
+		// 					label: "Automático",
+		// 					description: "Infere o próximo cargo na lista.",
+		// 					emoji: "🤖",
+		// 				},
+		// 				...jobRolesChoices.filter(Boolean).map((role) => ({
+		// 					id: role.id,
+		// 					label: role.name,
+		// 				})),
+		// 			],
+		// 			placeholder: "Selecionar",
+		// 			question: "Selecione o cargo que deseja promover.",
+		// 		},
+		// 	);
 
 		// Authorized
 		// Authorized
@@ -185,22 +185,15 @@ export class PromotionInteractionHandler extends InteractionHandler {
 		// Infer Roles
 		// Infer Roles
 
-		let nextTargetJob: any;
-
-		if (nextTargetJobId === "AUTO")
-			nextTargetJob = this.#inferNextJobRole(
-				targetMember.roles,
-				currentTargetJob,
-			);
-		else
-			nextTargetJob =
-				guild.roles.cache.get(nextTargetJobId) ??
-				(await guild.roles.fetch(nextTargetJobId));
+		const nextTargetJob = this.#inferNextJobRole(
+      targetMember.roles,
+      currentTargetJob,
+    );
 
     this.container.logger.info(
     `[PromotionInteractionHandler#run]
       nextTargetJob: ${nextTargetJob}, \n
-      nextTargetJobId: ${nextTargetJobId}, \n
+      nextTargetJobId: ${nextTargetJob?.id}, \n
     `,
     );
 
@@ -212,7 +205,7 @@ export class PromotionInteractionHandler extends InteractionHandler {
 
 			this.container.logger.info(
 				`[PromotionInteractionHandler#run/${interaction.id}] ${interaction.user.tag} tried to promote ${result.target} but failed because they are not authorized to promote.`,
-				{ nextTargetJobId, previousTargetJobId: currentTargetJob.id },
+				{ previousTargetJobId: currentTargetJob.id },
 			);
 
 			return;
@@ -220,6 +213,14 @@ export class PromotionInteractionHandler extends InteractionHandler {
 
     const targetJobRole =
     nextTargetJob.id && (await targetMember.guild.roles.fetch(nextTargetJob.id));
+
+    if (!targetJobRole) {
+      this.container.logger.error(
+        "[PromotionInteractionHandler#run] targetJobRole Error"
+      );
+
+      return;
+    }
 
     const [isPromotionPossible, registrationType] =
     await this.#isPromotionPossible(interactionFromModal, targetMember.id, nextTargetJob.id);
@@ -396,7 +397,7 @@ export class PromotionInteractionHandler extends InteractionHandler {
         nextSectorRoleName: ${nextSectorRole?.name}, \n
         nextSectorRoleId: ${nextSectorRole?.id}, \n
         nextTargetJobName: ${nextTargetJob}, \n
-        nextTargetJobId: ${nextTargetJobId}`,
+        nextTargetJobId: ${nextTargetJob.id}`,
       );
 
 			if (existingUser && nextSectorRole)
@@ -569,22 +570,6 @@ export class PromotionInteractionHandler extends InteractionHandler {
 
 		if (!targetJob?.index) {
 			return [true, "UNREGISTERED"];
-		}
-
-		if (targetJob && authorJob && userDb.latestPromotionDate) {
-			const currentDate = new Date();
-			const daysSinceLastPromotion = Math.floor(
-				(currentDate.getTime() - userDb.latestPromotionDate.getTime()) /
-					(1000 * 3600 * 24),
-			);
-
-			const isEnoughDaysPassed =
-				daysSinceLastPromotion >= targetJob.minDaysProm;
-
-			return [
-				isEnoughDaysPassed && isNotSelfPromotion && hasEnoughHierarchy,
-				"REGISTERED",
-			];
 		}
 
     this.container.logger.info(
