@@ -436,22 +436,11 @@ export class HireInteractionHandler extends InteractionHandler {
 			return;
 		}
 
-		const sectorRoleKey = getJobSectorsById(targetUser.pendingPromotionRoleId);
+    const sectorRoleKey = getJobSectorsById(targetUser.pendingPromotionRoleId);
 
 		const sectorRole =
 			sectorRoleKey &&
 			(await guild.roles.fetch(ENVIRONMENT.SECTORS_ROLES[sectorRoleKey].id));
-
-		if (sectorRole)
-			await guild.members.addRole({
-				user: targetUser.discordId,
-				role: sectorRole,
-			});
-
-		await guild.members.addRole({
-			role: pendingPromotionRole,
-			user: targetUser.discordId,
-		});
 
 		const latestPromotionRole =
 			targetUser.latestPromotionRoleId &&
@@ -491,6 +480,17 @@ export class HireInteractionHandler extends InteractionHandler {
 				role: latestPromotionRole,
 			});
 		}
+
+		if (sectorRole)
+			await guild.members.addRole({
+				user: targetUser.discordId,
+				role: sectorRole,
+			});
+
+		await guild.members.addRole({
+			role: pendingPromotionRole,
+			user: targetUser.discordId,
+		});
 
     if (!sectorRole) {
       await interaction.reply({
