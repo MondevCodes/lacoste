@@ -223,7 +223,7 @@ export class PromotionInteractionHandler extends InteractionHandler {
     }
 
     const [isPromotionPossible, registrationType] =
-    await this.#isPromotionPossible(interactionFromModal, targetMember.id, nextTargetJob.id);
+    await this.#isPromotionPossible(interactionFromModal, targetMember.id, nextTargetJob.id, currentTargetJob.id);
 
     this.container.logger.info(
       `[PromotionInteractionHandler#run] isPromotionPossible: ${isPromotionPossible}`,
@@ -506,6 +506,7 @@ export class PromotionInteractionHandler extends InteractionHandler {
 		interaction: RepliableInteraction,
 		user: Snowflake,
     selectedJob: Snowflake,
+    currentTargetJob: Snowflake,
 	): Promise<[boolean, "REGISTERED" | "UNREGISTERED"]> {
 		const guild =
 			interaction.guild ??
@@ -543,11 +544,11 @@ export class PromotionInteractionHandler extends InteractionHandler {
 			);
 
 		const targetJob = Object.values(ENVIRONMENT.JOBS_ROLES).find(
-			(job) => job.id === selectedJob
+			(job) => job.id === currentTargetJob
 		);
 
 		const authorJob = Object.values(ENVIRONMENT.JOBS_ROLES).find(
-			(job) => job.id === authorJobRole,
+			(job) => job.id === authorJobRole
 		);
 
     this.container.logger.info(
