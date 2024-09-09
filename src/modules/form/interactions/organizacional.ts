@@ -534,13 +534,15 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
         });
 
         // const today = new Date();
-        // const yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
         // const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 9, 0);
         // const startOfDay = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 0, 10, 0);
 
+
         const today = new Date();
-        const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-        const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+        const yesterday = new Date(today.getTime());
+        yesterday.setDate(today.getDate() - 1);
+        const startOfDay = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate());
+        const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 9, 0);
 
         const dailyUsers = users.filter((user) => {
           return user.reportsHistory.some((report) => {
