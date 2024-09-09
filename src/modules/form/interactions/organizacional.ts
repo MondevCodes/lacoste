@@ -533,10 +533,14 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
           },
         });
 
+        // const today = new Date();
+        // const yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+        // const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 9, 0);
+        // const startOfDay = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 0, 10, 0);
+
         const today = new Date();
-        const yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
-        const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 9, 0);
-        const startOfDay = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 0, 10, 0);
+        const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
 
         const dailyUsers = users.filter((user) => {
           return user.reportsHistory.some((report) => {
@@ -584,7 +588,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
               embeds: [
                 new EmbedBuilder()
                   .setColor(EmbedColors.Default)
-                  .setTitle(`<:lacoste:984848944649625661> Controle Diário Organizacional [${yesterday.toLocaleDateString('pt-BR')}]`)
+                  .setTitle(`<:lacoste:984848944649625661> Controle Diário Organizacional [${today.toLocaleDateString('pt-BR')}]`)
                   .setDescription(
                     `**${dailyUsers.length} usuários **  📊 Total de presenças nos relatórios presenciais (incluindo presenças no Comando Geral):\n\n${dailyUsersWithCount
                       .map((user) => `${user.user.habboName} - ${user.count}`)
@@ -630,7 +634,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
             // });
 
             await notificationChannelNoIdentify.send({
-              content: `**FIM DO DIA** [${yesterday.toLocaleDateString('pt-BR')}]`
+              content: `**FIM DO DIA** [${today.toLocaleDateString('pt-BR')}]`
             });
           } catch (error) {
             this.container.logger.error(
