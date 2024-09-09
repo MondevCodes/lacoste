@@ -261,10 +261,20 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 				}
 
 				if (targetMember)
-					await this.container.prisma.user.update({
-						where: { discordId: targetMember.user.id },
-						data: { reportsHistory: { push: new Date() } },
-					});
+          if (group === "GeneralCommand") {
+            await this.container.prisma.user.update({
+              where: { discordId: targetMember.user.id },
+              data: {
+                reportsHistory: { push: new Date() },
+                reportsHistoryCG: { push: new Date() },
+              },
+            });
+          } else {
+            await this.container.prisma.user.update({
+              where: { discordId: targetMember.user.id },
+              data: { reportsHistory: { push: new Date() } },
+            });
+          }
 
 				members[group].push(
 					targetHabbo.name.replaceAll(MARKDOWN_CHARS_RE, "\\$&"),
@@ -483,6 +493,137 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 			},
 			{ recoverMissedExecutions: true },
 		);
+    schedule(
+      // "58 23 * * *", // Todo dia as 23:58
+      "*/1 * * * *", // <- A cada minuto para testes
+      async () => {
+        this.container.logger.info(
+          "[OrganizacionalFormInteractionHandler#run] Auto/schedule: 'Relatório Diário', daily runned"
+        );
+
+        const users = await this.container.prisma.user.findMany({
+          where: {
+            AND: [
+              {
+                OR: [
+                  { activeRenewal: null },
+                  { activeRenewal: { isSet: false } },
+                ],
+              },
+              { habboName: { not: "" } },
+            ],
+          },
+        });
+
+        const today = new Date();
+        const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+
+        const dailyUsers = users.filter((user) => {
+          return user.reportsHistory.some((report) => {
+            const reportDate = new Date(report);
+            return reportDate >= startOfDay && reportDate < endOfDay;
+          });
+        });
+
+        const dailyCGUsers = users.filter((user) => {
+          return user.reportsHistoryCG.some((report) => {
+            const reportDate = new Date(report);
+            return reportDate >= startOfDay && reportDate < endOfDay;
+          });
+        });
+
+        const dailyUsersWithCount = dailyUsers.map((user) => {
+          const count = user.reportsHistory.filter((report) => {
+            const reportDate = new Date(report);
+            return reportDate >= startOfDay && reportDate < endOfDay;
+          }).length;
+          return { user, count };
+        });
+
+        const dailyCGUsersWithCount = dailyCGUsers.map((user) => {
+          const count = user.reportsHistoryCG.filter((report) => {
+            const reportDate = new Date(report);
+            return reportDate >= startOfDay && reportDate < endOfDay;
+          }).length;
+          return { user, count };
+        });
+
+        this.container.logger.info(
+          `[OrganizacionalFormInteractionHandler#run] Fetched ${users.length} users`
+        );
+
+        this.container.logger.info(
+          `[OrganizacionalFormInteractionHandler#run] Filtered ${dailyUsers.length} daily users`
+        );
+
+        this.container.logger.info(
+          `[OrganizacionalFormInteractionHandler#run] Filtered ${dailyCGUsers.length} daily CG users`
+        );
+
+        const notificationChannel = await this.container.client.channels.fetch(
+          ENVIRONMENT.NOTIFICATION_CHANNELS.FORM_ANALYTICS,
+        );
+
+        if (notificationChannel?.isTextBased()) {
+          try {
+            await notificationChannel.send({
+              embeds: [
+                new EmbedBuilder()
+                  .setColor(EmbedColors.Default)
+                  .setTitle(`⚡ Controle Diário Organizacional ⚡ [${today}]`)
+                  .setDescription(
+                    `**${dailyUsers.length} usuários** 📊 Total de presenças nos relatórios presenciais (incluindo presenças no Comando Geral):\n\n${dailyUsersWithCount
+                      .map((user) => `${user.user.habboName} - ${user.count}`)
+                      .join("\n")}`,
+                  ),
+              ],
+            });
+
+            // await notificationChannel.send({
+            //   embeds: [
+            //     new EmbedBuilder()
+            //       .setColor(EmbedColors.Default)
+            //       .setDescription(
+            //         `**${dailyUsers.length}** 📊 🏆  Destaque Diário:\n\n${dailyUsers
+            //           .map((user) => `🥇 ${user.habboName} - ${aqui era pra estar a quantidade de presenças por usuario}`)
+            //           .join("\n")}`,
+            //       ),
+            //   ],
+            // });
+
+            await notificationChannel.send({
+              embeds: [
+                new EmbedBuilder()
+                  .setColor(EmbedColors.Default)
+                  .setDescription(
+                    `**${dailyCGUsers.length} usuários** 📊 Total de presenças no Comando Geral:\n\n${dailyCGUsersWithCount
+                      .map((user) => `${user.user.habboName} - ${user.count}` )
+                      .join("\n")}`,
+                  ),
+              ],
+            });
+
+            // await notificationChannel.send({
+            //   embeds: [
+            //     new EmbedBuilder()
+            //       .setColor(EmbedColors.Default)
+            //       .setDescription(
+            //         `**${dailyCGUsers.length}** 🏆  Destaque Diário CG:\n\n${dailyCGUsers
+            //           .map((user) => `🥇 ${user.habboName} - ${aqui era pra estar a quantidade de presenças por usuario no CG}` )
+            //           .join("\n")}`,
+            //       ),
+            //   ],
+            // });
+          } catch (error) {
+            this.container.logger.error(
+              `[OrganizacionalFormInteractionHandler#run] Error to send embed: ${error} `
+            );
+          }
+        }
+      },
+      { recoverMissedExecutions: true },
+    );
 	}
 
 	#joinList(list: string[]) {
