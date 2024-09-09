@@ -549,20 +549,11 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
           return { user, count };
         });
 
-        this.container.logger.info(
-          `[OrganizacionalFormInteractionHandler#run] Fetched ${users.length} users`
-        );
-
-        this.container.logger.info(
-          `[OrganizacionalFormInteractionHandler#run] Filtered ${dailyUsers.length} daily users`
-        );
-
-        this.container.logger.info(
-          `[OrganizacionalFormInteractionHandler#run] Filtered ${dailyCGUsers.length} daily CG users`
-        );
+        dailyUsersWithCount.sort((a, b) => a.count - b.count);
+        dailyCGUsersWithCount.sort((a, b) => a.count - b.count);
 
         const notificationChannel = await this.container.client.channels.fetch(
-          ENVIRONMENT.NOTIFICATION_CHANNELS.FORM_ANALYTICS,
+          ENVIRONMENT.NOTIFICATION_CHANNELS.DIARY_ORGANIZATIONAL
         );
 
         if (notificationChannel?.isTextBased()) {
@@ -571,9 +562,9 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
               embeds: [
                 new EmbedBuilder()
                   .setColor(EmbedColors.Default)
-                  .setTitle(`⚡ Controle Diário Organizacional ⚡ [${today}]`)
+                  .setTitle(`⚡ Controle Diário Organizacional ⚡ [${today.toLocaleDateString('pt-BR')}]`)
                   .setDescription(
-                    `**${dailyUsers.length} usuários** 📊 Total de presenças nos relatórios presenciais (incluindo presenças no Comando Geral):\n\n${dailyUsersWithCount
+                    `**${dailyUsers.length} usuários ** 📊 Total de presenças nos relatórios presenciais (incluindo presenças no Comando Geral):\n\n${dailyUsersWithCount
                       .map((user) => `${user.user.habboName} - ${user.count}`)
                       .join("\n")}`,
                   ),
@@ -597,7 +588,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
                 new EmbedBuilder()
                   .setColor(EmbedColors.Default)
                   .setDescription(
-                    `**${dailyCGUsers.length} usuários** 📊 Total de presenças no Comando Geral:\n\n${dailyCGUsersWithCount
+                    `**${dailyCGUsers.length} usuários ** 📊 Total de presenças no Comando Geral:\n\n${dailyCGUsersWithCount
                       .map((user) => `${user.user.habboName} - ${user.count}` )
                       .join("\n")}`,
                   ),
