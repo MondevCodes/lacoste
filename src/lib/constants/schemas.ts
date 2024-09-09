@@ -98,6 +98,7 @@ export const NotificationChannels = z.enum([
 	"DEPARTMENT_DEMOTION",
 	"DEPARTMENT_PROMOTIONS",
   "DIARY_ORGANIZATIONAL",
+  "NOIDENTIFY_ORGANIZATIONAL",
 ]);
 
 export type NotificationChannel = z.infer<typeof NotificationChannels>;

@@ -237,6 +237,8 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 			);
 		}
 
+    const notFoundUsers: string[] = [];
+
 		for (const [group, target] of Object.entries(targets) as [
 			Targets,
 			string,
@@ -251,12 +253,13 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 				const { habbo: targetHabbo, member: targetMember } =
 					inferredTarget.unwrapOr({ habbo: undefined, member: undefined });
 
-				if (!targetHabbo) {
+				if (!targetHabbo || !targetMember) {
 					this.container.logger.warn(
 						`[OrganizationalFormInteractionHandler#run] Couldn't find target: ${target}.`,
 					);
 
 					members[group].push(target.replaceAll(MARKDOWN_CHARS_RE, "\\$&"));
+          notFoundUsers.push(target);
 					continue;
 				}
 
@@ -383,6 +386,8 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 			)
 			.setColor(EmbedColors.Default);
 
+
+
 		const guild =
 			interaction.guild ??
 			(await interaction.client.guilds.fetch(ENVIRONMENT.GUILD_ID));
@@ -391,9 +396,22 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 			ENVIRONMENT.NOTIFICATION_CHANNELS.FORM_ORGANIZATIONAL,
 		);
 
-		if (channel === null || !channel.isTextBased()) {
+    const notificationChannelNoIdentify = await this.container.client.channels.fetch(
+      ENVIRONMENT.NOTIFICATION_CHANNELS.NOIDENTIFY_ORGANIZATIONAL
+    );
+
+		if (channel === null || !channel.isTextBased() || !notificationChannelNoIdentify?.isTextBased()) {
 			throw new Error("Forms channel not found or not a text channel.");
 		}
+
+    if (notFoundUsers.length > 0) {
+      await notificationChannelNoIdentify.send({ embeds: [
+        new EmbedBuilder()
+        .setTitle("Usuários não encontrados/cadastrados no Formulário Organizacional")
+        .setDescription(notFoundUsers.join("\n"))
+      ]
+     });
+    }
 
 		await channel.send({
 			embeds: [embed],
@@ -494,8 +512,8 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 			{ recoverMissedExecutions: true },
 		);
     schedule(
-      // "59 23 * * *", // Todo dia as 23:59
-      "*/1 * * * *", // <- A cada minuto para testes
+      // "10 0 * * *", // Executar às 00:10 todos os dias
+      "*/1 * * * *", // A cada minuto para testes
       async () => {
         this.container.logger.info(
           "[OrganizacionalFormInteractionHandler#run] Auto/schedule: 'Relatório Diário', daily runned"
@@ -516,8 +534,9 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
         });
 
         const today = new Date();
-        const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-        const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+        const yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+        const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1, 0, 10, 0);
+        const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 10, 0);
 
         const dailyUsers = users.filter((user) => {
           return user.reportsHistory.some((report) => {
@@ -555,14 +574,17 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
         const notificationChannel = await this.container.client.channels.fetch(
           ENVIRONMENT.NOTIFICATION_CHANNELS.DIARY_ORGANIZATIONAL
         );
+        const notificationChannelNoIdentify = await this.container.client.channels.fetch(
+          ENVIRONMENT.NOTIFICATION_CHANNELS.NOIDENTIFY_ORGANIZATIONAL
+        );
 
-        if (notificationChannel?.isTextBased()) {
+        if (notificationChannel?.isTextBased() && notificationChannelNoIdentify?.isTextBased()) {
           try {
             await notificationChannel.send({
               embeds: [
                 new EmbedBuilder()
                   .setColor(EmbedColors.Default)
-                  .setTitle(`:lacoste: Controle Diário Organizacional [${today.toLocaleDateString('pt-BR')}]`)
+                  .setTitle(`<:lacoste:984848944649625661> Controle Diário Organizacional [${yesterday.toLocaleDateString('pt-BR')}]`)
                   .setDescription(
                     `**${dailyUsers.length} usuários **  📊 Total de presenças nos relatórios presenciais (incluindo presenças no Comando Geral):\n\n${dailyUsersWithCount
                       .map((user) => `${user.user.habboName} - ${user.count}`)
@@ -606,6 +628,10 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
             //       ),
             //   ],
             // });
+
+            await notificationChannelNoIdentify.send({
+              content: `**FIM DO DIA** [${yesterday.toLocaleDateString('pt-BR')}]`
+            });
           } catch (error) {
             this.container.logger.error(
               `[OrganizacionalFormInteractionHandler#run] Error to send embed: ${error} `
