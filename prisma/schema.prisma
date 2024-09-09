@@ -33,6 +33,7 @@ model User {
   latestPromotionRoleId String?
 
   reportsHistory         DateTime[]
+  reportsHistoryCG         DateTime[]
   pendingPromotionRoleId String?
 
   // Tickets              Ticket[]
