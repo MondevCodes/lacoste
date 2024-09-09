@@ -494,7 +494,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 			{ recoverMissedExecutions: true },
 		);
     schedule(
-      // "58 23 * * *", // Todo dia as 23:58
+      // "59 23 * * *", // Todo dia as 23:59
       "*/1 * * * *", // <- A cada minuto para testes
       async () => {
         this.container.logger.info(
@@ -562,9 +562,9 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
               embeds: [
                 new EmbedBuilder()
                   .setColor(EmbedColors.Default)
-                  .setTitle(`⚡ Controle Diário Organizacional ⚡ [${today.toLocaleDateString('pt-BR')}]`)
+                  .setTitle(`:lacoste: Controle Diário Organizacional [${today.toLocaleDateString('pt-BR')}]`)
                   .setDescription(
-                    `**${dailyUsers.length} usuários ** 📊 Total de presenças nos relatórios presenciais (incluindo presenças no Comando Geral):\n\n${dailyUsersWithCount
+                    `**${dailyUsers.length} usuários **  📊 Total de presenças nos relatórios presenciais (incluindo presenças no Comando Geral):\n\n${dailyUsersWithCount
                       .map((user) => `${user.user.habboName} - ${user.count}`)
                       .join("\n")}`,
                   ),
@@ -588,7 +588,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
                 new EmbedBuilder()
                   .setColor(EmbedColors.Default)
                   .setDescription(
-                    `**${dailyCGUsers.length} usuários ** 📊 Total de presenças no Comando Geral:\n\n${dailyCGUsersWithCount
+                    `**${dailyCGUsers.length} usuários **  📊 Total de presenças no Comando Geral:\n\n${dailyCGUsersWithCount
                       .map((user) => `${user.user.habboName} - ${user.count}` )
                       .join("\n")}`,
                   ),
