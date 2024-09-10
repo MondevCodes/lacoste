@@ -378,21 +378,21 @@ export class PromotionInteractionHandler extends InteractionHandler {
 				));
 
 			await Promise.all([
-				targetMember.roles.add(nextTargetJob.id),
-				targetMember.roles.remove(currentTargetJob.id),
+				await targetMember.roles.remove(currentTargetJob.id),
+        previousSectorRole?.id !== nextSectorRole?.id &&
+          previousSectorRole &&
+          await guild.members.removeRole({
+            user: targetMember.id,
+            role: previousSectorRole,
+          }),
 
+				await targetMember.roles.add(nextTargetJob.id),
 				nextSectorRole &&
-					guild.members.addRole({
+					await guild.members.addRole({
 						user: targetMember.id,
 						role: nextSectorRole,
 					}),
 
-				previousSectorRole?.id !== nextSectorRole?.id &&
-					previousSectorRole &&
-					guild.members.removeRole({
-						user: targetMember.id,
-						role: previousSectorRole,
-					}),
 			]);
 
       this.container.logger.info(
