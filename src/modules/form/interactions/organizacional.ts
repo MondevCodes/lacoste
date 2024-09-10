@@ -510,8 +510,8 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 			{ recoverMissedExecutions: true },
 		);
     schedule(
-      // "59 23 * * *", // Executar às 23:59 todos os dias
-      "*/1 * * * *", // A cada minuto para testes
+      "59 23 * * *", // Executar às 23:59 todos os dias
+      // "*/1 * * * *", // A cada minuto para testes
       async () => {
         this.container.logger.info(
           "[OrganizacionalFormInteractionHandler#run] Auto/schedule: 'Relatório Diário', daily runned"
