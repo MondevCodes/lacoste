@@ -239,7 +239,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 
     const notFoundUsers: string[] = [];
 
-		for (const [group, target] of Object.entries(targets) as [
+		for (const [group, target] of unparsedTargets as [
 			Targets,
 			string,
 		][]) {
