@@ -386,8 +386,6 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 			)
 			.setColor(EmbedColors.Default);
 
-
-
 		const guild =
 			interaction.guild ??
 			(await interaction.client.guilds.fetch(ENVIRONMENT.GUILD_ID));
@@ -407,7 +405,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
     if (notFoundUsers.length > 0) {
       await notificationChannelNoIdentify.send({ embeds: [
         new EmbedBuilder()
-        .setTitle("Usuários não encontrados/cadastrados no Formulário Organizacional")
+        .setTitle("Usuários não encontrados/vinculados no Formulário Organizacional")
         .setDescription(notFoundUsers.join("\n"))
       ]
      });
@@ -512,7 +510,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 			{ recoverMissedExecutions: true },
 		);
     schedule(
-      // "10 0 * * *", // Executar às 00:10 todos os dias
+      // "59 23 * * *", // Executar às 23:59 todos os dias
       "*/1 * * * *", // A cada minuto para testes
       async () => {
         this.container.logger.info(
@@ -533,16 +531,9 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
           },
         });
 
-        // const today = new Date();
-        // const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 9, 0);
-        // const startOfDay = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 0, 10, 0);
-
-
         const today = new Date();
-        const yesterday = new Date(today.getTime());
-        yesterday.setDate(today.getDate() - 1);
-        const startOfDay = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate());
-        const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 9, 0);
+        const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
 
         const dailyUsers = users.filter((user) => {
           return user.reportsHistory.some((report) => {
