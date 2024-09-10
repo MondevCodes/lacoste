@@ -575,7 +575,11 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
           ENVIRONMENT.NOTIFICATION_CHANNELS.NOIDENTIFY_ORGANIZATIONAL
         );
 
-        if (notificationChannel?.isTextBased() && notificationChannelNoIdentify?.isTextBased()) {
+        const channel = await this.container.client.channels.fetch(
+          ENVIRONMENT.NOTIFICATION_CHANNELS.FORM_ORGANIZATIONAL,
+        );
+
+        if (notificationChannel?.isTextBased() && notificationChannelNoIdentify?.isTextBased() && channel?.isTextBased()) {
           try {
             await notificationChannel.send({
               embeds: [
@@ -627,6 +631,10 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
             // });
 
             await notificationChannelNoIdentify.send({
+              content: `**FIM DO DIA** [${today.toLocaleDateString('pt-BR')}]`
+            });
+
+            await channel.send({
               content: `**FIM DO DIA** [${today.toLocaleDateString('pt-BR')}]`
             });
           } catch (error) {
