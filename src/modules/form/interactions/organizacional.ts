@@ -231,7 +231,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 
 			unparsedTargets.push(
 				...value
-					.split(/\s+/gm)
+					.split(/[\s\n\r]+/gm)
 					.filter((v) => v !== "")
 					.map((v) => [key, v] as (typeof unparsedTargets)[number]),
 			);
