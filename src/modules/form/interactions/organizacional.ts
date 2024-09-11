@@ -565,8 +565,8 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
           return { user, count };
         });
 
-        dailyUsersWithCount.sort((a, b) => a.count - b.count);
-        dailyCGUsersWithCount.sort((a, b) => a.count - b.count);
+        dailyUsersWithCount.sort((a, b) => b.count - a.count);
+        dailyCGUsersWithCount.sort((a, b) => b.count - a.count);
 
         const notificationChannel = await this.container.client.channels.fetch(
           ENVIRONMENT.NOTIFICATION_CHANNELS.DIARY_ORGANIZATIONAL
@@ -587,48 +587,48 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
                   .setColor(EmbedColors.Default)
                   .setTitle(`<:lacoste:984848944649625661> Controle Diário Organizacional [${today.toLocaleDateString('pt-BR')}]`)
                   .setDescription(
-                    `**${dailyUsers.length} usuários **  📊 Total de presenças nos relatórios presenciais (incluindo presenças no Comando Geral):\n\n${dailyUsersWithCount
+                    `**${dailyUsers.length} usuários  📊 Total de presenças nos relatórios presenciais (incluindo presenças no Comando Geral):** \n\n${dailyUsersWithCount
                       .map((user) => `${user.user.habboName} - ${user.count}`)
                       .join("\n")}`,
                   ),
               ],
             });
 
-            // await notificationChannel.send({
-            //   embeds: [
-            //     new EmbedBuilder()
-            //       .setColor(EmbedColors.Default)
-            //       .setDescription(
-            //         `**${dailyUsers.length}** 📊 🏆  Destaque Diário:\n\n${dailyUsers
-            //           .map((user) => `🥇 ${user.habboName} - ${aqui era pra estar a quantidade de presenças por usuario}`)
-            //           .join("\n")}`,
-            //       ),
-            //   ],
-            // });
+            await notificationChannel.send({
+              embeds: [
+                new EmbedBuilder()
+                  .setColor(EmbedColors.Default)
+                  .setDescription(
+                    `**🏆 Destaque Diário (Todos):**\n\n
+					🥇 ${dailyUsersWithCount[0].user.habboName} - ${dailyUsersWithCount[0].count}`,
+                  ),
+              ],
+            });
 
             await notificationChannel.send({
               embeds: [
                 new EmbedBuilder()
                   .setColor(EmbedColors.Default)
                   .setDescription(
-                    `**${dailyCGUsers.length} usuários **  📊 Total de presenças no Comando Geral:\n\n${dailyCGUsersWithCount
+                    `**${dailyCGUsers.length} usuários  📊 Total de presenças no Comando Geral:** \n\n${dailyCGUsersWithCount
                       .map((user) => `${user.user.habboName} - ${user.count}` )
                       .join("\n")}`,
                   ),
               ],
             });
 
-            // await notificationChannel.send({
-            //   embeds: [
-            //     new EmbedBuilder()
-            //       .setColor(EmbedColors.Default)
-            //       .setDescription(
-            //         `**${dailyCGUsers.length}** 🏆  Destaque Diário CG:\n\n${dailyCGUsers
-            //           .map((user) => `🥇 ${user.habboName} - ${aqui era pra estar a quantidade de presenças por usuario no CG}` )
-            //           .join("\n")}`,
-            //       ),
-            //   ],
-            // });
+            await notificationChannel.send({
+              embeds: [
+                new EmbedBuilder()
+                  .setColor(EmbedColors.Default)
+                  .setDescription(
+                    `**🏆 Destaque Diário (CG):**\n\n
+					🥇 ${dailyCGUsersWithCount[0].user.habboName} - ${dailyCGUsersWithCount[0].count} \n\n\n\n
+					*Atenciosamente, Sistema Lacoste.*
+					`,
+                  ),
+              ],
+            });
 
             await notificationChannelNoIdentify.send({
               content: `**FIM DO DIA** [${today.toLocaleDateString('pt-BR')}]`
