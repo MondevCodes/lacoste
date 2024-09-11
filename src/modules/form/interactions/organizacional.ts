@@ -587,7 +587,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
                   .setColor(EmbedColors.Default)
                   .setTitle(`<:lacoste:984848944649625661> Controle Diário Organizacional [${today.toLocaleDateString('pt-BR')}]`)
                   .setDescription(
-                    `**${dailyUsers.length} usuários  📊 Total de presenças nos relatórios presenciais (incluindo presenças no Comando Geral):** \n\n${dailyUsersWithCount
+                    `**📊 Total de presenças nos relatórios presenciais (incluindo presenças no Comando Geral):** \n **${dailyUsers.length} usuários** \n\n${dailyUsersWithCount
                       .map((user) => `${user.user.habboName} - ${user.count}`)
                       .join("\n")}`,
                   ),
@@ -610,7 +610,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
                 new EmbedBuilder()
                   .setColor(EmbedColors.Default)
                   .setDescription(
-                    `**${dailyCGUsers.length} usuários  📊 Total de presenças no Comando Geral:** \n\n${dailyCGUsersWithCount
+                    `**📊 Total de presenças no Comando Geral:** \n **${dailyCGUsers.length} usuários** \n\n${dailyCGUsersWithCount
                       .map((user) => `${user.user.habboName} - ${user.count}` )
                       .join("\n")}`,
                   ),
@@ -624,8 +624,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
                   .setDescription(
                     `**🏆 Destaque Diário (CG):**\n\n
 					🥇 ${dailyCGUsersWithCount[0].user.habboName} - ${dailyCGUsersWithCount[0].count} \n\n\n\n
-					*Atenciosamente, Sistema Lacoste.*
-					`,
+					*Atenciosamente, Sistema Lacoste.*`,
                   ),
               ],
             });
