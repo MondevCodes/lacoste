@@ -268,6 +268,18 @@ export class PromotionInteractionHandler extends InteractionHandler {
 			},
 		});
 
+    const authorDB = await this.container.prisma.user.findUnique({
+			where: {
+				discordId: interaction.user.id,
+			},
+			select: {
+				id: true,
+				latestPromotionDate: true,
+				latestPromotionRoleId: true,
+        habboName: true,
+			},
+		});
+
 		const authorizedHigherRoleId = this.#isTargetRoleInferior(
 			"SUPERVISOR",
 			nextTargetJob.id,
@@ -454,7 +466,7 @@ export class PromotionInteractionHandler extends InteractionHandler {
 						.addFields([
               {
                 name: "👤 Promotor ",
-                value: `${habboName ?? `@${interaction.user.tag}`}`,
+                value: `${habboName ?? authorDB?.habboName}`,
               },
 							{
 								name: "🗓️ Promovido Em",
