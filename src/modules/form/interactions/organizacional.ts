@@ -587,7 +587,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
                   .setColor(EmbedColors.Default)
                   .setTitle(`<:lacoste:984848944649625661> Controle Diário Organizacional [${today.toLocaleDateString('pt-BR')}]`)
                   .setDescription(
-                    `**📊 Total de presenças nos relatórios presenciais (incluindo presenças no Comando Geral):** \n **${dailyUsers.length} usuários** \n\n${dailyUsersWithCount
+                    `**📊 Total de presenças nos relatórios presenciais (incluindo presenças no Comando Geral) ${dailyUsers.length} usuários:** \n\n${dailyUsersWithCount
                       .map((user) => `${user.user.habboName} - ${user.count}`)
                       .join("\n")}`,
                   ),
@@ -599,7 +599,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
                 new EmbedBuilder()
                   .setColor(EmbedColors.Default)
                   .setDescription(
-                    `**🏆 Destaque Diário (Todos):**\n\n
+                    `**🏆 Destaque Diário (Todos):**\n
 					🥇 ${dailyUsersWithCount[0].user.habboName} - ${dailyUsersWithCount[0].count}`,
                   ),
               ],
@@ -610,7 +610,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
                 new EmbedBuilder()
                   .setColor(EmbedColors.Default)
                   .setDescription(
-                    `**📊 Total de presenças no Comando Geral:** \n **${dailyCGUsers.length} usuários** \n\n${dailyCGUsersWithCount
+                    `**📊 Total de presenças no Comando Geral ${dailyCGUsers.length} usuários:** \n\n${dailyCGUsersWithCount
                       .map((user) => `${user.user.habboName} - ${user.count}` )
                       .join("\n")}`,
                   ),
@@ -622,8 +622,8 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
                 new EmbedBuilder()
                   .setColor(EmbedColors.Default)
                   .setDescription(
-                    `**🏆 Destaque Diário (CG):**\n\n
-					🥇 ${dailyCGUsersWithCount[0].user.habboName} - ${dailyCGUsersWithCount[0].count} \n\n\n\n
+                    `**🏆 Destaque Diário (CG):**\n
+					🥇 ${dailyCGUsersWithCount[0].user.habboName} - ${dailyCGUsersWithCount[0].count} \n\n
 					*Atenciosamente, Sistema Lacoste.*`,
                   ),
               ],
@@ -643,7 +643,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
           }
         }
       },
-      { recoverMissedExecutions: true },
+      { recoverMissedExecutions: false },
     );
 	}
 
