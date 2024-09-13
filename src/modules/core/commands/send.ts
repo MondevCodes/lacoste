@@ -78,7 +78,7 @@ export default class SendCommand extends Command {
 							'Para adicionar ou remover um membro específico ou de um grupo (ex. setor estagiário), basta clicar no botão correspondente. Em adição ou remoção em grupo, use vírgula (",") para separar os nicks (ex. Brendo, Fortissima, Trobs).',
 						)
 						.setImage(
-							"https://media.discordapp.net/attachments/1217954543417950329/1224064257084100778/Lac_8.png?ex=661c21ac&is=6609acac&hm=1446a824b74f9b0bc102f07047c4ecca95ad0c91a2f904b655913910980a58fe&=&format=webp",
+							"https://media.discordapp.net/attachments/1266124737277595729/1284254541067456592/image-5.png?ex=66e5f6be&is=66e4a53e&hm=0db96174008110c92e1f76104be96c56575504c6188ac9cfbcc347d6fdf1f5e1&=&format=webp&quality=lossless",
 						),
 				],
 				components: [
@@ -119,7 +119,7 @@ export default class SendCommand extends Command {
 							"Selecione o tipo de formulário que deseja e responda o questionário que será aberto. Ao finalizar, seu formulário será enviado para a equipe de avaliação.",
 						)
 						.setImage(
-							"https://media.discordapp.net/attachments/1217954543417950329/1224063695009747075/image.png?ex=661c2126&is=6609ac26&hm=824f9653ce6f6317d59675927f7707b078d299221159ce4a7ac26b69d13e9aeb&=&format=webp",
+							"https://media.discordapp.net/attachments/1266124737277595729/1284254541298270312/image-6.png?ex=66e5f6be&is=66e4a53e&hm=8811a2e730b5bbd9e6f0f4955ad1bd2abf51be27062531e587131081a54dabd5&=&format=webp&quality=lossless",
 						),
 				],
 				components: [
@@ -148,7 +148,7 @@ export default class SendCommand extends Command {
 							"Clique no botão abaixo para abrir o questionário que, ao finalizar, será enviado para o canal de acompanhamentos.",
 						)
 						.setImage(
-							"https://cdn.discordapp.com/attachments/1267288327539916800/1280311448106700920/image.png?ex=66d79e74&is=66d64cf4&hm=046f3db2444275d0c3c3d00aae9e91e6bfc2327edea95cee2948c80c81c47e3a&",
+							"https://media.discordapp.net/attachments/1266124737277595729/1284266252378050740/intendente.png?ex=66e601a7&is=66e4b027&hm=56a017d69d4018393b874d7346a059e3988a17fcd9581ca7161b8ad11143f844&=&format=webp&quality=lossless",
 						),
 				],
 				components: [
@@ -205,7 +205,7 @@ export default class SendCommand extends Command {
 							"Selecione o tipo de formulário que deseja e responda o questionário que será aberto. Ao finalizar, seu formulário será enviado para o canal de relatórios.",
 						)
 						.setImage(
-							"https://media.discordapp.net/attachments/1217954543417950329/1224063783551504554/image.png?ex=661c213c&is=6609ac3c&hm=c3b512fc1e956cde8d78bcc6ff93c7f1ee3bda9ebe5b54aa804cbe2c0cbb79da&=&format=webp",
+							"https://media.discordapp.net/attachments/1266124737277595729/1284254540488769669/image-3.png?ex=66e5f6be&is=66e4a53e&hm=198411ebcf5541fcd3b20d1682ed2df1d456239c8dcc7476d9c1a2dc410877ef&=&format=webp&quality=lossless",
 						),
 				],
 				components: [
@@ -229,7 +229,7 @@ export default class SendCommand extends Command {
 							"Para realizar uma demissão, anotação ou advertência, será criado um ticket correspondente a ação escolhida. Fique atento ao canal que será gerado e as perguntas feitas pelo BOT. \n\nClique no botão que corresponda à ação desejada.",
 						)
 						.setImage(
-							"https://media.discordapp.net/attachments/1217954543417950329/1224064012820418622/image.png?ex=661c2172&is=6609ac72&hm=04bd0e02ed2f999e700a662e18dd8915407e0435aa6834e48d9856acecc1a189&=&format=webp",
+							"https://media.discordapp.net/attachments/1266124737277595729/1284254540056760413/image-1.png?ex=66e5f6be&is=66e4a53e&hm=fcaf2c3d944f3ef2fcfe9d5c369a82e39204b70f40a4edd218feb9b04d0866c2&=&format=webp&quality=lossless",
 						),
 				],
 				components: [
@@ -263,7 +263,7 @@ export default class SendCommand extends Command {
 							"Para enviar sugestões, reclamações ou duvidas! Um administrador irá responder o mais rápido possível.",
 						)
 						.setImage(
-							"https://media.discordapp.net/attachments/1217954543417950329/1224063318696919121/image.png?ex=661c20cd&is=6609abcd&hm=50887b1632ce7a97b9a7df629c79a9c56bccfa25a3967f25eec4bf89d7f8c582&=&format=webp",
+							"https://media.discordapp.net/attachments/1266124737277595729/1284254540283121766/image-2.png?ex=66e5f6be&is=66e4a53e&hm=2f1408921ad03a58727c13c9c88b2ccab7b337b4e67f0374a9bf378c07943283&=&format=webp&quality=lossless",
 						),
 				],
 				components: [
@@ -293,7 +293,7 @@ export default class SendCommand extends Command {
 							"Escolha o tipo de ação que deseja fazer o clique no botão abaixo, preencha os formulários corretamente e aguarde a aprovação do seu pedido.",
 						)
 						.setImage(
-							"https://media.discordapp.net/attachments/1217954543417950329/1224063918696042626/image.png?ex=661c215c&is=6609ac5c&hm=d3c5063fba91b95885042c685a2c90a113151d13f4af15ae6b8d397c4202614a&=&format=webp",
+							"https://media.discordapp.net/attachments/1266124737277595729/1284254541725962281/image.png?ex=66e5f6bf&is=66e4a53f&hm=58cb45e7011c2a79941c035706386b672cb133820dbbb15b553fff5499ce61c5&=&format=webp&quality=lossless",
 						),
 				],
 				components: [
@@ -348,7 +348,7 @@ export default class SendCommand extends Command {
 							"Selecione o tipo de afastamento que deseja e responda o questionário que será aberto. Ao finalizar, seu afastamento será enviado para o canal de relatórios.",
 						)
 						.setImage(
-							"https://media.discordapp.net/attachments/1217954543417950329/1224064191036522516/Lac_7.png?ex=661c219d&is=6609ac9d&hm=d24c6a91a139e628d2a7c27ccf9e1f3c62898b2dc1def111ff402c7f852b24e6&=&format=webp",
+							"https://media.discordapp.net/attachments/1266124737277595729/1284254541503795312/image-7.png?ex=66e5f6be&is=66e4a53e&hm=609d299183e11372d8ab9e134992f9a10f3929f7c43aee4c5c8baa688a4e9218&=&format=webp&quality=lossless",
 						),
 				],
 				components: [
@@ -379,7 +379,10 @@ export default class SendCommand extends Command {
 						.setTitle("Alterar Nickname")
 						.setDescription(
 							"Mudou seu apelido no Habbo? Clique no botão abaixo para automaticamente atualizar o seu perfil.",
-						),
+						)
+            .setImage(
+              "https://media.discordapp.net/attachments/1266124737277595729/1284254540753014976/image-4.png?ex=66e5f6be&is=66e4a53e&hm=7b53a778d894641cef1e209db75fcdbfb744c07475140ecfa5d9208fd0cc03d4&=&format=webp&quality=lossless"
+            ),
 				],
 				components: [
 					new ActionRowBuilder<ButtonBuilder>().addComponents(
