@@ -136,16 +136,18 @@ export class LinkCommand extends Command {
 					})
 					.catch(() => undefined);
 
-			await this.container.prisma.user.update({
-				where: {
-				habboId: profile.uniqueId,
-				},
-				data: {
-				latestPromotionDate: new Date(),
-				latestPromotionRoleId: ENVIRONMENT.SECTORS_ROLES.INICIAL.id,
-				},
+      if (existingUser) {
+        await this.container.prisma.user.update({
+          where: {
+          habboId: profile.uniqueId,
+          },
+          data: {
+          latestPromotionDate: new Date(),
+          latestPromotionRoleId: ENVIRONMENT.SECTORS_ROLES.INICIAL.id,
+          },
 
-			});
+        });
+      }
 
 			this.container.logger.info(
 				"Job Vinculado role Added"
