@@ -83,6 +83,21 @@ export class LinkCommand extends Command {
 			select: { habboId: true, discordId: true, latestPromotionRoleId: true },
 		});
 
+    const existingUserDiscord = await this.container.prisma.user.findUnique({
+			where: { discordId: member.id },
+			select: { habboId: true, discordId: true, latestPromotionRoleId: true, habboName: true },
+		});
+
+    if (existingUserDiscord) {
+      await this.container.utilities.discord.sendEphemeralMessage(message, {
+				content:
+					`Este perfil do Discord já está vinculado com a conta do Habbo: ${existingUserDiscord.habboName}`,
+				method: "reply",
+			});
+
+      return;
+    }
+
 		const highestJob =
 			this.container.utilities.discord.inferHighestJobRole(roles);
 
@@ -121,18 +136,16 @@ export class LinkCommand extends Command {
 					})
 					.catch(() => undefined);
 
-			if (existingUser) {
-				await this.container.prisma.user.update({
-					where: {
-					habboId: profile.uniqueId,
-					},
-					data: {
-					latestPromotionDate: new Date(),
-					latestPromotionRoleId: ENVIRONMENT.SECTORS_ROLES.INICIAL.id,
-					},
+			await this.container.prisma.user.update({
+				where: {
+				habboId: profile.uniqueId,
+				},
+				data: {
+				latestPromotionDate: new Date(),
+				latestPromotionRoleId: ENVIRONMENT.SECTORS_ROLES.INICIAL.id,
+				},
 
-				});
-			}
+			});
 
 			this.container.logger.info(
 				"Job Vinculado role Added"
@@ -149,7 +162,14 @@ export class LinkCommand extends Command {
 				);
 			});
 
-		if (existingUser) {
+    if (existingUser?.discordId === "0") {
+      await this.container.prisma.user
+      .update({
+        where: { habboId: existingUser.habboId },
+        data: { discordId: member.id },
+      })
+      .catch(() => undefined);
+		} else if (existingUser) {
 			await this.container.prisma.user
 				.update({
 					where: { discordId: existingUser.discordId },
