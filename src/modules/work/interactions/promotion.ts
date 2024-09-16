@@ -84,36 +84,21 @@ export class PromotionInteractionHandler extends InteractionHandler {
 				],
 			});
 
-		const inferredTargetResult = await Result.fromAsync(
-			this.container.utilities.habbo.inferTargetGuildMember(result.target),
-		);
+      const onlyHabbo = (await this.container.utilities.habbo.getProfile(result.target)).unwrapOr(
+        undefined,
+      );
 
-		if (inferredTargetResult.isErr()) {
-			await interactionFromModal.editReply({
-				content: "||P93N|| Houve um erro inesperado, contate o desenvolvedor.",
-			});
+      if (!onlyHabbo?.name) {
+        await interactionFromModal.editReply({
+          content:
+          "Não consegui encontrar o perfil do usuário no Habbo, talvez sua conta esteja deletada ou renomeada? Veja se o perfil do usuário no jogo está como público.",
+        });
 
-			this.container.logger.error(
-				`[PromotionInteractionHandler#run/${interaction.id}] ${interaction.user.tag} tried to promote ${result.target} but failed because they are not in the server.`,
-				{ error: inferredTargetResult.unwrapErr() },
-			);
-
-			return;
-		}
-
-		const { member: targetMember, habbo: targetHabbo } =
-			inferredTargetResult.unwrapOr({ member: undefined, habbo: undefined });
-
-    if (!targetHabbo) {
-      await interactionFromModal.editReply({
-				content: "Não foi possivel encontrar o usuário no Habbo, verifique se a conta que quer promover está como pública.",
-			});
-
-      return;
-    }
+        return;
+      }
 
     const targetDB = await this.container.prisma.user.findUnique({
-      where: { habboId: targetHabbo?.uniqueId },
+      where: { habboId: onlyHabbo.uniqueId },
       select: {
         id: true,
         discordId: true,
@@ -293,10 +278,10 @@ export class PromotionInteractionHandler extends InteractionHandler {
               new EmbedBuilder()
                 .setTitle("Promover")
                 .setDescription(
-                  `Promover ${targetHabbo.name} para ${targetJobRole}?`,
+                  `Promover ${onlyHabbo.name} para ${targetJobRole}?`,
                 )
                 .setThumbnail(
-                  `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`,
+                  `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo?.figureString}&size=b`,
                 )
                 .setColor(EmbedColors.Default),
             ],
@@ -337,7 +322,7 @@ export class PromotionInteractionHandler extends InteractionHandler {
       if (targetDB && nextSectorRole)
 				await this.container.prisma.user.update({
 					where: {
-						habboId: targetHabbo.uniqueId,
+						habboId: onlyHabbo.uniqueId,
 					},
 					data: {
 						latestPromotionDate: new Date(),
@@ -374,7 +359,7 @@ export class PromotionInteractionHandler extends InteractionHandler {
           embeds: [
             new EmbedBuilder()
               .setDescription(
-                `### Promoção de ${targetHabbo?.name ?? targetDB.habboName}\n\n`,
+                `### Promoção de ${onlyHabbo?.name ?? targetDB.habboName}\n\n`,
               )
               .setAuthor({
                 name: interaction.user.tag,
@@ -415,7 +400,7 @@ export class PromotionInteractionHandler extends InteractionHandler {
               ])
               .setColor(EmbedColors.Success)
               .setThumbnail(
-                `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`,
+                `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo?.figureString}&size=b`,
               ),
           ],
         });
@@ -430,6 +415,34 @@ export class PromotionInteractionHandler extends InteractionHandler {
         return;
 
       // END WITHOUT DISCORD
+    }
+
+    const inferredTargetResult = await Result.fromAsync(
+			this.container.utilities.habbo.inferTargetGuildMember(result.target),
+		);
+
+		if (inferredTargetResult.isErr()) {
+			await interactionFromModal.editReply({
+				content: "||P93N|| Houve um erro inesperado, contate o desenvolvedor.",
+			});
+
+			this.container.logger.error(
+				`[PromotionInteractionHandler#run/${interaction.id}] ${interaction.user.tag} tried to promote ${result.target} but failed because they are not in the server.`,
+				{ error: inferredTargetResult.unwrapErr() },
+			);
+
+			return;
+		}
+
+		const { member: targetMember, habbo: targetHabbo } =
+			inferredTargetResult.unwrapOr({ member: undefined, habbo: undefined });
+
+    if (!targetHabbo) {
+      await interactionFromModal.editReply({
+				content: "Não foi possivel encontrar o usuário no Habbo, verifique se a conta que quer promover está como pública.",
+			});
+
+      return;
     }
 
 		if (!targetMember) {

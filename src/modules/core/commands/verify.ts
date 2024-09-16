@@ -17,22 +17,22 @@ export default class SendCommand extends Command {
 		const targetResult = await args.pickResult("string");
 		if (targetResult.isErr()) return;
 
-		const { habbo, member } =
-			await this.container.utilities.habbo.inferTargetGuildMember(
-				targetResult.unwrap(),
-			);
 
-    if (!habbo?.name) {
+    const onlyHabbo = (await this.container.utilities.habbo.getProfile(targetResult.unwrap())).unwrapOr(
+			undefined,
+		);
+
+    if (!onlyHabbo?.name) {
       await message.reply({
         content:
-				"Não consegui encontrar o perfil do usuário no Habbo, talvez sua conta esteja deletada ou renomeada? Veja se o perfil do usuário no Habbo está como público.",
+				"Não consegui encontrar o perfil do usuário no Habbo, talvez sua conta esteja deletada ou renomeada? Veja se o perfil do usuário no jogo está como público.",
       });
 
       return;
     }
 
     const targetDB = await this.container.prisma.user.findUnique({
-      where: { habboId: habbo.uniqueId },
+      where: { habboId: onlyHabbo.uniqueId },
       select: {
         id: true,
         discordId: true,
@@ -111,7 +111,7 @@ export default class SendCommand extends Command {
           await message.reply({
             embeds: [
               new EmbedBuilder()
-                .setTitle(`Verificação de ${habbo.name}`)
+                .setTitle(`Verificação de ${onlyHabbo.name}`)
                 .setFields([
                   {
                     name: "Setor // Cargo",
@@ -146,7 +146,7 @@ export default class SendCommand extends Command {
                 })
                 .setColor(EmbedColors.Default)
                 .setThumbnail(
-                  `https://www.habbo.com/habbo-imaging/avatarimage?figure=${habbo.figureString}&size=b`,
+                  `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo.figureString}&size=b`,
                 ),
             ],
           });
@@ -162,7 +162,7 @@ export default class SendCommand extends Command {
           await message.reply({
             embeds: [
               new EmbedBuilder()
-                .setTitle(`Verificação de ${habbo.name}`)
+                .setTitle(`Verificação de ${onlyHabbo.name}`)
                 .setFields([
                   {
                     name: "Setor // Cargo",
@@ -187,7 +187,7 @@ export default class SendCommand extends Command {
                 })
                 .setColor(EmbedColors.Default)
                 .setThumbnail(
-                  `https://www.habbo.com/habbo-imaging/avatarimage?figure=${habbo.figureString}&size=b`,
+                  `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo.figureString}&size=b`,
                 ),
             ],
           });
@@ -200,14 +200,26 @@ export default class SendCommand extends Command {
       discordLinked = true;
     }
 
+    const { habbo, member } =
+    await this.container.utilities.habbo.inferTargetGuildMember(
+      targetResult.unwrap(),
+    );
+
     if (!member) {
 			await message.reply({
 				content:
-					"Não consegui encontrar o perfil do Discord usuário que estava com o mesmo ativo, talvez saiu do Servidor?",
+					"Não consegui encontrar o perfil do Discord do usuário que estava com o mesmo ativo, talvez saiu do Servidor?",
 			});
 
 			return;
-		}
+		} else if (!habbo?.name) {
+      await message.reply({
+				content:
+					"Não consegui encontrar o perfil do usuário no Habbo, talvez sua conta esteja deletada ou renomeada? Veja se o perfil do usuário no jogo está como público.",
+			});
+
+      return;
+    }
 
 		const currentSectorId =
 			this.container.utilities.discord.inferHighestSectorRole(
