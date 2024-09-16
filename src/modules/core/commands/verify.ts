@@ -1,4 +1,4 @@
-import { EmbedBuilder, Message} from "discord.js";
+import { EmbedBuilder, Message } from "discord.js";
 import { ApplyOptions } from "@sapphire/decorators";
 import { Args, Command} from "@sapphire/framework";
 
@@ -22,10 +22,188 @@ export default class SendCommand extends Command {
 				targetResult.unwrap(),
 			);
 
-		if (!habbo?.name || !member) {
+    if (!habbo?.name) {
+      await message.reply({
+        content:
+				"Não consegui encontrar o perfil do usuário no Habbo, talvez sua conta esteja deletada ou renomeada? Veja se o perfil do usuário no Habbo está como público.",
+      });
+
+      return;
+    }
+
+    const targetDB = await this.container.prisma.user.findUnique({
+      where: { habboId: habbo.uniqueId },
+      select: {
+        id: true,
+        discordId: true,
+        latestPromotionDate: true,
+        latestPromotionRoleId: true,
+        latestPromotionJobId: true,
+      },
+    });
+
+    let discordLinked: boolean | undefined;
+
+    // START VERIFY WITHOUT DISCORD
+    if (targetDB?.discordId === "0") {
+      discordLinked = false;
+
+      if (!targetDB.latestPromotionRoleId) {
+        await message.reply({
+          content:
+            "Não consegui encontrar o setor do usuário, talvez sua conta esteja deletada ou renomeada?",
+        });
+
+        return;
+      }
+
+      const currentSectorEnvironment =
+			Object.values(ENVIRONMENT.SECTORS_ROLES).find((r) => r.id === targetDB.latestPromotionRoleId);
+
+      if (!currentSectorEnvironment) {
+        await message.reply({
+          content:
+            "Não consegui encontrar o setor do usuário, talvez sua conta esteja deletada ou renomeada?",
+        });
+
+        return;
+      }
+
+      const currentSector = await message.guild.roles.fetch(currentSectorEnvironment?.id);
+
+      const currentJobEnvironment =
+      Object.values(ENVIRONMENT.JOBS_ROLES).find((r) => r.id === targetDB.latestPromotionJobId);
+
+      if (!currentJobEnvironment) {
+        await message.reply({
+          content:
+            "Não consegui encontrar o cargo do usuário, talvez sua conta esteja deletada ou renomeada?",
+        });
+
+        return;
+      }
+
+      const currentJob = await message.guild.roles.fetch(currentJobEnvironment?.id);
+
+        let shouldPromote =
+        /** isFirstPromotion */
+        !targetDB?.latestPromotionRoleId ||
+        !targetDB?.latestPromotionDate;
+
+      if (!shouldPromote) {
+        const latestPromotionDate =
+        targetDB?.latestPromotionDate &&
+        new Date(targetDB?.latestPromotionDate);
+
+        const minDaysProm = currentJobEnvironment.minDaysProm;
+
+        if (latestPromotionDate && minDaysProm) {
+          const daysSinceLastPromotion = Math.floor(
+              (new Date().getTime() - latestPromotionDate.getTime()) /
+                (1000 * 3600 * 24),
+          );
+
+          let daysForPromote = minDaysProm - daysSinceLastPromotion
+          shouldPromote = daysSinceLastPromotion >= minDaysProm
+
+          if (daysForPromote < 0) { daysForPromote = 0 }
+
+          await message.reply({
+            embeds: [
+              new EmbedBuilder()
+                .setTitle(`Verificação de ${habbo.name}`)
+                .setFields([
+                  {
+                    name: "Setor // Cargo",
+                    value: `**${currentSector?.name}** // **${currentJob?.name}**`,
+                  },
+                  {
+                    name: "Ultima Promoção",
+                    value: targetDB?.latestPromotionDate
+                      ? new Date(
+                          targetDB?.latestPromotionDate,
+                        ).toLocaleDateString("pt-BR")
+                      : "N/D",
+                  },
+                  {
+                    name: "Promoção Disponível?",
+                    value: shouldPromote
+                      ? "Sim"
+                      : "Não",
+                  },
+                  {
+                    name: "Dias até a próxima Promoção",
+                    value: `${daysForPromote}`,
+                  },
+                  {
+                    name: "Discord Vinculado?",
+                    value: discordLinked ? "Vinculado ✅" : "Não Vinculado ❌"
+                  },
+                ])
+                .setFooter({
+                  text: message.author.tag,
+                  iconURL: message.author.displayAvatarURL(),
+                })
+                .setColor(EmbedColors.Default)
+                .setThumbnail(
+                  `https://www.habbo.com/habbo-imaging/avatarimage?figure=${habbo.figureString}&size=b`,
+                ),
+            ],
+          });
+
+        } else {
+          if (currentJob?.name !== "Vinculado") {
+            await message.reply({
+              content:
+                `Erro: Função 'minDaysProm': ${minDaysProm} e 'latestPromotionDate': ${latestPromotionDate}, contate o Desenvolvedor.`,
+            });
+          }
+
+          await message.reply({
+            embeds: [
+              new EmbedBuilder()
+                .setTitle(`Verificação de ${habbo.name}`)
+                .setFields([
+                  {
+                    name: "Setor // Cargo",
+                    value: `**${currentSector?.name}** // **${currentJob?.name}**`,
+                  },
+                  {
+                    name: "Ultima Promoção",
+                    value: targetDB?.latestPromotionDate
+                      ? new Date(
+                          targetDB?.latestPromotionDate,
+                        ).toLocaleDateString("pt-BR")
+                      : "N/D",
+                  },
+                  {
+                    name: "Discord Vinculado?",
+                    value: discordLinked ? "Vinculado ✅" : "Não Vinculado ❌"
+                  },
+                ])
+                .setFooter({
+                  text: message.author.tag,
+                  iconURL: message.author.displayAvatarURL(),
+                })
+                .setColor(EmbedColors.Default)
+                .setThumbnail(
+                  `https://www.habbo.com/habbo-imaging/avatarimage?figure=${habbo.figureString}&size=b`,
+                ),
+            ],
+          });
+        }
+      }
+
+      // END VERIFY WITHOUT DISCORD
+      return;
+    } else {
+      discordLinked = true;
+    }
+
+    if (!member) {
 			await message.reply({
 				content:
-					"Não consegui encontrar o perfil do usuário, talvez sua conta esteja deletada ou renomeada? Veja se o perfil do usuário no Habbo está como público.",
+					"Não consegui encontrar o perfil do Discord usuário que estava com o mesmo ativo, talvez saiu do Servidor?",
 			});
 
 			return;
@@ -129,7 +307,11 @@ export default class SendCommand extends Command {
                 {
                   name: "Dias até a próxima Promoção",
                   value: `${daysForPromote}`,
-                }
+                },
+                {
+                  name: "Discord Vinculado?",
+                  value: discordLinked ? "Vinculado ✅" : "Não Vinculado ❌"
+                },
               ])
               .setFooter({
                 text: message.author.tag,
@@ -166,6 +348,10 @@ export default class SendCommand extends Command {
                         databaseUser?.latestPromotionDate,
                       ).toLocaleDateString("pt-BR")
                     : "N/D",
+                },
+                {
+                  name: "Discord Vinculado?",
+                  value: discordLinked ? "Vinculado ✅" : "Não Vinculado ❌"
                 },
               ])
               .setFooter({
