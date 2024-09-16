@@ -104,6 +104,334 @@ export class PromotionInteractionHandler extends InteractionHandler {
 		const { member: targetMember, habbo: targetHabbo } =
 			inferredTargetResult.unwrapOr({ member: undefined, habbo: undefined });
 
+    if (!targetHabbo) {
+      await interactionFromModal.editReply({
+				content: "Não foi possivel encontrar o usuário no Habbo, verifique se a conta que quer promover está como pública.",
+			});
+
+      return;
+    }
+
+    const targetDB = await this.container.prisma.user.findUnique({
+      where: { habboId: targetHabbo?.uniqueId },
+      select: {
+        id: true,
+        discordId: true,
+        latestPromotionDate: true,
+        latestPromotionRoleId: true,
+        latestPromotionJobId: true,
+        habboName: true,
+      },
+    });
+
+     // START VERIFY WITHOUT DISCORD
+     if (targetDB?.discordId === "0") {
+      const guild =
+			interaction.guild ??
+			(await interaction.client.guilds.fetch(interaction.guildId));
+
+      if (!targetDB.latestPromotionRoleId) {
+        await interactionFromModal.editReply({
+          content:
+            "Não consegui encontrar o setor do usuário, talvez sua conta esteja deletada ou renomeada?",
+        });
+
+        return;
+      }
+
+      const currentSectorEnvironment =
+			Object.values(ENVIRONMENT.SECTORS_ROLES).find((r) => r.id === targetDB.latestPromotionRoleId);
+
+      if (!currentSectorEnvironment) {
+        await interactionFromModal.editReply({
+          content:
+            "Não consegui encontrar o setor do usuário, talvez sua conta esteja deletada ou renomeada?",
+        });
+
+        return;
+      }
+
+      const currentSector = await guild.roles.fetch(currentSectorEnvironment?.id);
+
+      const currentJobEnvironment =
+      Object.values(ENVIRONMENT.JOBS_ROLES).find((r) => r.id === targetDB.latestPromotionJobId);
+
+      if (!currentJobEnvironment) {
+        await interactionFromModal.editReply({
+          content:
+            "Não consegui encontrar o cargo do usuário, talvez sua conta esteja deletada ou renomeada?",
+        });
+
+        return;
+      }
+
+      const currentJob = await guild.roles.fetch(currentJobEnvironment?.id);
+
+      if (!currentJob || !currentSector) {
+        await interactionFromModal.editReply({
+          content:
+            "||P94N|| Ocorreu um erro, contate o Desenvolvedor.",
+        });
+
+        return;
+      }
+
+      const currentRoleSearch =
+			Object.values(ENVIRONMENT.JOBS_ROLES).find((r) => r.id === currentJob.id)
+
+      if (!currentRoleSearch) {
+        await interactionFromModal.editReply({
+          content:
+            "||P95N|| Ocorreu um erro, contate o Desenvolvedor.",
+        });
+
+        return;
+      }
+
+		  const nextRole = Object.values(ENVIRONMENT.JOBS_ROLES)
+			  .sort((a, b) => a.index - b.index)
+			  .find((role) => role.index > currentRoleSearch.index);
+
+      if (!nextRole) {
+        await interactionFromModal.editReply({
+          content:
+            "||P96N|| Ocorreu um erro, contate o Desenvolvedor.",
+        });
+
+        return;
+      }
+
+      const targetJobRole =
+      nextRole.id && (await guild.roles.fetch(nextRole.id));
+
+      const author = await guild.members.fetch(interaction.user.id);
+
+      const authorJobRole =
+			this.container.utilities.discord.inferHighestJobRole(
+				author.roles.cache.map((r) => r.id),
+			);
+
+		  const authorJob = Object.values(ENVIRONMENT.JOBS_ROLES).find(
+			  (job) => job.id === authorJobRole
+		  );
+
+		  const hasEnoughHierarchy =
+			  (currentJobEnvironment?.index ?? 0) <= (authorJob?.promoteIndex ?? -1)
+
+      if (!hasEnoughHierarchy || !targetJobRole) {
+        const author = await guild.members.fetch(interaction.user.id);
+
+        const authorJobRoleGuild =
+        authorJobRole && (await author.guild.roles.fetch(authorJobRole));
+
+        await interactionFromModal.editReply({
+          content:
+            `Seu cargo de ${authorJobRoleGuild} não tem permissão para promover alguém para o cargo de ${targetJobRole}`,
+        });
+
+        this.container.logger.info(
+          `[PromotionInteractionHandler#run/${interaction.id}] ${interaction.user.tag} tried to promote ${result.target} but failed because they are not authorized to promote.`,
+        );
+
+        return;
+      }
+
+      if (!targetDB) {
+        await interactionFromModal.editReply({
+          content:
+            "||WP157|| Usuário não encontrado na base de dados, use `vincular`.",
+        });
+
+        return;
+      }
+
+      const latestPromotionDate =
+        targetDB?.latestPromotionDate &&
+        new Date(targetDB?.latestPromotionDate);
+
+      const minDaysProm = find(
+        values(ENVIRONMENT.JOBS_ROLES),
+        (x) => x.id === currentJob.id,
+      )?.minDaysProm;
+
+      if (latestPromotionDate && minDaysProm) {
+        const daysSinceLastPromotion = Math.floor(
+          (new Date().getTime() - latestPromotionDate.getTime()) /
+            (1000 * 3600 * 24),
+        );
+
+        const shouldPromote = daysSinceLastPromotion >= minDaysProm;
+
+        if (!shouldPromote) {
+          await interactionFromModal.editReply({
+            content: `🕝 O usuário tem que aguardar pelo menos ${
+              minDaysProm - daysSinceLastPromotion
+            } dia para poder promover de cargo.`,
+          });
+
+          return;
+        }
+      }
+
+      const isConfirmed = await this.container.utilities.inquirer.awaitButtons(
+        interactionFromModal,
+        {
+          choices: [
+            {
+              id: "true",
+              label: "Sim",
+              style: ButtonStyle.Success,
+            },
+            {
+              id: "false",
+              label: "Não",
+              style: ButtonStyle.Danger,
+            },
+          ] as const,
+          question: {
+            embeds: [
+              new EmbedBuilder()
+                .setTitle("Promover")
+                .setDescription(
+                  `Promover ${targetHabbo.name} para ${targetJobRole}?`,
+                )
+                .setThumbnail(
+                  `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`,
+                )
+                .setColor(EmbedColors.Default),
+            ],
+          },
+        },
+      );
+
+      if (isConfirmed.result === "false") {
+        await interactionFromModal
+        .deleteReply()
+        .catch(() =>
+          this.container.logger.error("[PromotionInteractionHandler] Couldn't delete reply."),
+        );;
+
+        return;
+      }
+
+      const authorDB = await this.container.prisma.user.findUnique({
+        where: {
+          discordId: interaction.user.id,
+        },
+        select: {
+          id: true,
+          latestPromotionDate: true,
+          latestPromotionRoleId: true,
+          habboName: true,
+        },
+      });
+
+      const nextSectorRoleKey = getJobSectorsById(nextRole.id);
+
+      const nextSectorRole =
+      nextSectorRoleKey &&
+      (await guild.roles.fetch(
+        ENVIRONMENT.SECTORS_ROLES[nextSectorRoleKey].id,
+      ));
+
+      if (targetDB && nextSectorRole)
+				await this.container.prisma.user.update({
+					where: {
+						habboId: targetHabbo.uniqueId,
+					},
+					data: {
+						latestPromotionDate: new Date(),
+						latestPromotionRoleId: nextSectorRole.id,
+            latestPromotionJobId: nextRole.id,
+					},
+				});
+
+      const notificationChannel = await this.container.client.channels.fetch(
+        ENVIRONMENT.NOTIFICATION_CHANNELS.DEPARTMENT_PROMOTIONS,
+      );
+
+      const authorResult =
+        (await Result.fromAsync(
+          this.container.utilities.habbo.inferTargetGuildMember(
+            `@${interaction.user.tag}`,
+            true,
+          ),
+        ));
+
+      let habboName: string | undefined = undefined;
+
+      if (authorResult) {
+        const { habbo: authorHabbo } = authorResult.unwrapOr({
+          member: undefined,
+          habbo: undefined,
+        });
+
+        habboName = authorHabbo?.name ?? "N/A";
+      }
+
+      if (notificationChannel?.isTextBased()) {
+        await notificationChannel.send({
+          embeds: [
+            new EmbedBuilder()
+              .setDescription(
+                `### Promoção de ${targetHabbo?.name ?? targetDB.habboName}\n\n`,
+              )
+              .setAuthor({
+                name: interaction.user.tag,
+                iconURL: interaction.user.displayAvatarURL(),
+              })
+              .addFields([
+                {
+                  name: "👤 Promotor ",
+                  value: `${habboName ?? authorDB?.habboName}`,
+                },
+                {
+                  name: "🗓️ Promovido Em",
+                  value: time(new Date(), "F"),
+                  inline: true,
+                },
+                {
+                  name: "📅 Última Promoção",
+                  value: targetDB?.latestPromotionDate
+                    ? time(targetDB.latestPromotionDate, "F")
+                    : "N/A",
+                  inline: true,
+                },
+                {
+                  name: "📝 Cargo Anterior",
+                  value: currentJob.toString(),
+                  inline: false,
+                },
+                {
+                  name: "📗 Cargo Promovido",
+                  value: targetJobRole.toString(),
+                },
+                {
+                  name: "🗒️ Observação",
+                  value: result.additional.length > 0
+                  ? result.additional
+                  : "Nenhuma observação foi adicionada.",
+                }
+              ])
+              .setColor(EmbedColors.Success)
+              .setThumbnail(
+                `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`,
+              ),
+          ],
+        });
+
+        await interactionFromModal.editReply({
+          content: "✅ Operação concluída.",
+          embeds: [],
+          components: [],
+        });
+      }
+
+        return;
+
+      // END WITHOUT DISCORD
+    }
+
 		if (!targetMember) {
 			const isHabboTarget = result.target.startsWith("@");
 
