@@ -109,7 +109,7 @@ export class PromotionInteractionHandler extends InteractionHandler {
       },
     });
 
-     // START VERIFY WITHOUT DISCORD
+     // START USER WITHOUT DISCORD
      if (targetDB?.discordId === "0") {
       const guild =
 			interaction.guild ??
@@ -412,9 +412,8 @@ export class PromotionInteractionHandler extends InteractionHandler {
         });
       }
 
-        return;
-
-      // END WITHOUT DISCORD
+      return;
+      // END USER WITHOUT DISCORD
     }
 
     const inferredTargetResult = await Result.fromAsync(
@@ -766,6 +765,7 @@ export class PromotionInteractionHandler extends InteractionHandler {
 					data: {
 						latestPromotionDate: new Date(),
 						latestPromotionRoleId: nextSectorRole.id,
+            latestPromotionJobId: nextTargetJob.id,
 					},
 				});
 
