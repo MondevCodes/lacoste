@@ -141,6 +141,187 @@ export class FireInteractionHandler extends InteractionHandler {
 					},
 				);
 
+      const onlyHabbo = (await this.container.utilities.habbo.getProfile(result.Target)).unwrapOr(
+        undefined,
+      );
+
+      if (!onlyHabbo?.name) {
+        await modalInteraction.editReply({
+          content:
+          "Não consegui encontrar o perfil do usuário no Habbo, talvez sua conta esteja deletada ou renomeada? Veja se o perfil do usuário no jogo está como público.",
+        });
+
+        return;
+      }
+
+      const targetDBOnlyHabbo = await this.container.prisma.user.findUnique({
+        where: { habboId: onlyHabbo.uniqueId },
+        select: {
+          id: true,
+          discordId: true,
+          latestPromotionDate: true,
+          latestPromotionRoleId: true,
+          latestPromotionJobId: true,
+          habboName: true,
+        },
+      });
+
+      // START USER WITHOUT DISCORD
+      if (targetDBOnlyHabbo?.discordId === "0") {
+        const guild =
+        interaction.guild ??
+        (await interaction.client.guilds.fetch(interaction.guildId));
+
+        if (!targetDBOnlyHabbo.latestPromotionRoleId) {
+          await modalInteraction.editReply({
+            content:
+              "Não consegui encontrar o setor do usuário, talvez sua conta esteja deletada ou renomeada?",
+          });
+
+          return;
+        }
+
+        const currentSectorEnvironment =
+        Object.values(ENVIRONMENT.SECTORS_ROLES).find((r) => r.id === targetDBOnlyHabbo.latestPromotionRoleId);
+
+        if (!currentSectorEnvironment) {
+          await modalInteraction.editReply({
+            content:
+              "Não consegui encontrar o setor do usuário, talvez sua conta esteja deletada ou renomeada?",
+          });
+
+          return;
+        }
+
+        const currentSector = await guild.roles.fetch(currentSectorEnvironment?.id);
+
+        const currentJobEnvironment =
+        Object.values(ENVIRONMENT.JOBS_ROLES).find((r) => r.id === targetDBOnlyHabbo.latestPromotionJobId);
+
+        if (!currentJobEnvironment) {
+          await modalInteraction.editReply({
+            content:
+              "Não consegui encontrar o cargo do usuário, talvez sua conta esteja deletada ou renomeada?",
+          });
+
+          return;
+        }
+
+        const currentJob = await guild.roles.fetch(currentJobEnvironment?.id);
+
+        if (!currentJob || !currentSector) {
+          await modalInteraction.editReply({
+            content:
+              "||P94N|| Ocorreu um erro, contate o Desenvolvedor.",
+          });
+
+          return;
+        }
+
+        habboTargetStorage = onlyHabbo.name;
+
+        const authorResult =
+        (await Result.fromAsync(
+          this.container.utilities.habbo.inferTargetGuildMember(
+            `@${interaction.user.tag}`,
+            true,
+          ),
+        ));
+
+        if (authorResult) {
+          const { habbo: authorHabbo } = authorResult.unwrapOr({
+            member: undefined,
+            habbo: undefined,
+          });
+
+          habboInteractionName = authorHabbo?.name ?? "N/A";
+        }
+
+        const confirmationEmbed = new EmbedBuilder()
+          .setThumbnail(
+            `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo.figureString}`,
+          )
+          .setFooter({
+            text: `${onlyHabbo.name ?? targetDBOnlyHabbo.habboName}`,
+          })
+          .setTitle("Você tem certeza que deseja demiti-lo(a)?");
+
+        const { result: isConfirmed } =
+          await this.container.utilities.inquirer.awaitButtons(modalInteraction, {
+            question: {
+              embeds: [confirmationEmbed],
+            },
+            choices: [
+              {
+                id: "True" as const,
+                style: ButtonStyle.Success,
+                label: "Sim",
+              },
+              {
+                id: "False" as const,
+                style: ButtonStyle.Danger,
+                label: "Não",
+              },
+            ],
+          });
+
+        if (isConfirmed === "False") {
+          await modalInteraction.reply({
+            content: "Operação cancelada.",
+            ephemeral: true,
+          });
+
+          return;
+        }
+
+        const approvalChannel = await cachedGuild.channels.fetch(
+          ENVIRONMENT.NOTIFICATION_CHANNELS.APPROVAL_REQUEST,
+        );
+
+        if (!approvalChannel?.isTextBased()) {
+          throw new Error("Can't send message to non-text channel.");
+        }
+
+        const approvalEmbed = new EmbedBuilder()
+          .setTitle(`Solicitação de Demissão de ${onlyHabbo.name ?? targetDBOnlyHabbo.habboName}`)
+          .setColor(EmbedColors.Default)
+          .setAuthor({
+            name: interaction.user.tag,
+            iconURL: interaction.user.displayAvatarURL(),
+          })
+          .setFooter({
+            text: targetDBOnlyHabbo.id,
+          })
+          .addFields([
+            {
+              name: "👤 Demissor",
+              value: `${habboInteractionName ?? `@${interaction.user.tag}`}`,
+            },
+            {
+              name: "📗 Cargo",
+              value: currentJob.name ?? "N/D",
+            },
+            {
+              name: "🗒️ Motivo",
+              value: result.Reason.length > 0 ? result.Reason : "N/D",
+            },
+          ])
+          .setThumbnail(
+            `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo.figureString}&size=b`,
+          );
+
+        await approvalChannel.send({
+          embeds: [approvalEmbed],
+          components: [this.#APPROVAL_ROW],
+          content: `<@&${ENVIRONMENT.SECTORS_ROLES.PRESIDÊNCIA.id}>`,
+        });
+
+        await modalInteraction.deleteReply();
+
+        // END USER WITHOUT DISCORD
+        return;
+    }
+
 			const { member: targetMember, habbo: targetHabbo } =
 				await this.container.utilities.habbo.inferTargetGuildMember(
 					result.Target,
@@ -148,7 +329,7 @@ export class FireInteractionHandler extends InteractionHandler {
 
 			if (!targetMember) {
 				await modalInteraction.editReply({
-					content: "Não foi possível encontrar o usuário informado.",
+					content: "Não foi possível encontrar o usuário informado no Discord.",
 				});
 
 				return;
@@ -364,36 +545,38 @@ export class FireInteractionHandler extends InteractionHandler {
 			interaction.guild ??
 			(await interaction.client.guilds.fetch(interaction.guildId));
 
-		const targetMember = await guild.members.fetch(targetUser.discordId);
+    if (targetUser.discordId !== "0") {
+      const targetMember = await guild.members.fetch(targetUser.discordId);
 
-		const currentJobRoleId =
-			this.container.utilities.discord.inferHighestJobRole(
-				targetMember.roles.cache.map((x) => x.id),
-			);
+      const currentJobRoleId =
+        this.container.utilities.discord.inferHighestJobRole(
+          targetMember.roles.cache.map((x) => x.id),
+        );
 
-		const currentJobRole =
-			currentJobRoleId && (await guild.roles.fetch(currentJobRoleId));
+      const currentJobRole =
+        currentJobRoleId && (await guild.roles.fetch(currentJobRoleId));
 
-		if (currentJobRoleId) {
-			const sectorRoleKey = getJobSectorsById(currentJobRoleId);
+      if (currentJobRoleId) {
+        const sectorRoleKey = getJobSectorsById(currentJobRoleId);
 
-			const sectorRole =
-				sectorRoleKey &&
-				(await guild.roles.fetch(ENVIRONMENT.SECTORS_ROLES[sectorRoleKey].id));
+        const sectorRole =
+          sectorRoleKey &&
+          (await guild.roles.fetch(ENVIRONMENT.SECTORS_ROLES[sectorRoleKey].id));
 
-			if (sectorRole)
-				await guild.members.removeRole({
-					user: targetUser.discordId,
-					role: sectorRole,
-				});
-		}
+        if (sectorRole)
+          await guild.members.removeRole({
+            user: targetUser.discordId,
+            role: sectorRole,
+          });
+      }
 
-		if (currentJobRole) {
-			await guild.members.removeRole({
-				user: targetUser.discordId,
-				role: currentJobRole,
-			});
-		}
+      if (currentJobRole) {
+        await guild.members.removeRole({
+          user: targetUser.discordId,
+          role: currentJobRole,
+        });
+      }
+    }
 
     const authorResult =
       (await Result.fromAsync(
