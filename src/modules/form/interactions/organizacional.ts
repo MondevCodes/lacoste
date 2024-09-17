@@ -2,7 +2,7 @@ import { ApplyOptions } from "@sapphire/decorators";
 import {
 	InteractionHandler,
 	InteractionHandlerTypes,
-	Result,
+	// Result,
 } from "@sapphire/framework";
 
 import {
@@ -246,27 +246,47 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 			if (target === "N/D") continue;
 
 			try {
-				const inferredTarget = await Result.fromAsync(
-					this.container.utilities.habbo.inferTargetGuildMember(target),
-				);
+        const onlyHabbo = (await this.container.utilities.habbo.getProfile(target)).unwrapOr(
+          undefined,
+        );
 
-				const { habbo: targetHabbo, member: targetMember } =
-					inferredTarget.unwrapOr({ habbo: undefined, member: undefined });
+        if (!onlyHabbo?.name) {
+          this.container.logger.warn(
+						`[OrganizationalFormInteractionHandler#run] Couldn't find target: ${target}.`,
+					);
 
-				if (!targetHabbo || !targetMember) {
+					members[group].push(target.replaceAll(MARKDOWN_CHARS_RE, "\\$&"));
+          notFoundUsers.push(target);
+
+					continue;
+        }
+
+        const targetMember = await this.container.prisma.user.findUnique({
+          where: { habboId: onlyHabbo.uniqueId },
+        });
+
+				// const inferredTarget = await Result.fromAsync(
+				// 	this.container.utilities.habbo.inferTargetGuildMember(target),
+				// );
+
+				// const { habbo: targetHabbo, member: targetMember } =
+				// 	inferredTarget.unwrapOr({ habbo: undefined, member: undefined });
+
+				if (!targetMember) {
 					this.container.logger.warn(
 						`[OrganizationalFormInteractionHandler#run] Couldn't find target: ${target}.`,
 					);
 
 					members[group].push(target.replaceAll(MARKDOWN_CHARS_RE, "\\$&"));
           notFoundUsers.push(target);
+
 					continue;
 				}
 
 				if (targetMember)
           if (group === "GeneralCommand") {
             await this.container.prisma.user.update({
-              where: { discordId: targetMember.user.id },
+              where: { habboId: targetMember.habboId },
               data: {
                 reportsHistory: { push: new Date() },
                 reportsHistoryCG: { push: new Date() },
@@ -274,13 +294,13 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
             });
           } else {
             await this.container.prisma.user.update({
-              where: { discordId: targetMember.user.id },
+              where: { habboId: targetMember.habboId },
               data: { reportsHistory: { push: new Date() } },
             });
           }
 
 				members[group].push(
-					targetHabbo.name.replaceAll(MARKDOWN_CHARS_RE, "\\$&"),
+					onlyHabbo.name.replaceAll(MARKDOWN_CHARS_RE, "\\$&"),
 				);
 			} catch (error) {
 				members[group].push(target.replaceAll(MARKDOWN_CHARS_RE, "\\$&"));
@@ -507,7 +527,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
           }
 				}
 			},
-			{ recoverMissedExecutions: true },
+			{ recoverMissedExecutions: false },
 		);
     schedule(
       "59 23 * * *", // Executar às 23:59 todos os dias
