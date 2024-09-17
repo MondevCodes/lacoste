@@ -56,13 +56,13 @@ export class LinkCommand extends Command {
 
 		// 	return;
 		// }
-    
+
     // START MEMBER WITHOUT DISCORD
-		if (memberResult === null || memberResult === undefined) {
+		if (memberResult.isErr()) {
       if (nickResult.isErr()) {
         await this.container.utilities.discord.sendEphemeralMessage(message, {
           content:
-            "Comando inválido, use `vincular NickNoHabbo` deve ser usado para vincular apenas o Habbo ou `vincular NickNoHabbo @NickNoDiscord` para vincular também o Discord.",
+            "Comando inválido, use `vincular NickNoHabbo` para vincular apenas o Habbo ou `vincular @NickNoDiscord NickNoHabbo` para vincular também o Discord.",
           method: "reply",
         });
 
@@ -141,6 +141,12 @@ export class LinkCommand extends Command {
           `https://www.habbo.com/habbo-imaging/avatarimage?figure=${profile.figureString}&size=b&gesture=std`,
         );
 
+      await this.container.utilities.discord.sendEphemeralMessage(message, {
+        content:
+          "Não consegui identificar o Discord do usuário, então foi vinculado apenas o Habbo.",
+        method: "reply",
+      });
+
       await notificationChannel.send({
         embeds: [embed],
       });
@@ -151,15 +157,15 @@ export class LinkCommand extends Command {
       // END USER WITHOUT DISCORD
 		}
 
-    if (memberResult.isErr()) {
-      await this.container.utilities.discord.sendEphemeralMessage(message, {
-        content:
-          "Comando inválido, usuário do Discord não encontrado, use `vincular NickNoHabbo` deve ser usado para vincular apenas o Habbo ou `vincular NickNoHabbo @NickNoDiscord` para vincular também o Discord.",
-        method: "reply",
-      });
+    // if (memberResult.isErr()) {
+    //   await this.container.utilities.discord.sendEphemeralMessage(message, {
+    //     content:
+    //       "Comando inválido, usuário do Discord não encontrado, use `vincular NickNoHabbo` deve ser usado para vincular apenas o Habbo ou `vincular @NickNoDiscord NickNoHabbo` para vincular também o Discord.",
+    //     method: "reply",
+    //   });
 
-      return;
-    }
+    //   return;
+    // }
 
 		const profileResult = await this.container.utilities.habbo.getProfile(
 			nickResult.unwrap(),
