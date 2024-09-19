@@ -39,13 +39,14 @@ export default class SendCommand extends Command {
         latestPromotionDate: true,
         latestPromotionRoleId: true,
         latestPromotionJobId: true,
+        discordLink: true
       },
     });
 
     let discordLinked: boolean | undefined;
 
     // START VERIFY WITHOUT DISCORD
-    if (targetDB?.discordId === "0") {
+    if (targetDB?.discordLink === false) {
       discordLinked = false;
 
       if (!targetDB.latestPromotionRoleId) {
