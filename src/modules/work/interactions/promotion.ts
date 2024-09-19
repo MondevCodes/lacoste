@@ -106,11 +106,12 @@ export class PromotionInteractionHandler extends InteractionHandler {
         latestPromotionRoleId: true,
         latestPromotionJobId: true,
         habboName: true,
+        discordLink: true,
       },
     });
 
      // START USER WITHOUT DISCORD
-     if (targetDB?.discordId === "0") {
+     if (targetDB?.discordLink === false) {
       const guild =
 			interaction.guild ??
 			(await interaction.client.guilds.fetch(interaction.guildId));

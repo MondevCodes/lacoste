@@ -23,7 +23,9 @@ model User {
   habboName String @unique
 
   habboId   String @unique
-  discordId String
+  discordId String @unique
+
+  discordLink Boolean?
 
   activeRenewal          RenewalPeriod?
   activeRenewalStartedAt DateTime?

@@ -163,11 +163,12 @@ export class FireInteractionHandler extends InteractionHandler {
           latestPromotionRoleId: true,
           latestPromotionJobId: true,
           habboName: true,
+          discordLink: true,
         },
       });
 
       // START USER WITHOUT DISCORD
-      if (targetDBOnlyHabbo?.discordId === "0") {
+      if (targetDBOnlyHabbo?.discordLink === false) {
         const guild =
         interaction.guild ??
         (await interaction.client.guilds.fetch(interaction.guildId));
@@ -545,7 +546,7 @@ export class FireInteractionHandler extends InteractionHandler {
 			interaction.guild ??
 			(await interaction.client.guilds.fetch(interaction.guildId));
 
-    if (targetUser.discordId !== "0") {
+    if (targetUser.discordLink !== false) {
       const targetMember = await guild.members.fetch(targetUser.discordId);
 
       const currentJobRoleId =

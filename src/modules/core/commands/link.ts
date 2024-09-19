@@ -105,12 +105,13 @@ export class LinkCommand extends Command {
         await this.container.prisma.user
           .create({
             data: {
-              discordId: "0",
+              discordId: profile.uniqueId,
               habboId: profile.uniqueId,
               habboName: profile.name,
               latestPromotionDate: new Date(),
               latestPromotionRoleId: ENVIRONMENT.SECTORS_ROLES.INICIAL.id,
               latestPromotionJobId: ENVIRONMENT.JOBS_ROLES.VINCULADO.id,
+              discordLink: false
             },
           })
           .catch((error) => {
@@ -204,6 +205,7 @@ export class LinkCommand extends Command {
         discordId: true,
         latestPromotionRoleId: true,
         latestPromotionJobId: true,
+        discordLink: true,
       },
     });
 
@@ -291,7 +293,7 @@ export class LinkCommand extends Command {
         );
       });
 
-    if (existingUser?.discordId === "0") {
+    if (existingUser?.discordLink === false) {
       if (
         !existingUser.latestPromotionJobId ||
         !existingUser.latestPromotionRoleId
@@ -307,7 +309,7 @@ export class LinkCommand extends Command {
       await this.container.prisma.user
         .update({
           where: { habboId: existingUser.habboId },
-          data: { discordId: member.id },
+          data: { discordId: member.id, discordLink: true },
         })
         .catch(() => undefined);
 
@@ -327,7 +329,7 @@ export class LinkCommand extends Command {
       await this.container.prisma.user
         .update({
           where: { discordId: existingUser.discordId },
-          data: { habboId: profile.uniqueId, habboName: profile.name },
+          data: { habboId: profile.uniqueId, habboName: profile.name, discordLink: true },
         })
         .catch(() => undefined);
     } else {
@@ -340,6 +342,7 @@ export class LinkCommand extends Command {
             latestPromotionDate: new Date(),
             latestPromotionRoleId: ENVIRONMENT.SECTORS_ROLES.INICIAL.id,
             latestPromotionJobId: ENVIRONMENT.JOBS_ROLES.VINCULADO.id,
+            discordLink: true,
           },
         })
         .catch(() => undefined);
