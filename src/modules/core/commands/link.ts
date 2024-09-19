@@ -97,7 +97,7 @@ export class LinkCommand extends Command {
       if (existingUser) {
         await this.container.utilities.discord.sendEphemeralMessage(message, {
           content:
-            `Este usuário já está vinculado sem o Discord. Caso queira vincular o Discord utilize: 'vincular @NickNoDiscord ${profile.name}'`,
+            `Este usuário já está vinculado sem o Discord. Caso queira vincular o Discord utilize: "vincular @NickNoDiscord ${profile.name}"`,
           method: "reply",
         });
 
