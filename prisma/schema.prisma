@@ -23,7 +23,7 @@ model User {
   habboName String @unique
 
   habboId   String @unique
-  discordId String @unique
+  discordId String
 
   activeRenewal          RenewalPeriod?
   activeRenewalStartedAt DateTime?
