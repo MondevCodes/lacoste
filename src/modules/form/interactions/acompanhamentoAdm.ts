@@ -316,12 +316,12 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
             },
 						{
 							name: "📝 Cargo Anterior",
-							value: "@Coordenador",
+							value: `<@&${ENVIRONMENT.JOBS_ROLES.COORDENADOR.id}>`,
 							inline: false,
 						},
 						{
 							name: "📗 Cargo Promovido",
-							value: "@Sub Gerente",
+							value: `<@&${ENVIRONMENT.JOBS_ROLES.SUB_GERENTE.id}>`,
 						},
             {
               name: "🔍 Supervisionado por",

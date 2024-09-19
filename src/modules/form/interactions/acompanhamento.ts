@@ -303,12 +303,12 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
             },
 						{
 							name: "📝 Cargo Anterior",
-							value: "@Vinculado",
+							value: `<@&${ENVIRONMENT.JOBS_ROLES.VINCULADO.id}>`,
 							inline: false,
 						},
 						{
 						  name: "📗 Cargo Promovido",
-							value: "@Estagiário",
+							value: `<@&${ENVIRONMENT.JOBS_ROLES.ESTAGIÁRIO.id}>`,
 						},
             {
               name: "🔍 Supervisionado por",
