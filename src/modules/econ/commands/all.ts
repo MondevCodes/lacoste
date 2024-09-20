@@ -47,7 +47,7 @@ export class AllBalancesCommand extends Command {
 
       if (fieldValue.length + fieldText.length > 1024) {
         fields.push({
-          name: `Usuário ${fieldCount + 1}`,
+          name: `Página ${fieldCount + 1}`,
           value: fieldValue,
         });
         fieldValue = '';
@@ -59,7 +59,7 @@ export class AllBalancesCommand extends Command {
 
     if (fieldValue.length > 0) {
       fields.push({
-        name: `Usuário ${fieldCount + 1}`,
+        name: `Página ${fieldCount + 1}`,
         value: fieldValue,
       });
     }
