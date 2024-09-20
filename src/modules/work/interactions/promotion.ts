@@ -70,8 +70,8 @@ export class PromotionInteractionHandler extends InteractionHandler {
 				inputs: [
 					new TextInputBuilder()
 						.setCustomId("target")
-						.setLabel("Promovido (Discord ou Habbo)")
-						.setPlaceholder("Informe ID do Discord (@Nick) ou do Habbo (Nick).")
+						.setLabel("Promovido")
+						.setPlaceholder("Informe o Habbo (Nick).")
 						.setStyle(TextInputStyle.Short)
 						.setRequired(true),
 
