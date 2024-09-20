@@ -1,6 +1,6 @@
 import {
-	InteractionHandler,
-	InteractionHandlerTypes,
+  InteractionHandler,
+  InteractionHandlerTypes,
 } from "@sapphire/framework";
 
 import { ApplyOptions } from "@sapphire/decorators";
@@ -19,217 +19,218 @@ export const BASE_BUTTON_ID_REGEX = new RegExp(`^${BASE_BUTTON_ID}/`);
 
 /** @internal @see {@link decodeButtonId} */
 export function encodeButtonId(action: Action) {
-	return `${BASE_BUTTON_ID}/${action}`;
+  return `${BASE_BUTTON_ID}/${action}`;
 }
 
 /** @internal @see {@link encodeButtonId} */
 export function decodeButtonId(id: string): Action {
-	return id.replace(`${BASE_BUTTON_ID}/`, "") as Action;
+  return id.replace(`${BASE_BUTTON_ID}/`, "") as Action;
 }
 
 type ParsedData = { action: Action };
 
 @ApplyOptions<InteractionHandler.Options>({
-	interactionHandlerType: InteractionHandlerTypes.Button,
+  interactionHandlerType: InteractionHandlerTypes.Button,
 })
 export class ModIndividualInteractionHandler extends InteractionHandler {
-	async #isAuthorized(interaction: ButtonInteraction) {
-		if (!interaction.inCachedGuild()) {
-			this.container.logger.warn(
-				`[ModIndividualInteractionHandler#isAuthorized] ${interaction.user.tag} tried to perform an action in a DM.`,
-			);
+  async #isAuthorized(interaction: ButtonInteraction) {
+    if (!interaction.inCachedGuild()) {
+      this.container.logger.warn(
+        `[ModIndividualInteractionHandler#isAuthorized] ${interaction.user.tag} tried to perform an action in a DM.`
+      );
 
-			return false;
-		}
+      return false;
+    }
 
-		const { roles } =
-			interaction.member ??
-			(await interaction.guild.members.fetch(interaction.user.id));
+    const { roles } =
+      interaction.member ??
+      (await interaction.guild.members.fetch(interaction.user.id));
 
-		return this.container.utilities.discord.hasPermissionByRole({
-			checkFor: "FUNDAÇÃO",
-			category: "SECTOR",
-			roles,
-		});
-	}
+    return this.container.utilities.discord.hasPermissionByRole({
+      checkFor: "FUNDAÇÃO",
+      category: "SECTOR",
+      roles,
+    });
+  }
 
-	public override async parse(interaction: ButtonInteraction) {
-		if (!interaction.customId.match(BASE_BUTTON_ID_REGEX)) return this.none();
-		if (!(await this.#isAuthorized(interaction))) return this.none();
+  public override async parse(interaction: ButtonInteraction) {
+    if (!interaction.customId.match(BASE_BUTTON_ID_REGEX)) return this.none();
+    if (!(await this.#isAuthorized(interaction))) return this.none();
 
-		return this.some({ action: decodeButtonId(interaction.customId) });
-	}
+    return this.some({ action: decodeButtonId(interaction.customId) });
+  }
 
-	public override async run(interaction: ButtonInteraction, data: ParsedData) {
-		if (!interaction.inGuild()) {
-			this.container.logger.warn(
-				`[HireInteractionHandler#run] ${interaction.user.tag} tried to perform an action in a DM.`,
-			);
+  public override async run(interaction: ButtonInteraction, data: ParsedData) {
+    if (!interaction.inGuild()) {
+      this.container.logger.warn(
+        `[HireInteractionHandler#run] ${interaction.user.tag} tried to perform an action in a DM.`
+      );
 
-			return;
-		}
+      return;
+    }
 
-		const { result, interaction: i } =
-			await this.container.utilities.inquirer.awaitModal<"Target" | "Amount">(
-				interaction,
-				{
-					inputs: [
-						new TextInputBuilder()
-							.setCustomId("Target")
-							.setLabel("Membro (Discord ou Habbo)")
-							.setPlaceholder(
-								"Informe ID do Discord (@Nick) ou do Habbo (Nick).",
-							)
-							.setStyle(TextInputStyle.Short)
-							.setRequired(true),
+    const { result, interaction: i } =
+      await this.container.utilities.inquirer.awaitModal<"Target" | "Amount">(
+        interaction,
+        {
+          inputs: [
+            new TextInputBuilder()
+              .setCustomId("Target")
+              .setLabel("Membro")
+              .setPlaceholder("Informe o Habbo (Nick).")
+              .setStyle(TextInputStyle.Short)
+              .setRequired(true),
 
-						new TextInputBuilder()
-							.setCustomId("Amount")
-							.setLabel("Quantidade de Câmbios")
-							.setPlaceholder("A quantia de câmbios a ser adicionada")
-							.setStyle(TextInputStyle.Short)
-							.setRequired(true),
-					],
-					title:
-						data.action === "Add"
-							? "Adicionar Saldo Individual"
-							: "Remover Saldo Individual",
-					listenInteraction: true,
-				},
-			);
+            new TextInputBuilder()
+              .setCustomId("Amount")
+              .setLabel("Quantidade de Câmbios")
+              .setPlaceholder("A quantia de câmbios a ser adicionada")
+              .setStyle(TextInputStyle.Short)
+              .setRequired(true),
+          ],
+          title:
+            data.action === "Add"
+              ? "Adicionar Saldo Individual"
+              : "Remover Saldo Individual",
+          listenInteraction: true,
+        }
+      );
 
-		const amount = Number(result.Amount);
+    const amount = Number(result.Amount);
 
-		if (Number.isNaN(amount)) {
-			this.container.logger.warn(
-				`[HireInteractionHandler#run] ${interaction.user.tag} tried to perform an action in a DM.`,
-			);
+    if (Number.isNaN(amount)) {
+      this.container.logger.warn(
+        `[HireInteractionHandler#run] ${interaction.user.tag} tried to perform an action in a DM.`
+      );
 
-			await interaction.reply({
-				ephemeral: true,
-				content: "Quantia inválida, tente novamente apenas números",
-			});
-		}
+      await interaction.reply({
+        ephemeral: true,
+        content: "Quantia inválida, tente novamente apenas números",
+      });
+    }
 
-		const cachedGuild =
-			interaction.guild ??
-			(await this.container.client.guilds.fetch(interaction.guildId));
+    const cachedGuild =
+      interaction.guild ??
+      (await this.container.client.guilds.fetch(interaction.guildId));
 
-		const { member: targetMember, habbo: targetHabbo } =
-			await this.container.utilities.habbo.inferTargetGuildMember(
-				result.Target,
-			);
+    const targetHabbo = (
+      await this.container.utilities.habbo.getProfile(result.Target)
+    ).unwrapOr(undefined);
 
-		if (!targetMember) {
-			await i.editReply({
-				content: "Não foi possível encontrar o usuário informado.",
-			});
+    if (!targetHabbo) {
+      await i.editReply({
+        content:
+          "Não foi possível encontrar o usuário informado no Habbo, verifique se o mesmo está com o perfil público no jogo.",
+      });
 
-			return;
-		}
+      return;
+    }
 
-		const targetUser = await this.container.prisma.user.findUnique({
-			where: { discordId: targetMember.user.id },
-			select: {
-				id: true,
-				latestPromotionDate: true,
-				latestPromotionRoleId: true,
-			},
-		});
+    const targetUser = await this.container.prisma.user.findUnique({
+      where: { habboId: targetHabbo.uniqueId },
+      select: {
+        id: true,
+        latestPromotionDate: true,
+        latestPromotionRoleId: true,
+        habboName: true,
+      },
+    });
 
-		const authorUser = await this.container.prisma.user.findUnique({
-			where: {
-				discordId: interaction.user.id,
-			},
-			select: {
-				id: true,
-			},
-		});
+    const authorUser = await this.container.prisma.user.findUnique({
+      where: {
+        discordId: interaction.user.id,
+      },
+      select: {
+        id: true,
+      },
+    });
 
-		if (!targetUser || !authorUser) {
-			this.container.logger.warn(
-				"[HireInteractionHandler#run] Author or target user was not found in database.",
-			);
+    if (!targetUser || !authorUser) {
+      this.container.logger.warn(
+        "[HireInteractionHandler#run] Author or target user was not found in database."
+      );
 
-			await i.editReply({
-				content:
-					"Usuário (você ou o perfil do membro) não encontrado no banco de dados, use `vincular`.",
-			});
+      await i.editReply({
+        content:
+          "Usuário (você ou o perfil do membro) não encontrado no banco de dados, use `vincular`.",
+      });
 
-			return;
-		}
+      return;
+    }
 
-		const {
-			_sum: { amount: totalAmount },
-		} = await this.container.prisma.transaction.aggregate({
-			where: { user: { id: targetUser.id } },
-			_sum: { amount: true },
-		});
+    const {
+      _sum: { amount: totalAmount },
+    } = await this.container.prisma.transaction.aggregate({
+      where: { user: { id: targetUser.id } },
+      _sum: { amount: true },
+    });
 
-		const newTotalAmount =
-			data.action === "Add"
-				? (totalAmount ?? 0) + amount
-				: (totalAmount ?? 0) - Math.abs(amount);
+    const newTotalAmount =
+      data.action === "Add"
+        ? (totalAmount ?? 0) + amount
+        : (totalAmount ?? 0) - Math.abs(amount);
 
-		await this.container.prisma.user.update({
-			where: {
-				id: targetUser.id,
-			},
-			data: {
-				ReceivedTransactions: {
-					create: {
-						amount: data.action === "Add" ? amount : -Math.abs(amount),
-						authorId: authorUser.id,
-						reason: "Adicionado individualmente",
-					},
-				},
-			},
-		});
+    await this.container.prisma.user.update({
+      where: {
+        id: targetUser.id,
+      },
+      data: {
+        ReceivedTransactions: {
+          create: {
+            amount: data.action === "Add" ? amount : -Math.abs(amount),
+            authorId: authorUser.id,
+            reason: "Adicionado individualmente",
+          },
+        },
+      },
+    });
 
-		await i.editReply({
-			content: `${
-				data.action === "Add" ? "Adicionado" : "Removido"
-			} **${amount}** Câmbios ao perfil de ${
-				targetHabbo?.name || targetMember.user.tag
-			}!`,
-		});
+    await i.editReply({
+      content: `${
+        data.action === "Add" ? "Adicionado" : "Removido"
+      } **${amount}** Câmbios ao perfil de ${
+        targetHabbo?.name || targetUser?.habboName
+      }!`,
+    });
 
-		const notificationChannel = await cachedGuild.channels.fetch(
-			ENVIRONMENT.NOTIFICATION_CHANNELS.CMB_LOGS,
-		);
+    const notificationChannel = await cachedGuild.channels.fetch(
+      ENVIRONMENT.NOTIFICATION_CHANNELS.CMB_LOGS
+    );
 
-		if (!notificationChannel?.isTextBased()) {
-			throw new Error("Can't send message to non-text channel.");
-		}
+    if (!notificationChannel?.isTextBased()) {
+      throw new Error("Can't send message to non-text channel.");
+    }
 
-		await notificationChannel.send({
-			embeds: [
-				new EmbedBuilder()
-					.setAuthor({
-						name: interaction.user.tag,
-						iconURL: interaction.user.displayAvatarURL(),
-					})
-					.setTitle("Alteração de Saldo (Individual)")
-					.setThumbnail(
-						`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`,
-					)
-					.setDescription(
-						`**${amount} Câmbios** ${
-							data.action === "Add" ? "adicionado" : "removido"
-						} individualmente por ${interaction.user} para ${targetMember}`,
-					)
-					.addFields([
-						{
-							name: "Saldo Anterior",
-							value: MONETARY_INTL.format(totalAmount ?? 0),
-						},
-						{
-							name: "Saldo Atual",
-							value: MONETARY_INTL.format(newTotalAmount),
-						},
-					])
-					.setColor(EmbedColors.Success),
-			],
-		});
-	}
+    await notificationChannel.send({
+      embeds: [
+        new EmbedBuilder()
+          .setAuthor({
+            name: interaction.user.tag,
+            iconURL: interaction.user.displayAvatarURL(),
+          })
+          .setTitle("Alteração de Saldo (Individual)")
+          .setThumbnail(
+            `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`
+          )
+          .setDescription(
+            `**${amount} Câmbios** ${
+              data.action === "Add" ? "adicionado" : "removido"
+            } individualmente por ${interaction.user} para ${
+              targetHabbo?.name ?? targetUser?.habboName
+            }`
+          )
+          .addFields([
+            {
+              name: "Saldo Anterior",
+              value: MONETARY_INTL.format(totalAmount ?? 0),
+            },
+            {
+              name: "Saldo Atual",
+              value: MONETARY_INTL.format(newTotalAmount),
+            },
+          ])
+          .setColor(EmbedColors.Success),
+      ],
+    });
+  }
 }
