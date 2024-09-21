@@ -517,7 +517,8 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
                   .setDescription(
                     `**${
                       filteredUsers.length
-                    }** Colaboradores de cargos importantes que não compareceram com no mínimo 5 presenças nos relatórios presenciais durante 15 dias.\n\n${filteredUsers
+                    }** Colaboradores de cargos importantes que não compareceram com no mínimo 5 presenças nos relatórios presenciais durante 15 dias.\n\n${
+                      await Promise.all(filteredUsers
                       .map(async (user) => {
                         const member = await cachedGuild.members.fetch(user.discordId);
 
@@ -533,7 +534,8 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
                         }
                         return `- ${user.habboName} // ${job ?? "N/A"}`;
                       })
-                      .join("\n")}`,
+                      .join("\n")
+                      )}`,
                   )
                   .setFooter({
                     text: "📊 Este relatório é enviado de 15 em 15 dias, fazer as confirmações necessárias antes de tomar medidas. Membros em afastamento ativo foram descartados."
