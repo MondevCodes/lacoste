@@ -470,7 +470,6 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
               { habboName: { not: "" } }
             ],
             OR: [
-              { latestPromotionRoleId: "1213993987384545400" },
               { latestPromotionRoleId: "788612423363330081" },
               { latestPromotionRoleId: "1016542462468173884" },
               { latestPromotionRoleId: "788612423363330083" },
