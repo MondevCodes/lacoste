@@ -8,6 +8,7 @@ import {
 import {
 	EmbedBuilder,
 	GuildMember,
+	Role,
 	TextInputBuilder,
 	TextInputStyle,
 	type ButtonInteraction,
@@ -450,8 +451,8 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 
 	public override onLoad() {
 		schedule(
-			"30 15 1,15 * *",
-			// "*/1 * * * *", <- A cada minuto para testes
+			// "30 15 1,15 * *",
+			"*/1 * * * *",
 			async () => {
         this.container.logger.info(
           "[OrganizacionalFormInteractionHandler#run] Auto/schedule: 'Relatório Organizacional', day 1 or 15 runned"
@@ -500,6 +501,8 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
           `[OrganizacionalFormInteractionHandler#run] Filtered ${filteredUsers.length} users`
         );
 
+        const cachedGuild = await this.container.client.guilds.fetch(ENVIRONMENT.GUILD_ID);
+
 				const notificationChannel = await this.container.client.channels.fetch(
 					ENVIRONMENT.NOTIFICATION_CHANNELS.FORM_ANALYTICS,
 				);
@@ -509,15 +512,32 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
             await notificationChannel.send({
               embeds: [
                 new EmbedBuilder()
-                  .setColor(EmbedColors.Default)
-                  .setTitle("Relatório Organizacional - 15 dias")
+                  .setColor(EmbedColors.LalaRed)
+                  .setTitle("Relatório Função Análise - Organizacional")
                   .setDescription(
                     `**${
                       filteredUsers.length
-                    }** usuários que tiveram o relatório pendente.\n\n${filteredUsers
-                      .map((user) => `- ${user.habboName}`)
+                    }** Colaboradores de cargos importantes que não compareceram com no mínimo 5 presenças nos relatórios presenciais durante 15 dias.\n\n${filteredUsers
+                      .map(async (user) => {
+                        const member = await cachedGuild.members.fetch(user.discordId);
+
+                        const currentJobId = this.container.utilities.discord.inferHighestJobRole(
+                          member.roles.cache.map((r) => r.id),
+                        );
+
+                        let job: Role | undefined | null;
+                        if (currentJobId) {
+                          job = currentJobId
+                          ? await cachedGuild.roles.fetch(currentJobId)
+                          : member.roles.highest;
+                        }
+                        return `- ${user.habboName} // ${job ?? "N/A"}`;
+                      })
                       .join("\n")}`,
-                  ),
+                  )
+                  .setFooter({
+                    text: "📊 Este relatório é enviado de 15 em 15 dias, fazer as confirmações necessárias antes de tomar medidas. Membros em afastamento ativo foram descartados."
+                  }),
               ],
             });
           } catch (error) {
