@@ -191,7 +191,7 @@ export class InterviewFormInteractionHandler extends InteractionHandler {
 				name: authorHabbo.name ?? `@${interaction.user.tag}`,
 				iconURL: interaction.user.displayAvatarURL(),
 			})
-			.setColor(EmbedColors.Default);
+			.setColor(EmbedColors.LalaRed);
 
 		const guild =
 			interaction.guild ??

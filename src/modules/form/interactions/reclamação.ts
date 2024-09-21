@@ -107,7 +107,7 @@ export class ComplaintFormInteractionHandler extends InteractionHandler {
 				name: interaction.user.tag,
 				iconURL: interaction.user.displayAvatarURL(),
 			})
-			.setColor(EmbedColors.Default);
+			.setColor(EmbedColors.Alert);
 
 		const guild =
 			interaction.guild ??

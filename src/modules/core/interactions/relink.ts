@@ -91,7 +91,7 @@ export class EvaluationFormInteractionHandler extends InteractionHandler {
           name: interaction.user.tag,
           iconURL: interaction.user.displayAvatarURL(),
         })
-        .setColor(EmbedColors.Default)
+        .setColor(EmbedColors.LalaRed)
         .setThumbnail(
           `https://www.habbo.com/habbo-imaging/avatarimage?figure=${habbo.figureString}&size=b`,
         ),

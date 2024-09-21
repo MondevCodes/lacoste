@@ -797,7 +797,7 @@ export class HireInteractionHandler extends InteractionHandler {
               value: `${habboInteractionName ?? `@${interaction.user.tag}`}`,
             },
           ])
-          .setColor(EmbedColors.Success),
+          .setColor(EmbedColors.Hire),
       ],
     });
 

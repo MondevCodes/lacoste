@@ -355,7 +355,10 @@ export class ModGroupInteractionHandler extends InteractionHandler {
 							value: fields.join("\n"),
 						},
 					])
-					.setColor(EmbedColors.Success),
+					.setColor(
+            data.action === "Add"
+            ? EmbedColors.AddAmount
+            : EmbedColors.RemoveAmount),
 			],
 		});
 	}

@@ -229,7 +229,10 @@ export class ModIndividualInteractionHandler extends InteractionHandler {
               value: MONETARY_INTL.format(newTotalAmount),
             },
           ])
-          .setColor(EmbedColors.Success),
+          .setColor(
+            data.action === "Add"
+            ? EmbedColors.AddAmount
+            : EmbedColors.RemoveAmount),
       ],
     });
   }

@@ -448,7 +448,7 @@ export class WarningsInteractionHandler extends InteractionHandler {
               value: `${habboInteractionName ?? `@${interaction.user.tag}`}`,
             },
           ])
-          .setColor(EmbedColors.Error),
+          .setColor(EmbedColors.LalaRed),
       ],
     });
 

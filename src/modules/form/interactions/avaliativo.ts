@@ -218,7 +218,7 @@ export class EvaluationFormInteractionHandler extends InteractionHandler {
 			.setFooter({
 				text: `Nota ➜ ${finalRate}/5`,
 			})
-			.setColor(EmbedColors.Default);
+			.setColor(EmbedColors.LalaRed);
 
 		const guild =
 			interaction.guild ??

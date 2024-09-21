@@ -480,7 +480,7 @@ export class DepartmentInteractionHandler extends InteractionHandler {
 			await notificationChannel.send({
 				embeds: [
 					new EmbedBuilder()
-						.setColor(EmbedColors.Default)
+						.setColor(EmbedColors.LalaRed)
 						.setTitle(`Afastamento de ${targetHabbo?.name}`)
 						.setAuthor({
 							name: interaction.user.tag,
@@ -794,7 +794,7 @@ export class DepartmentInteractionHandler extends InteractionHandler {
 			await notificationChannel.send({
 				embeds: [
 					new EmbedBuilder()
-						.setColor(EmbedColors.Default)
+						.setColor(EmbedColors.LalaRed)
 						.setTitle("Retorno")
 						.setFooter({
 							text: targetHabbo?.name ?? targetMember?.user.tag ?? "N/D",

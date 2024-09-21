@@ -109,7 +109,7 @@ export class OnGuildMemberRemoveListener extends Listener {
         .setDescription(
           "Seu saldo foi zerado pelo motivo que o Colaborador deixou o Servidor"
         )
-        .setColor(EmbedColors.Error)
+        .setColor(EmbedColors.LalaRed)
         .addFields([
           {
             name: "Saldo Anterior",

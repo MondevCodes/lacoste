@@ -145,7 +145,7 @@ export default class SendCommand extends Command {
                   text: message.author.tag,
                   iconURL: message.author.displayAvatarURL(),
                 })
-                .setColor(EmbedColors.Default)
+                .setColor(EmbedColors.LalaRed)
                 .setThumbnail(
                   `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo.figureString}&size=b`,
                 ),
@@ -186,7 +186,7 @@ export default class SendCommand extends Command {
                   text: message.author.tag,
                   iconURL: message.author.displayAvatarURL(),
                 })
-                .setColor(EmbedColors.Default)
+                .setColor(EmbedColors.LalaRed)
                 .setThumbnail(
                   `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo.figureString}&size=b`,
                 ),
@@ -330,7 +330,7 @@ export default class SendCommand extends Command {
                 text: message.author.tag,
                 iconURL: message.author.displayAvatarURL(),
               })
-              .setColor(EmbedColors.Default)
+              .setColor(EmbedColors.LalaRed)
               .setThumbnail(
                 `https://www.habbo.com/habbo-imaging/avatarimage?figure=${habbo.figureString}&size=b`,
               ),
@@ -371,7 +371,7 @@ export default class SendCommand extends Command {
                 text: message.author.tag,
                 iconURL: message.author.displayAvatarURL(),
               })
-              .setColor(EmbedColors.Default)
+              .setColor(EmbedColors.LalaRed)
               .setThumbnail(
                 `https://www.habbo.com/habbo-imaging/avatarimage?figure=${habbo.figureString}&size=b`,
               ),

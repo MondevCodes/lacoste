@@ -274,7 +274,7 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
 					inline: true,
 				},
 			])
-			.setColor(EmbedColors.Default)
+			.setColor(EmbedColors.LalaRed)
       .setThumbnail(
         `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`,
       );
