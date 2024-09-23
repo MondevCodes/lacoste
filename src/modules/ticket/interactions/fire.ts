@@ -601,7 +601,7 @@ export class FireInteractionHandler extends InteractionHandler {
 				EmbedBuilder.from(interaction.message.embeds[0])
 					.setTitle(`Demissão de ${habboTargetStorage}`)
 					.addFields([{ name: "🛡️ Autorizado Por", value: `${habboInteractionName ?? `@${interaction.user.tag}`}`, }])
-					.setColor(EmbedColors.Error),
+					.setColor(EmbedColors.LalaRed),
 			],
 		});
 

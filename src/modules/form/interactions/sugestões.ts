@@ -124,7 +124,7 @@ export class SuggestionFormInteractionHandler extends InteractionHandler {
 				name: interaction.user.tag,
 				iconURL: interaction.user.displayAvatarURL(),
 			})
-			.setColor(EmbedColors.Default);
+			.setColor(EmbedColors.Alert);
 
 		const channel = await guild.channels.fetch(
 			ENVIRONMENT.NOTIFICATION_CHANNELS.FORM_SUGGESTION,
