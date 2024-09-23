@@ -25,7 +25,7 @@ export class AllBalancesCommand extends Command {
           .map((t) => t.amount)
           .reduce((a, b) => a + b, 0);
 
-        return [transactions[0].user.discordId, amount] as const;
+        return [transactions[0].user.habboId, amount] as const;
       })
       .sort((a, b) => Number(b[1]) - Number(a[1]))
       .filter((b) => Number(b[1]) !== 0);
@@ -34,11 +34,11 @@ export class AllBalancesCommand extends Command {
     let fieldValue = '';
     let fieldCount = 0;
 
-    for (const [userId, amount] of balances) {
+    for (const [userHabboId, amount] of balances) {
       const formattedAmount = MONETARY_INTL.format(Number(amount) || 0);
 
       const targetDB = await this.container.prisma.user.findUnique({
-        where: { discordId: userId },
+        where: { habboId: userHabboId },
         select: { habboName: true, },
       });
 
