@@ -75,7 +75,7 @@ export class CorrecoesFormInteractionHandler extends InteractionHandler {
 
 						new TextInputBuilder()
 							.setLabel("Nicks para correção no relatório presencial")
-							.setPlaceholder("Nicks dos colaboradores no Habbo")
+							.setPlaceholder(">> ATENÇÃO: SEPARE OS NICKS POR LINHA <<")
 							.setCustomId(FixFormInputIds.Nicks)
 							.setStyle(TextInputStyle.Paragraph)
 							.setRequired(true),
@@ -159,7 +159,7 @@ export class CorrecoesFormInteractionHandler extends InteractionHandler {
 
           await interactionFromModal.editReply({
             content:
-              `Não consegui encontrar o usuário como vinculado: **${target}** verifique se o mesmo está realmente vinculado`,
+              `Não consegui encontrar o usuário como vinculado: **${target}** verifique se o mesmo está realmente vinculado **ou vincule-o**`,
           });
 
 					return;

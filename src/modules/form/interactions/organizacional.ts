@@ -455,7 +455,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
       await notificationChannelNoIdentify.send({ embeds: [
         new EmbedBuilder()
         .setDescription(`**<@&1009452772200030289> - Correção Identificada** \n\n
-            ${notFoundUsers.join("\n")} \n`)
+            ${notFoundUsers.join("\n")} \n\n`)
         .setFooter({
           text: "Usuários não vinculados/encontrados no nosso banco de dados.\nAcrescente a devida presença com o nick correto e vinculado."
         })
