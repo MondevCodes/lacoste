@@ -217,7 +217,7 @@ export default class SendCommand extends Command {
 
 						new ButtonBuilder()
 							.setLabel("Correções")
-							.setStyle(ButtonStyle.Success)
+							.setStyle(ButtonStyle.Danger)
 							.setCustomId(FormIds.OrganizacionalCorrecao),
 					),
 				],
