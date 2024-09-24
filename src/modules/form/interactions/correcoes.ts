@@ -81,6 +81,7 @@ export class CorrecoesFormInteractionHandler extends InteractionHandler {
 							.setRequired(true),
 
 					],
+					listenInteraction: true,
 					title: "Formulário Correção",
 				},
 			);
@@ -132,10 +133,9 @@ export class CorrecoesFormInteractionHandler extends InteractionHandler {
 						`[CorreçãoFormInteractionHandler#run] Couldn't find target: ${target}.`,
 					);
 
-          await interactionFromModal.reply({
+          await interactionFromModal.editReply({
             content:
               `Não consegui encontrar esse usuário no Habbo: **${target}** tem certeza que digitou o Nick corretamente? Ou a conta do mesmo no jogo está pública?`,
-            ephemeral: true,
           });
 
 					return;
@@ -157,10 +157,9 @@ export class CorrecoesFormInteractionHandler extends InteractionHandler {
 						`[CorreçãoFormInteractionHandler#run] Couldn't find target: ${target}.`,
 					);
 
-          await interactionFromModal.reply({
+          await interactionFromModal.editReply({
             content:
               `Não consegui encontrar o usuário como vinculado: **${target}** verifique se o mesmo está realmente vinculado`,
-            ephemeral: true,
           });
 
 					return;
