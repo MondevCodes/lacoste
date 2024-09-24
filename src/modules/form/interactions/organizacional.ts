@@ -457,7 +457,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
         .setDescription(`**<@&1009452772200030289> - Correção Identificada** \n\n
             ${notFoundUsers.join("\n")} \n`)
         .setFooter({
-          text: "Usuários não vinculados/encontrados no nosso banco de dados. Acrescente a devida presença com o nick correto e vinculado."
+          text: "Usuários não vinculados/encontrados no nosso banco de dados.\nAcrescente a devida presença com o nick correto e vinculado."
         })
       ]
      });
