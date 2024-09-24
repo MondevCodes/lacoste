@@ -81,7 +81,6 @@ export class CorrecoesFormInteractionHandler extends InteractionHandler {
 							.setRequired(true),
 
 					],
-					listenInteraction: true,
 					title: "Formulário Correção",
 				},
 			);
