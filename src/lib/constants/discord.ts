@@ -10,5 +10,6 @@ export enum EmbedColors {
   Diary = 0x6c6a6a,
   Alert = 0xe3e300,
   AddAmount = 0x147201,
-  RemoveAmount = 0x972b00
+  RemoveAmount = 0x972b00,
+  FixOrganizational = 0xd9dfe3,
 }
