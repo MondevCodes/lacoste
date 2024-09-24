@@ -214,6 +214,11 @@ export default class SendCommand extends Command {
 							.setLabel("Relatório Presencial")
 							.setStyle(ButtonStyle.Success)
 							.setCustomId(FormIds.Organizacional),
+
+						new ButtonBuilder()
+							.setLabel("Correções")
+							.setStyle(ButtonStyle.Success)
+							.setCustomId(FormIds.OrganizacionalCorrecao),
 					),
 				],
 			});
