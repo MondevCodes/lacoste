@@ -247,31 +247,31 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 			// if (target === "N/D") continue;
       switch (target) {
         case "N/D":
-          return;
+          continue;
 
         case "-":
-          return;
+          continue;
 
         case "-x-":
-          return;
+          continue;
 
         case "/":
-          return;
+          continue;
 
         case "//":
-          return;
+          continue;
 
         case ".":
-          return;
+          continue;
 
         case "x":
-          return;
+          continue;
 
         case "|":
-          return;
+          continue;
 
         case "ninguem":
-          return;
+          continue;
       }
 
 			try {
@@ -433,7 +433,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 					),
 				},
 			)
-			.setColor(EmbedColors.Default);
+			.setColor(EmbedColors.Diary);
 
 		const guild =
 			interaction.guild ??
@@ -455,8 +455,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
       await notificationChannelNoIdentify.send({ embeds: [
         new EmbedBuilder()
         .setDescription(`**<@&1009452772200030289> - Correção Identificada** \n\n
-            ${notFoundUsers.join("\n")}
-          `)
+            ${notFoundUsers.join("\n")} \n`)
         .setFooter({
           text: "Usuários não vinculados/encontrados no nosso banco de dados"
         })

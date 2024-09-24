@@ -124,7 +124,6 @@ export class CorrecoesFormInteractionHandler extends InteractionHandler {
 		][]) {
 			if (target === "N/D") return;
 
-			try {
         const onlyHabbo = (await this.container.utilities.habbo.getProfile(target)).unwrapOr(
           undefined,
         );
@@ -178,9 +177,6 @@ export class CorrecoesFormInteractionHandler extends InteractionHandler {
 				members[group].push(
 					onlyHabbo.name.replaceAll(MARKDOWN_CHARS_RE, "\\$&"),
 				);
-			} catch (error) {
-				members[group].push(target.replaceAll(MARKDOWN_CHARS_RE, "\\$&"));
-			}
 		}
 
 		this.container.logger.info(
