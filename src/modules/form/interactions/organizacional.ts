@@ -244,7 +244,35 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 			Targets,
 			string,
 		][]) {
-			if (target === "N/D") continue;
+			// if (target === "N/D") continue;
+      switch (target) {
+        case "N/D":
+          return;
+
+        case "-":
+          return;
+
+        case "-x-":
+          return;
+
+        case "/":
+          return;
+
+        case "//":
+          return;
+
+        case ".":
+          return;
+
+        case "x":
+          return;
+
+        case "|":
+          return;
+
+        case "ninguem":
+          return;
+      }
 
 			try {
         const onlyHabbo = (await this.container.utilities.habbo.getProfile(target)).unwrapOr(
@@ -426,8 +454,12 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
     if (notFoundUsers.length > 0) {
       await notificationChannelNoIdentify.send({ embeds: [
         new EmbedBuilder()
-        .setTitle("Usuários não encontrados/vinculados no Formulário Organizacional")
-        .setDescription(notFoundUsers.join("\n"))
+        .setDescription(`**<@&1009452772200030289> - Correção Identificada** \n\n
+            ${notFoundUsers.join("\n")}
+          `)
+        .setFooter({
+          text: "Usuários não vinculados/encontrados no nosso banco de dados"
+        })
       ]
      });
     }
@@ -470,9 +502,10 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
               { habboName: { not: "" } }
             ],
             OR: [
-              { latestPromotionRoleId: "788612423363330081" },
-              { latestPromotionRoleId: "1016542462468173884" },
-              { latestPromotionRoleId: "788612423363330083" },
+              { latestPromotionRoleId: ENVIRONMENT.SECTORS_ROLES.ADMINISTRATIVO.id },
+              { latestPromotionRoleId: ENVIRONMENT.SECTORS_ROLES.DIRETORIA.id },
+              { latestPromotionRoleId: ENVIRONMENT.SECTORS_ROLES.PRESIDÊNCIA.id },
+              { latestPromotionRoleId: ENVIRONMENT.SECTORS_ROLES.FUNDAÇÃO.id }
             ],
           },
         });
