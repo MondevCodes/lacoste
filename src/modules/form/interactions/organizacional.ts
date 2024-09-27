@@ -267,6 +267,9 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
         case "x":
           continue;
 
+        case "X":
+          continue;
+
         case "|":
           continue;
 
@@ -454,8 +457,8 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
     if (notFoundUsers.length > 0) {
       await notificationChannelNoIdentify.send({ embeds: [
         new EmbedBuilder()
-        .setDescription(`**<@&1009452772200030289> - Correção Identificada** \n\n
-            ${notFoundUsers.join("\n")} \n\n`)
+        .setDescription(`**<@&1009452772200030289> - Correção Identificada** \n
+            ${notFoundUsers.join("\n")} \n`)
         .setFooter({
           text: "Usuários não vinculados/encontrados no nosso banco de dados.\nAcrescente a devida presença com o nick correto e vinculado."
         })
@@ -702,11 +705,11 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
             });
 
             await notificationChannelNoIdentify.send({
-              content: `**FIM DO DIA** [${today.toLocaleDateString('pt-BR')}]`
+              content: `**🕛 FIM DO DIA** [${today.toLocaleDateString('pt-BR')}]`
             });
 
             await channel.send({
-              content: `**FIM DO DIA** [${today.toLocaleDateString('pt-BR')}]`
+              content: `**🕛 FIM DO DIA** [${today.toLocaleDateString('pt-BR')}]`,
             });
           } catch (error) {
             this.container.logger.error(
