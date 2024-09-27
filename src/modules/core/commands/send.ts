@@ -265,7 +265,7 @@ export default class SendCommand extends Command {
 						.setColor(EmbedColors.Default)
 						.setTitle("Ouvidoria")
 						.setDescription(
-							"Para enviar sugestões, reclamações ou duvidas! Um administrador irá responder o mais rápido possível.",
+							"Para enviar sugestões, reclamações ou duvidas aperte no Ticket! Um administrador irá responder o mais rápido possível. Fique a vontade para enviar um elogio também.",
 						)
 						.setImage(
 							"https://media.discordapp.net/attachments/1266124737277595729/1284254540283121766/image-2.png?ex=66e5f6be&is=66e4a53e&hm=2f1408921ad03a58727c13c9c88b2ccab7b337b4e67f0374a9bf378c07943283&=&format=webp&quality=lossless",
@@ -281,8 +281,7 @@ export default class SendCommand extends Command {
 						new ButtonBuilder()
 							.setLabel("Enviar Elogios")
 							.setStyle(ButtonStyle.Secondary)
-							.setCustomId(encodeOmbudsmanButtonId({ action: "OpenPraise" }))
-							.setDisabled(true),
+							.setCustomId(FormIds.Elogio)
 					),
 				],
 			});
