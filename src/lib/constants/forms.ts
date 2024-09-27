@@ -10,4 +10,5 @@ export enum FormIds {
 	AcompanhamentoAdm = "LCST::Form/AcompanhamentoAdm",
 	Organizacional = "LCST::Form/Organizacional",
 	OrganizacionalCorrecao = "LCST::Form/OrganizacionalCorrecao",
+	Elogio = "LCST::Form/Elogio",
 }
