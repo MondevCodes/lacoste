@@ -117,8 +117,8 @@ export class ComplimentFormInteractionHandler extends InteractionHandler {
             authorDB?.habboName ?? `<@${authorDB?.discordId}>`
           }** enviou um elogio para **${
             onlyHabbo.name ?? targetDBHabbo.habboName
-          }**! \n\n
-          **================================** \n\n
+          }**! \n
+          **================================** \n
           ${result.Description}`
         )
         .setImage(
@@ -176,8 +176,8 @@ export class ComplimentFormInteractionHandler extends InteractionHandler {
         .setDescription(
           `**${
             authorDB?.habboName ?? `<@${authorDB?.discordId}>`
-          }** nos enviou um elogio! \n\n
-          **================================** \n\n
+          }** nos enviou um elogio! \n
+          **================================** \n
           ${result.Description}`
         )
         .setImage(
