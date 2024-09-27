@@ -45,13 +45,20 @@ export class CorrecoesFormInteractionHandler extends InteractionHandler {
 			? await guild.members.fetch(interaction.member.user.id)
 			: interaction.member;
 
-		const isAuthorized = this.container.utilities.discord.hasPermissionByRole({
-			category: "SECTOR",
-			checkFor: "PROMOCIONAL",
-			roles: member.roles,
-		});
+		// const isAuthorized = this.container.utilities.discord.hasPermissionByRole({
+		// 	category: "SECTOR",
+		// 	checkFor: "PROMOCIONAL",
+		// 	roles: member.roles,
+		// });
+
+    const isAuthorized = member.roles.cache.has("1009452772200030289" || "1008077046955651193")
 
 		if (!isAuthorized) {
+      await interaction.editReply({
+        content:
+          `Não autorizado. Você precisa ter o cargo de <@&1009452772200030289> ou <@&1008077046955651193> para acessar essa função.`,
+      });
+
 			return this.none();
 		}
 
