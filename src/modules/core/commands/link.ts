@@ -60,10 +60,9 @@ export class LinkCommand extends Command {
     // START MEMBER WITHOUT DISCORD
     if (memberResult.isErr()) {
       if (nickResult.isErr()) {
-        await this.container.utilities.discord.sendEphemeralMessage(message, {
+        await message.reply({
           content:
             "Comando inválido, use `–vincular NickNoHabbo` para vincular apenas o Habbo ou `–vincular @NickNoDiscord NickNoHabbo` para vincular também o Discord.",
-          method: "reply",
         });
 
         return;
@@ -78,10 +77,9 @@ export class LinkCommand extends Command {
           err: profileResult.unwrapErr(),
         });
 
-        await this.container.utilities.discord.sendEphemeralMessage(message, {
+        await message.reply({
           content:
             "Parece que o usuário do Habbo informado não existe, verifique o nome e tente novamente.",
-          method: "reply",
         });
 
         return;
@@ -95,9 +93,8 @@ export class LinkCommand extends Command {
       });
 
       if (existingUser) {
-        await this.container.utilities.discord.sendEphemeralMessage(message, {
+        await message.reply({
           content: `Este usuário já está vinculado sem o Discord. Caso queira vincular o Discord utilize: –vincular @NickNoDiscord ${profile.name}`,
-          method: "reply",
         });
 
         return;
@@ -182,10 +179,9 @@ export class LinkCommand extends Command {
         err: profileResult.unwrapErr(),
       });
 
-      await this.container.utilities.discord.sendEphemeralMessage(message, {
+      await message.reply({
         content:
-          "Parece que o usuário informado não existe, verifique o nome e tente novamente.",
-        method: "reply",
+          "Parece que o usuário informado não existe no Habbo, verifique o nome e tente novamente.",
       });
 
       return;
@@ -220,9 +216,8 @@ export class LinkCommand extends Command {
     });
 
     if (existingUserDiscord) {
-      await this.container.utilities.discord.sendEphemeralMessage(message, {
+      await message.reply({
         content: `Este perfil do Discord já está vinculado com a conta do Habbo: ${existingUserDiscord.habboName}`,
-        method: "reply",
       });
 
       return;
@@ -276,9 +271,8 @@ export class LinkCommand extends Command {
           },
         });
 
-        await this.container.utilities.discord.sendEphemeralMessage(message, {
+        await message.reply({
           content: `Algo aconteceu com os dados do usuário, ele foi resetado para o cargo VINCULADO no Banco de Dados e atribuido os respectivos cargos.`,
-          method: "reply",
         });
       }
     }
@@ -298,9 +292,8 @@ export class LinkCommand extends Command {
         !existingUser.latestPromotionJobId ||
         !existingUser.latestPromotionRoleId
       ) {
-        await this.container.utilities.discord.sendEphemeralMessage(message, {
+        await message.reply({
           content: `Ocorreu um erro inesperado, contate o Desenvolvedor.`,
-          method: "reply",
         });
 
         return;
