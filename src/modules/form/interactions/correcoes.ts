@@ -73,13 +73,12 @@ export class CorrecoesFormInteractionHandler extends InteractionHandler {
 		// 	roles: member.roles,
 		// });
 
-    const isAuthorized = member.roles.cache.has("1009452772200030289");
-    const isAuthorizedTwo = member.roles.cache.has("1008077046955651193");
+    const isAuthorized = member.roles.cache.hasAny("1009452772200030289" || "1008077046955651193");
 
-		if (!isAuthorized || !isAuthorizedTwo) {
+		if (!isAuthorized) {
       await interaction.reply({
         content:
-          `Não autorizado. Você precisa ter o cargo de <@&1009452772200030289> ou <@&1008077046955651193> para acessar essa função.`,
+          `Não autorizado. Você precisa ter o cargo de <@&1009452772200030289> para acessar a função "Correções".`,
         ephemeral: true,
       });
 
