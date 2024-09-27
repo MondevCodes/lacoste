@@ -148,7 +148,7 @@ export class ComplimentFormInteractionHandler extends InteractionHandler {
       });
 
       if (targetDBHabbo.discordLink !== false) {
-        await channel.send(`<@${targetDBHabbo.discordId}>`);
+        await channel.send(`<@${interaction.user.id}> 📨 <@${targetDBHabbo.discordId}>`);
       }
 
       await interactionFromModal.deleteReply();
@@ -206,7 +206,7 @@ export class ComplimentFormInteractionHandler extends InteractionHandler {
         embeds: [embed],
       });
 
-      await channel.send("@everyone");
+      await channel.send(`<@${interaction.user.id}> 📨 @everyone`);
 
       await interactionFromModal.deleteReply();
     }
