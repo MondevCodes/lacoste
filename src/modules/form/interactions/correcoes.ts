@@ -54,9 +54,10 @@ export class CorrecoesFormInteractionHandler extends InteractionHandler {
     const isAuthorized = member.roles.cache.has("1009452772200030289" || "1008077046955651193")
 
 		if (!isAuthorized) {
-      await interaction.editReply({
+      await interaction.reply({
         content:
           `Não autorizado. Você precisa ter o cargo de <@&1009452772200030289> ou <@&1008077046955651193> para acessar essa função.`,
+        ephemeral: true,
       });
 
 			return this.none();
