@@ -200,5 +200,6 @@ export class ComplimentFormInteractionHandler extends InteractionHandler {
 
       await channel.send(`<@${interaction.user.id}> 📨 @everyone`);
     }
+    interactionFromModal.deleteReply();
   }
 }
