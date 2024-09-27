@@ -102,10 +102,6 @@ export class ComplimentFormInteractionHandler extends InteractionHandler {
         },
       });
 
-      if (!interactionFromModal.deferred) {
-        await interaction.deferReply({ ephemeral: true });
-      }
-
       const guild =
         interaction.guild ??
         (await interaction.client.guilds.fetch(ENVIRONMENT.GUILD_ID));
@@ -148,10 +144,10 @@ export class ComplimentFormInteractionHandler extends InteractionHandler {
       });
 
       if (targetDBHabbo.discordLink !== false) {
-        await channel.send(`<@${interaction.user.id}> 📨 <@${targetDBHabbo.discordId}>`);
+        await channel.send(
+          `<@${interaction.user.id}> 📨 <@${targetDBHabbo.discordId}>`
+        );
       }
-
-      await interactionFromModal.deleteReply();
     } else {
       const authorDB = await this.container.prisma.user.findUnique({
         where: { discordId: interaction.user.id },
@@ -162,10 +158,6 @@ export class ComplimentFormInteractionHandler extends InteractionHandler {
           discordLink: true,
         },
       });
-
-      if (!interactionFromModal.deferred) {
-        await interaction.deferReply({ ephemeral: true });
-      }
 
       const guild =
         interaction.guild ??
@@ -207,8 +199,6 @@ export class ComplimentFormInteractionHandler extends InteractionHandler {
       });
 
       await channel.send(`<@${interaction.user.id}> 📨 @everyone`);
-
-      await interactionFromModal.deleteReply();
     }
   }
 }
