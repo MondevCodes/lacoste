@@ -85,7 +85,7 @@ export class OnGuildMemberRemoveListener extends Listener {
       await notificationFireChannel.send({ embeds: [
         new EmbedBuilder()
         .setTitle(`Demissão de ${targetDB?.habboName}`)
-        .setColor(EmbedColors.Error)
+        .setColor(EmbedColors.LalaRed)
         .addFields([
           {
             name: "👤 Demissor",
