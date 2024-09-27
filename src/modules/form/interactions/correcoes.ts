@@ -73,7 +73,7 @@ export class CorrecoesFormInteractionHandler extends InteractionHandler {
 		// 	roles: member.roles,
 		// });
 
-    const isAuthorized = member.roles.cache.has("1009452772200030289" || "1008077046955651193")
+    const isAuthorized = member.roles.cache.hasAny("1009452772200030289" || "1008077046955651193")
 
 		if (!isAuthorized) {
       await interaction.reply({
