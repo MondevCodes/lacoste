@@ -45,6 +45,28 @@ export class CorrecoesFormInteractionHandler extends InteractionHandler {
 			? await guild.members.fetch(interaction.member.user.id)
 			: interaction.member;
 
+		const isAuthorized = this.container.utilities.discord.hasPermissionByRole({
+			category: "SECTOR",
+			checkFor: "PROMOCIONAL",
+			roles: member.roles,
+		});
+
+		if (!isAuthorized) {
+			return this.none();
+		}
+
+		return interaction.customId === FormIds.OrganizacionalCorrecao
+			? this.some()
+			: this.none();
+	}
+
+	public override async run(interaction: ButtonInteraction) {
+    const guildCache = await this.container.utilities.discord.getGuild();
+
+		const member = !(interaction.member instanceof GuildMember)
+			? await guildCache.members.fetch(interaction.user.id)
+			: interaction.member;
+
 		// const isAuthorized = this.container.utilities.discord.hasPermissionByRole({
 		// 	category: "SECTOR",
 		// 	checkFor: "PROMOCIONAL",
@@ -60,15 +82,9 @@ export class CorrecoesFormInteractionHandler extends InteractionHandler {
         ephemeral: true,
       });
 
-			return this.none();
-		}
+      return;
+    }
 
-		return interaction.customId === FormIds.OrganizacionalCorrecao
-			? this.some()
-			: this.none();
-	}
-
-	public override async run(interaction: ButtonInteraction) {
 		const { result, interaction: interactionFromModal } =
 			await this.container.utilities.inquirer.awaitModal<OrganizationalFormInput>(
 				interaction,
