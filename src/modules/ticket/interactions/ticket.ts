@@ -210,13 +210,22 @@ export class OmbudsmanInteractionHandler extends InteractionHandler {
 		const guild = await this.container.utilities.discord.getGuild();
 		const member = await guild.members.fetch(interaction.user.id);
 
-		const hasPermission = this.container.utilities.discord.hasPermissionByRole({
-			category: "SECTOR",
-			checkFor: "FUNDAÇÃO",
-			roles: member.roles,
-		});
+		// const hasPermission = this.container.utilities.discord.hasPermissionByRole({
+		// 	category: "SECTOR",
+		// 	checkFor: "FUNDAÇÃO",
+		// 	roles: member.roles,
+		// });
 
-		if (!hasPermission) return;
+    const hasPermission = member.roles.cache.has("985260931498000475");
+
+		if (!hasPermission) {
+      await interaction.reply({
+				content: "Não autorizado. Você precisa ter o cargo de <@&985260931498000475> para fechar o Ticket.",
+				ephemeral: true,
+			});
+
+      return;
+    }
 
 		const ticket = await this.container.prisma.ticket.findUnique({
 			where: { id },
