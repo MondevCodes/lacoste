@@ -275,6 +275,21 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 
         case "ninguem":
           continue;
+
+        case "Ninguem":
+          continue;
+
+        case "Ninguém":
+          continue;
+
+        case "ninguém":
+          continue;
+
+        case "_":
+          continue;
+
+        case "0":
+          continue;
       }
 
 			try {
