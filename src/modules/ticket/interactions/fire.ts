@@ -18,7 +18,6 @@ import {
 import { EmbedColors } from "$lib/constants/discord";
 import { ENVIRONMENT } from "$lib/env";
 import { getJobSectorsById } from "$lib/constants/jobs";
-import { MONETARY_INTL } from "src/modules/econ/commands/balance";
 
 export type Action = "Request" | "Approve" | "Reject";
 
@@ -55,6 +54,9 @@ const MODAL_INPUTS_OBJ = {
 
 const MODAL_INPUTS = Object.values(MODAL_INPUTS_OBJ);
 type ModalInput = keyof typeof MODAL_INPUTS_OBJ;
+
+let interactionDisplayAvatar: any;
+let interactionTag: any;
 
 let habboTargetStorage: string | undefined;
 let habboInteractionName: string | undefined = undefined;
@@ -169,6 +171,9 @@ export class FireInteractionHandler extends InteractionHandler {
           discordLink: true,
         },
       });
+
+      interactionDisplayAvatar = interaction.user.displayAvatarURL();
+      interactionTag = interaction.user.tag;
 
       // START USER WITHOUT DISCORD
       if (targetDBOnlyHabbo?.discordLink === false) {
@@ -653,10 +658,20 @@ export class FireInteractionHandler extends InteractionHandler {
       await this.container.utilities.habbo.getProfile(habboTargetStorage)
     ).unwrapOr(undefined);
 
+    const MONETARY_INTL = new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "CAM",
+      minimumFractionDigits: 0,
+    });
+
     await notificationCMBChannel.send({
       embeds: [
         new EmbedBuilder()
           .setTitle(`Alteração de Saldo de ${habboTargetStorage}`)
+          .setAuthor({
+            name: interactionTag,
+            iconURL: interactionDisplayAvatar,
+          })
           .setDescription(
             `Seu saldo foi zerado pelo motivo que o Colaborador foi demitido por ${habboInteractionAcceptName}`
           )
