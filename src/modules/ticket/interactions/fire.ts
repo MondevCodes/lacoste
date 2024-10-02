@@ -1,22 +1,24 @@
 import {
   InteractionHandler,
-  InteractionHandlerTypes, Result,
+  InteractionHandlerTypes,
+  Result,
 } from "@sapphire/framework";
 import { ApplyOptions } from "@sapphire/decorators";
 
 import {
-	ActionRowBuilder,
-	ButtonBuilder,
-	ButtonStyle,
-	EmbedBuilder,
-	TextInputBuilder,
-	TextInputStyle,
-	type ButtonInteraction,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  EmbedBuilder,
+  TextInputBuilder,
+  TextInputStyle,
+  type ButtonInteraction,
 } from "discord.js";
 
 import { EmbedColors } from "$lib/constants/discord";
 import { ENVIRONMENT } from "$lib/env";
 import { getJobSectorsById } from "$lib/constants/jobs";
+import { MONETARY_INTL } from "src/modules/econ/commands/balance";
 
 export type Action = "Request" | "Approve" | "Reject";
 
@@ -25,130 +27,134 @@ export const BASE_BUTTON_ID_REGEX = new RegExp(`^${BASE_BUTTON_ID}/`);
 
 /** @internal @see {@link decodeButtonId} */
 export function encodeButtonId(action: Action) {
-	return `${BASE_BUTTON_ID}/${action}`;
+  return `${BASE_BUTTON_ID}/${action}`;
 }
 
 /** @internal @see {@link encodeButtonId} */
 export function decodeButtonId(id: string): Action {
-	return id.replace(`${BASE_BUTTON_ID}/`, "") as Action;
+  return id.replace(`${BASE_BUTTON_ID}/`, "") as Action;
 }
 
 type ParsedData = { action: Action };
 
 const MODAL_INPUTS_OBJ = {
-	Target: new TextInputBuilder()
-		.setLabel("Demitido")
-		.setPlaceholder("Informe o Habbo (Nick).")
-		.setStyle(TextInputStyle.Short)
-		.setCustomId("Target")
-		.setRequired(true),
+  Target: new TextInputBuilder()
+    .setLabel("Demitido")
+    .setPlaceholder("Informe o Habbo (Nick).")
+    .setStyle(TextInputStyle.Short)
+    .setCustomId("Target")
+    .setRequired(true),
 
-	Reason: new TextInputBuilder()
-		.setStyle(TextInputStyle.Paragraph)
-		.setLabel("Motivo da demissão")
-		.setPlaceholder("Ex.: Inatividade")
-		.setCustomId("Reason")
-		.setRequired(false),
+  Reason: new TextInputBuilder()
+    .setStyle(TextInputStyle.Paragraph)
+    .setLabel("Motivo da demissão")
+    .setPlaceholder("Ex.: Inatividade")
+    .setCustomId("Reason")
+    .setRequired(false),
 } satisfies Record<string, TextInputBuilder | "GENERATED">;
 
 const MODAL_INPUTS = Object.values(MODAL_INPUTS_OBJ);
 type ModalInput = keyof typeof MODAL_INPUTS_OBJ;
 
+let interactionDisplayAvatar: any;
+let interactionTag: any;
+
 let habboTargetStorage: string | undefined;
 let habboInteractionName: string | undefined = undefined;
+let habboInteractionAcceptName: string | undefined = undefined;
 
 @ApplyOptions<InteractionHandler.Options>({
-	interactionHandlerType: InteractionHandlerTypes.Button,
+  interactionHandlerType: InteractionHandlerTypes.Button,
 })
 export class FireInteractionHandler extends InteractionHandler {
-	async #isAuthorized(interaction: ButtonInteraction) {
-		if (!interaction.inCachedGuild()) {
-			this.container.logger.warn(
-				`[FireInteractionHandler#isAuthorized] ${interaction.user.tag} tried to perform an action in a DM.`,
-			);
-
-			return false;
-		}
-
-		const { roles } =
-			interaction.member ??
-			(await interaction.guild.members.fetch(interaction.user.id));
-
-		switch (decodeButtonId(interaction.customId)) {
-			case "Request":
-				return this.container.utilities.discord.hasPermissionByRole({
-					checkFor: "INICIAL",
-					category: "SECTOR",
-					roles,
-				});
-
-			case "Reject":
-			case "Approve":
-				return this.container.utilities.discord.hasPermissionByRole({
-					checkFor: "PRESIDÊNCIA",
-					category: "SECTOR",
-					roles,
-				});
-
-			default:
-				throw new Error("Invalid Action");
-		}
-	}
-
-	public override async parse(interaction: ButtonInteraction) {
-		if (!interaction.customId.match(BASE_BUTTON_ID_REGEX)) return this.none();
-		if (!(await this.#isAuthorized(interaction))) return this.none();
-
-		return this.some({ action: decodeButtonId(interaction.customId) });
-	}
-
-	#APPROVAL_ROW = new ActionRowBuilder<ButtonBuilder>().addComponents(
-		new ButtonBuilder()
-			.setCustomId(encodeButtonId("Approve"))
-			.setStyle(ButtonStyle.Success)
-			.setLabel("Aprovar"),
-
-		new ButtonBuilder()
-			.setCustomId(encodeButtonId("Reject"))
-			.setStyle(ButtonStyle.Danger)
-			.setLabel("Reprovar"),
-	);
-
-	public override async run(
-		interaction: ButtonInteraction,
-		{ action }: ParsedData,
-	) {
-		if (!interaction.inGuild()) {
-			this.container.logger.warn(
-				`[FireInteractionHandler#run] ${interaction.user.tag} tried to perform an action in a DM.`,
-			);
-
-			return;
-		}
-
-		const cachedGuild =
-			interaction.guild ??
-			(await this.container.client.guilds.fetch(interaction.guildId));
-
-		if (action === "Request") {
-			const { result, interaction: modalInteraction } =
-				await this.container.utilities.inquirer.awaitModal<ModalInput>(
-					interaction,
-					{
-						listenInteraction: true,
-						inputs: MODAL_INPUTS,
-						title: "Demissão",
-					},
-				);
-
-      const onlyHabbo = (await this.container.utilities.habbo.getProfile(result.Target)).unwrapOr(
-        undefined,
+  async #isAuthorized(interaction: ButtonInteraction) {
+    if (!interaction.inCachedGuild()) {
+      this.container.logger.warn(
+        `[FireInteractionHandler#isAuthorized] ${interaction.user.tag} tried to perform an action in a DM.`
       );
+
+      return false;
+    }
+
+    const { roles } =
+      interaction.member ??
+      (await interaction.guild.members.fetch(interaction.user.id));
+
+    switch (decodeButtonId(interaction.customId)) {
+      case "Request":
+        return this.container.utilities.discord.hasPermissionByRole({
+          checkFor: "INICIAL",
+          category: "SECTOR",
+          roles,
+        });
+
+      case "Reject":
+      case "Approve":
+        return this.container.utilities.discord.hasPermissionByRole({
+          checkFor: "PRESIDÊNCIA",
+          category: "SECTOR",
+          roles,
+        });
+
+      default:
+        throw new Error("Invalid Action");
+    }
+  }
+
+  public override async parse(interaction: ButtonInteraction) {
+    if (!interaction.customId.match(BASE_BUTTON_ID_REGEX)) return this.none();
+    if (!(await this.#isAuthorized(interaction))) return this.none();
+
+    return this.some({ action: decodeButtonId(interaction.customId) });
+  }
+
+  #APPROVAL_ROW = new ActionRowBuilder<ButtonBuilder>().addComponents(
+    new ButtonBuilder()
+      .setCustomId(encodeButtonId("Approve"))
+      .setStyle(ButtonStyle.Success)
+      .setLabel("Aprovar"),
+
+    new ButtonBuilder()
+      .setCustomId(encodeButtonId("Reject"))
+      .setStyle(ButtonStyle.Danger)
+      .setLabel("Reprovar")
+  );
+
+  public override async run(
+    interaction: ButtonInteraction,
+    { action }: ParsedData
+  ) {
+    if (!interaction.inGuild()) {
+      this.container.logger.warn(
+        `[FireInteractionHandler#run] ${interaction.user.tag} tried to perform an action in a DM.`
+      );
+
+      return;
+    }
+
+    const cachedGuild =
+      interaction.guild ??
+      (await this.container.client.guilds.fetch(interaction.guildId));
+
+    if (action === "Request") {
+      const { result, interaction: modalInteraction } =
+        await this.container.utilities.inquirer.awaitModal<ModalInput>(
+          interaction,
+          {
+            listenInteraction: true,
+            inputs: MODAL_INPUTS,
+            title: "Demissão",
+          }
+        );
+
+      const onlyHabbo = (
+        await this.container.utilities.habbo.getProfile(result.Target)
+      ).unwrapOr(undefined);
 
       if (!onlyHabbo?.name) {
         await modalInteraction.editReply({
           content:
-          "Não consegui encontrar o perfil do usuário no Habbo, talvez sua conta esteja deletada ou renomeada? Veja se o perfil do usuário no jogo está como público.",
+            "Não consegui encontrar o perfil do usuário no Habbo, talvez sua conta esteja deletada ou renomeada? Veja se o perfil do usuário no jogo está como público.",
         });
 
         return;
@@ -167,11 +173,14 @@ export class FireInteractionHandler extends InteractionHandler {
         },
       });
 
+      interactionDisplayAvatar = interaction.user.displayAvatarURL();
+      interactionTag = interaction.user.tag;
+
       // START USER WITHOUT DISCORD
       if (targetDBOnlyHabbo?.discordLink === false) {
         const guild =
-        interaction.guild ??
-        (await interaction.client.guilds.fetch(interaction.guildId));
+          interaction.guild ??
+          (await interaction.client.guilds.fetch(interaction.guildId));
 
         if (!targetDBOnlyHabbo.latestPromotionRoleId) {
           await modalInteraction.editReply({
@@ -182,8 +191,9 @@ export class FireInteractionHandler extends InteractionHandler {
           return;
         }
 
-        const currentSectorEnvironment =
-        Object.values(ENVIRONMENT.SECTORS_ROLES).find((r) => r.id === targetDBOnlyHabbo.latestPromotionRoleId);
+        const currentSectorEnvironment = Object.values(
+          ENVIRONMENT.SECTORS_ROLES
+        ).find((r) => r.id === targetDBOnlyHabbo.latestPromotionRoleId);
 
         if (!currentSectorEnvironment) {
           await modalInteraction.editReply({
@@ -194,10 +204,13 @@ export class FireInteractionHandler extends InteractionHandler {
           return;
         }
 
-        const currentSector = await guild.roles.fetch(currentSectorEnvironment?.id);
+        const currentSector = await guild.roles.fetch(
+          currentSectorEnvironment?.id
+        );
 
-        const currentJobEnvironment =
-        Object.values(ENVIRONMENT.JOBS_ROLES).find((r) => r.id === targetDBOnlyHabbo.latestPromotionJobId);
+        const currentJobEnvironment = Object.values(
+          ENVIRONMENT.JOBS_ROLES
+        ).find((r) => r.id === targetDBOnlyHabbo.latestPromotionJobId);
 
         if (!currentJobEnvironment) {
           await modalInteraction.editReply({
@@ -212,8 +225,7 @@ export class FireInteractionHandler extends InteractionHandler {
 
         if (!currentJob || !currentSector) {
           await modalInteraction.editReply({
-            content:
-              "||P94N|| Ocorreu um erro, contate o Desenvolvedor.",
+            content: "||P94N|| Ocorreu um erro, contate o Desenvolvedor.",
           });
 
           return;
@@ -221,13 +233,12 @@ export class FireInteractionHandler extends InteractionHandler {
 
         habboTargetStorage = onlyHabbo.name;
 
-        const authorResult =
-        (await Result.fromAsync(
+        const authorResult = await Result.fromAsync(
           this.container.utilities.habbo.inferTargetGuildMember(
             `@${interaction.user.tag}`,
-            true,
-          ),
-        ));
+            true
+          )
+        );
 
         if (authorResult) {
           const { habbo: authorHabbo } = authorResult.unwrapOr({
@@ -240,7 +251,7 @@ export class FireInteractionHandler extends InteractionHandler {
 
         const confirmationEmbed = new EmbedBuilder()
           .setThumbnail(
-            `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo.figureString}`,
+            `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo.figureString}`
           )
           .setFooter({
             text: `${onlyHabbo.name ?? targetDBOnlyHabbo.habboName}`,
@@ -248,23 +259,26 @@ export class FireInteractionHandler extends InteractionHandler {
           .setTitle("Você tem certeza que deseja demiti-lo(a)?");
 
         const { result: isConfirmed } =
-          await this.container.utilities.inquirer.awaitButtons(modalInteraction, {
-            question: {
-              embeds: [confirmationEmbed],
-            },
-            choices: [
-              {
-                id: "True" as const,
-                style: ButtonStyle.Success,
-                label: "Sim",
+          await this.container.utilities.inquirer.awaitButtons(
+            modalInteraction,
+            {
+              question: {
+                embeds: [confirmationEmbed],
               },
-              {
-                id: "False" as const,
-                style: ButtonStyle.Danger,
-                label: "Não",
-              },
-            ],
-          });
+              choices: [
+                {
+                  id: "True" as const,
+                  style: ButtonStyle.Success,
+                  label: "Sim",
+                },
+                {
+                  id: "False" as const,
+                  style: ButtonStyle.Danger,
+                  label: "Não",
+                },
+              ],
+            }
+          );
 
         if (isConfirmed === "False") {
           await modalInteraction.reply({
@@ -276,7 +290,7 @@ export class FireInteractionHandler extends InteractionHandler {
         }
 
         const approvalChannel = await cachedGuild.channels.fetch(
-          ENVIRONMENT.NOTIFICATION_CHANNELS.APPROVAL_REQUEST,
+          ENVIRONMENT.NOTIFICATION_CHANNELS.APPROVAL_REQUEST
         );
 
         if (!approvalChannel?.isTextBased()) {
@@ -284,7 +298,11 @@ export class FireInteractionHandler extends InteractionHandler {
         }
 
         const approvalEmbed = new EmbedBuilder()
-          .setTitle(`Solicitação de Demissão de ${onlyHabbo.name ?? targetDBOnlyHabbo.habboName}`)
+          .setTitle(
+            `Solicitação de Demissão de ${
+              onlyHabbo.name ?? targetDBOnlyHabbo.habboName
+            }`
+          )
           .setColor(EmbedColors.Default)
           .setAuthor({
             name: interaction.user.tag,
@@ -308,7 +326,7 @@ export class FireInteractionHandler extends InteractionHandler {
             },
           ])
           .setThumbnail(
-            `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo.figureString}&size=b`,
+            `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo.figureString}&size=b`
           );
 
         await approvalChannel.send({
@@ -321,82 +339,81 @@ export class FireInteractionHandler extends InteractionHandler {
 
         // END USER WITHOUT DISCORD
         return;
-    }
+      }
 
-			const { member: targetMember, habbo: targetHabbo } =
-				await this.container.utilities.habbo.inferTargetGuildMember(
-					result.Target,
-				);
+      const { member: targetMember, habbo: targetHabbo } =
+        await this.container.utilities.habbo.inferTargetGuildMember(
+          result.Target
+        );
 
-			if (!targetMember) {
-				await modalInteraction.editReply({
-					content: "Não foi possível encontrar o usuário informado no Discord.",
-				});
+      if (!targetMember) {
+        await modalInteraction.editReply({
+          content: "Não foi possível encontrar o usuário informado no Discord.",
+        });
 
-				return;
-			}
+        return;
+      }
 
-			const targetUserDb = await this.container.prisma.user.findUnique({
-				where: {
-					discordId: targetMember.id,
-				},
-				select: {
-					id: true,
-					discordId: true,
-					latestPromotionDate: true,
-					latestPromotionRoleId: true,
-				},
-			});
+      const targetUserDb = await this.container.prisma.user.findUnique({
+        where: {
+          discordId: targetMember.id,
+        },
+        select: {
+          id: true,
+          discordId: true,
+          latestPromotionDate: true,
+          latestPromotionRoleId: true,
+        },
+      });
 
-			if (!targetUserDb) {
-				await modalInteraction.reply({
-					content:
-						"Não consegui encontrar o perfil do colaborador, tem certeza que ele está registrado no servidor?",
-					ephemeral: true,
-				});
+      if (!targetUserDb) {
+        await modalInteraction.reply({
+          content:
+            "Não consegui encontrar o perfil do colaborador, tem certeza que ele está registrado no servidor?",
+          ephemeral: true,
+        });
 
-				return;
-			}
+        return;
+      }
 
-			const targetUser = await cachedGuild.members.fetch(
-				targetUserDb.discordId,
-			);
+      const targetUser = await cachedGuild.members.fetch(
+        targetUserDb.discordId
+      );
 
-			if (!targetUser) {
-				await modalInteraction.reply({
-					content:
-						"Não consegui encontrar o perfil do colaborador, tem certeza que ele está registrado no servidor?",
-					ephemeral: true,
-				});
-			}
+      if (!targetUser) {
+        await modalInteraction.reply({
+          content:
+            "Não consegui encontrar o perfil do colaborador, tem certeza que ele está registrado no servidor?",
+          ephemeral: true,
+        });
+      }
 
-			const currentJobRoleId =
-				this.container.utilities.discord.inferHighestJobRole(
-					targetUser.roles.cache.map((x) => x.id),
-				);
+      const currentJobRoleId =
+        this.container.utilities.discord.inferHighestJobRole(
+          targetUser.roles.cache.map((x) => x.id)
+        );
 
-			const currentJobRole =
-				currentJobRoleId && (await cachedGuild.roles.fetch(currentJobRoleId));
+      const currentJobRole =
+        currentJobRoleId && (await cachedGuild.roles.fetch(currentJobRoleId));
 
-			if (!currentJobRole) {
-				await modalInteraction.reply({
-					content:
-						"Não consegui encontrar o cargo, tem certeza que ele está registrado no servidor?",
-					ephemeral: true,
-				});
+      if (!currentJobRole) {
+        await modalInteraction.reply({
+          content:
+            "Não consegui encontrar o cargo, tem certeza que ele está registrado no servidor?",
+          ephemeral: true,
+        });
 
-				return;
-			}
+        return;
+      }
 
       habboTargetStorage = targetHabbo?.name;
 
-      const authorResult =
-        (await Result.fromAsync(
-          this.container.utilities.habbo.inferTargetGuildMember(
-            `@${interaction.user.tag}`,
-            true,
-          ),
-        ));
+      const authorResult = await Result.fromAsync(
+        this.container.utilities.habbo.inferTargetGuildMember(
+          `@${interaction.user.tag}`,
+          true
+        )
+      );
 
       if (authorResult) {
         const { habbo: authorHabbo } = authorResult.unwrapOr({
@@ -407,151 +424,158 @@ export class FireInteractionHandler extends InteractionHandler {
         habboInteractionName = authorHabbo?.name ?? "N/A";
       }
 
-			const confirmationEmbed = new EmbedBuilder()
-				.setThumbnail(
-					`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}`,
-				)
-				.setFooter({
-					text: `@${targetMember.user.tag} | ${targetHabbo?.name ?? "N/D"}`,
-					iconURL: targetMember.displayAvatarURL(),
-				})
-				.setTitle("Você tem certeza que deseja demiti-lo(a)?");
+      const confirmationEmbed = new EmbedBuilder()
+        .setThumbnail(
+          `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}`
+        )
+        .setFooter({
+          text: `@${targetMember.user.tag} | ${targetHabbo?.name ?? "N/D"}`,
+          iconURL: targetMember.displayAvatarURL(),
+        })
+        .setTitle("Você tem certeza que deseja demiti-lo(a)?");
 
-			const { result: isConfirmed } =
-				await this.container.utilities.inquirer.awaitButtons(modalInteraction, {
-					question: {
-						embeds: [confirmationEmbed],
-					},
-					choices: [
-						{
-							id: "True" as const,
-							style: ButtonStyle.Success,
-							label: "Sim",
-						},
-						{
-							id: "False" as const,
-							style: ButtonStyle.Danger,
-							label: "Não",
-						},
-					],
-				});
+      const { result: isConfirmed } =
+        await this.container.utilities.inquirer.awaitButtons(modalInteraction, {
+          question: {
+            embeds: [confirmationEmbed],
+          },
+          choices: [
+            {
+              id: "True" as const,
+              style: ButtonStyle.Success,
+              label: "Sim",
+            },
+            {
+              id: "False" as const,
+              style: ButtonStyle.Danger,
+              label: "Não",
+            },
+          ],
+        });
 
-			if (isConfirmed === "False") {
-				await modalInteraction.reply({
-					content: "Operação cancelada.",
-					ephemeral: true,
-				});
+      if (isConfirmed === "False") {
+        await modalInteraction.reply({
+          content: "Operação cancelada.",
+          ephemeral: true,
+        });
 
-				return;
-			}
+        return;
+      }
 
-			const approvalChannel = await cachedGuild.channels.fetch(
-				ENVIRONMENT.NOTIFICATION_CHANNELS.APPROVAL_REQUEST,
-			);
+      const approvalChannel = await cachedGuild.channels.fetch(
+        ENVIRONMENT.NOTIFICATION_CHANNELS.APPROVAL_REQUEST
+      );
 
-			if (!approvalChannel?.isTextBased()) {
-				throw new Error("Can't send message to non-text channel.");
-			}
+      if (!approvalChannel?.isTextBased()) {
+        throw new Error("Can't send message to non-text channel.");
+      }
 
-			const approvalEmbed = new EmbedBuilder()
-				.setTitle(`Solicitação de Demissão de ${targetHabbo?.name}`)
-				.setColor(EmbedColors.Default)
-				.setAuthor({
-					name: interaction.user.tag,
-					iconURL: interaction.user.displayAvatarURL(),
-				})
+      const approvalEmbed = new EmbedBuilder()
+        .setTitle(`Solicitação de Demissão de ${targetHabbo?.name}`)
+        .setColor(EmbedColors.Default)
+        .setAuthor({
+          name: interaction.user.tag,
+          iconURL: interaction.user.displayAvatarURL(),
+        })
         .setFooter({
           text: targetUserDb.id,
         })
-				.addFields([
+        .addFields([
           {
             name: "👤 Demissor",
             value: `${habboInteractionName ?? `@${interaction.user.tag}`}`,
           },
-					{
-						name: "📗 Cargo",
-						value: currentJobRole.name ?? "N/D",
-					},
-					{
-						name: "🗒️ Motivo",
-						value: result.Reason.length > 0 ? result.Reason : "N/D",
-					},
-				])
-				.setThumbnail(
-					`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`,
-				);
+          {
+            name: "📗 Cargo",
+            value: currentJobRole.name ?? "N/D",
+          },
+          {
+            name: "🗒️ Motivo",
+            value: result.Reason.length > 0 ? result.Reason : "N/D",
+          },
+        ])
+        .setThumbnail(
+          `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`
+        );
 
-			await approvalChannel.send({
-				embeds: [approvalEmbed],
-				components: [this.#APPROVAL_ROW],
-				content: `<@&${ENVIRONMENT.SECTORS_ROLES.PRESIDÊNCIA.id}>`,
-			});
+      await approvalChannel.send({
+        embeds: [approvalEmbed],
+        components: [this.#APPROVAL_ROW],
+        content: `<@&${ENVIRONMENT.SECTORS_ROLES.PRESIDÊNCIA.id}>`,
+      });
 
-			await modalInteraction.deleteReply();
+      await modalInteraction.deleteReply();
 
-			return;
-		}
+      return;
+    }
 
-		// ---------------------
-		// -  Handle Approval  -
-		// ---------------------
+    // ---------------------
+    // -  Handle Approval  -
+    // ---------------------
 
-		const targetUserId = interaction.message.embeds[0].footer?.text;
+    const targetUserId = interaction.message.embeds[0].footer?.text;
 
-		if (!targetUserId) {
-			await interaction.reply({
-				content: "||305|| Ocorreu um erro, contate o desenvolvedor.",
-				ephemeral: true,
-			});
+    if (!targetUserId) {
+      await interaction.reply({
+        content: "||305|| Ocorreu um erro, contate o desenvolvedor.",
+        ephemeral: true,
+      });
 
-			return;
-		}
+      return;
+    }
 
-		if (action === "Reject") {
-			await interaction.message.delete();
+    if (action === "Reject") {
+      await interaction.message.delete();
 
-			return;
-		}
+      return;
+    }
 
     const targetDBamount = await this.container.prisma.transaction.findMany({
       where: {
-        user: { id: targetUserId }
+        user: { id: targetUserId },
       },
-    })
+    });
 
-		const notificationChannel = await cachedGuild.channels.fetch(
-			ENVIRONMENT.NOTIFICATION_CHANNELS.FORM_FIRE,
-		);
+    const notificationChannel = await cachedGuild.channels.fetch(
+      ENVIRONMENT.NOTIFICATION_CHANNELS.FORM_FIRE
+    );
 
-		if (!notificationChannel?.isTextBased()) {
-			throw new Error("Can't send message to non-text channel.");
-		}
+    const notificationCMBChannel = await cachedGuild.channels.fetch(
+      ENVIRONMENT.NOTIFICATION_CHANNELS.CMB_LOGS
+    );
 
-		const targetUser = await this.container.prisma.user.findUnique({
-			where: {
-				id: targetUserId,
-			},
-		});
+    if (
+      !notificationChannel?.isTextBased() ||
+      !notificationCMBChannel?.isTextBased()
+    ) {
+      throw new Error("Can't send message to non-text channel.");
+    }
 
-		if (!targetUser) {
-			await interaction.reply({
-				content: "||342|| Ocorreu um erro, contate o desenvolvedor.",
-				ephemeral: true,
-			});
+    const targetUser = await this.container.prisma.user.findUnique({
+      where: {
+        id: targetUserId,
+      },
+    });
 
-			return;
-		}
+    if (!targetUser) {
+      await interaction.reply({
+        content: "||342|| Ocorreu um erro, contate o desenvolvedor.",
+        ephemeral: true,
+      });
 
-		const guild =
-			interaction.guild ??
-			(await interaction.client.guilds.fetch(interaction.guildId));
+      return;
+    }
+
+    const guild =
+      interaction.guild ??
+      (await interaction.client.guilds.fetch(interaction.guildId));
 
     if (targetUser.discordLink !== false) {
       const targetMember = await guild.members.fetch(targetUser.discordId);
 
       const currentJobRoleId =
         this.container.utilities.discord.inferHighestJobRole(
-          targetMember.roles.cache.map((x) => x.id),
+          targetMember.roles.cache.map((x) => x.id)
         );
 
       const currentJobRole =
@@ -562,7 +586,9 @@ export class FireInteractionHandler extends InteractionHandler {
 
         const sectorRole =
           sectorRoleKey &&
-          (await guild.roles.fetch(ENVIRONMENT.SECTORS_ROLES[sectorRoleKey].id));
+          (await guild.roles.fetch(
+            ENVIRONMENT.SECTORS_ROLES[sectorRoleKey].id
+          ));
 
         if (sectorRole)
           await guild.members.removeRole({
@@ -579,13 +605,12 @@ export class FireInteractionHandler extends InteractionHandler {
       }
     }
 
-    const authorResult =
-      (await Result.fromAsync(
-        this.container.utilities.habbo.inferTargetGuildMember(
-          `@${interaction.user.tag}`,
-          true,
-        ),
-      ));
+    const authorResult = await Result.fromAsync(
+      this.container.utilities.habbo.inferTargetGuildMember(
+        `@${interaction.user.tag}`,
+        true
+      )
+    );
 
     if (authorResult) {
       const { habbo: authorHabbo } = authorResult.unwrapOr({
@@ -593,38 +618,97 @@ export class FireInteractionHandler extends InteractionHandler {
         habbo: undefined,
       });
 
-      habboInteractionName = authorHabbo?.name ?? "N/A";
+      habboInteractionAcceptName = authorHabbo?.name ?? "N/A";
     }
 
-		await notificationChannel.send({
-			embeds: [
-				EmbedBuilder.from(interaction.message.embeds[0])
-					.setTitle(`Demissão de ${habboTargetStorage}`)
-					.addFields([{ name: "🛡️ Autorizado Por", value: `${habboInteractionName ?? `@${interaction.user.tag}`}`, }])
-					.setColor(EmbedColors.LalaRed),
-			],
-		});
+    await notificationChannel.send({
+      embeds: [
+        EmbedBuilder.from(interaction.message.embeds[0])
+          .setTitle(`Demissão de ${habboTargetStorage}`)
+          .addFields([
+            {
+              name: "🛡️ Autorizado Por",
+              value: `${
+                habboInteractionAcceptName ?? `@${interaction.user.tag}`
+              }`,
+            },
+          ])
+          .setColor(EmbedColors.LalaRed),
+      ],
+    });
+
+    const {
+      _sum: { amount },
+    } = await this.container.prisma.transaction.aggregate({
+      where: { user: { id: targetUserId } },
+      _sum: { amount: true },
+    });
+
+    const oldAmount = amount ?? 0;
+
+    if (!habboTargetStorage) {
+      await interaction.reply({
+        content: "||343|| Ocorreu um erro, contate o desenvolvedor.",
+        ephemeral: true,
+      });
+
+      return;
+    }
+
+    const onlyHabbo = (
+      await this.container.utilities.habbo.getProfile(habboTargetStorage)
+    ).unwrapOr(undefined);
+
+    await notificationCMBChannel.send({
+      embeds: [
+        new EmbedBuilder()
+          .setTitle(`Alteração de Saldo de ${habboTargetStorage}`)
+          .setAuthor({
+            name: interactionTag,
+            iconURL: interactionDisplayAvatar,
+          })
+          .setDescription(
+            `Seu saldo foi zerado pelo motivo que o Colaborador foi demitido por ${habboInteractionAcceptName}`
+          )
+          .setColor(EmbedColors.LalaRed)
+          .addFields([
+            {
+              name: "Saldo Anterior",
+              value: `${
+                targetDBamount
+                  ? MONETARY_INTL.format(oldAmount ?? 0)
+                  : "O usuário não possuia CAM acumulados"
+              }`,
+            },
+            {
+              name: "Saldo Atual",
+              value: MONETARY_INTL.format(0),
+            },
+          ])
+          .setThumbnail(
+            `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo?.figureString}&size=b`
+          ),
+      ],
+    });
 
     if (targetDBamount) {
       await this.container.prisma.transaction.deleteMany({
         where: {
-          user:  { id: targetUserId },
-        }
+          user: { id: targetUserId },
+        },
       });
     } else {
-      this.container.logger.error(
-      `Member don't have any amount in database`
-      );
+      this.container.logger.error(`Member don't have any amount in database`);
     }
 
     await this.container.prisma.user.delete({
       where: {
         id: targetUserId,
-      }
+      },
     });
 
-		await interaction.message.delete();
+    await interaction.message.delete();
 
-		return;
-	}
+    return;
+  }
 }
