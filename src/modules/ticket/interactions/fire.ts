@@ -56,9 +56,6 @@ const MODAL_INPUTS_OBJ = {
 const MODAL_INPUTS = Object.values(MODAL_INPUTS_OBJ);
 type ModalInput = keyof typeof MODAL_INPUTS_OBJ;
 
-let interactionDisplayAvatar: any;
-let interactionTag: any;
-
 let habboTargetStorage: string | undefined;
 let habboInteractionName: string | undefined = undefined;
 let habboInteractionAcceptName: string | undefined = undefined;
@@ -172,9 +169,6 @@ export class FireInteractionHandler extends InteractionHandler {
           discordLink: true,
         },
       });
-
-      interactionDisplayAvatar = interaction.user.displayAvatarURL();
-      interactionTag = interaction.user.tag;
 
       // START USER WITHOUT DISCORD
       if (targetDBOnlyHabbo?.discordLink === false) {
@@ -663,10 +657,6 @@ export class FireInteractionHandler extends InteractionHandler {
       embeds: [
         new EmbedBuilder()
           .setTitle(`Alteração de Saldo de ${habboTargetStorage}`)
-          .setAuthor({
-            name: interactionTag,
-            iconURL: interactionDisplayAvatar,
-          })
           .setDescription(
             `Seu saldo foi zerado pelo motivo que o Colaborador foi demitido por ${habboInteractionAcceptName}`
           )
