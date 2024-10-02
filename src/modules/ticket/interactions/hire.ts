@@ -11,6 +11,7 @@ import {
   EmbedBuilder,
   TextInputBuilder,
   TextInputStyle,
+  GuildMemberRoleManager,
   type ButtonInteraction,
 } from "discord.js";
 
@@ -704,6 +705,48 @@ export class HireInteractionHandler extends InteractionHandler {
     }
 
     if (targetUser.discordLink !== false) {
+      const targetDiscordMember = await guild.members.fetch(
+        targetUser.discordId
+      );
+
+      const previousJobRole = this.#inferHighestJobRole(
+        targetDiscordMember.roles
+      );
+
+      if (!previousJobRole) {
+        this.container.logger.error(
+          "[HireInteractionHandler#run] Error to find previousJobRole"
+        );
+
+        return;
+      }
+
+      const previousSectorRoleKey = getJobSectorsById(previousJobRole.id);
+
+      const previousSectorRole =
+        previousSectorRoleKey &&
+        (await guild.roles.fetch(
+          ENVIRONMENT.SECTORS_ROLES[previousSectorRoleKey].id
+        ));
+
+      if (!previousSectorRole) {
+        this.container.logger.error(
+          "[HireInteractionHandler#run] Error to find previousSectorRole"
+        );
+
+        return;
+      }
+
+      await guild.members.removeRole({
+        user: targetUser.discordId,
+        role: previousJobRole.id,
+      });
+
+      await guild.members.removeRole({
+        user: targetUser.discordId,
+        role: previousSectorRole?.id,
+      });
+
       const latestPromotionRole =
         targetUser.latestPromotionRoleId &&
         (await guild.roles.fetch(targetUser.latestPromotionRoleId));
@@ -804,5 +847,29 @@ export class HireInteractionHandler extends InteractionHandler {
     await interaction.message.delete();
 
     return;
+  }
+
+  #inferHighestJobRole(roles: GuildMemberRoleManager) {
+    const jobRoles = roles.cache.filter((role) =>
+      Object.values(ENVIRONMENT.JOBS_ROLES).some((r) => r.id === role.id)
+    );
+
+    if (jobRoles.size === 0) return null;
+
+    return jobRoles.reduce((highest, current) => {
+      const currentIndex =
+        Object.values(ENVIRONMENT.JOBS_ROLES).find((r) => r.id === current.id)
+          ?.index ?? 0;
+
+      const highestIndex =
+        Object.values(ENVIRONMENT.JOBS_ROLES).find((r) => r.id === highest.id)
+          ?.index ?? 0;
+
+      if (!currentIndex || !highestIndex) {
+        return current;
+      }
+
+      return currentIndex > highestIndex ? current : highest;
+    });
   }
 }
