@@ -183,7 +183,7 @@ export class CorrecoesFormInteractionHandler extends InteractionHandler {
 
           await interactionFromModal.editReply({
             content:
-              `Não consegui encontrar o usuário como vinculado: **${target}** verifique se o mesmo está realmente vinculado **ou vincule-o**`,
+              `Não consegui encontrar o usuário como vinculado: **${target}** \nVerifique se escreveu corretamente com as devidas letras maiúsculas e minúsculas, verifique também se o mesmo está realmente vinculado **ou vincule-o**`,
           });
 
 					return;
