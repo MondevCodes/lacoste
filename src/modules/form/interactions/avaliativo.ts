@@ -20,7 +20,6 @@ import { MarkdownCharactersRegex } from "$lib/constants/regexes";
 enum FeedbackInputIds {
 	Target = "Target",
 	Position = "Position",
-	Promotion = "Promotion",
 	Performance = "Performance",
 	Orthography = "Orthography",
 	PerformanceRate = "PerformanceRate",
@@ -94,31 +93,30 @@ export class EvaluationFormInteractionHandler extends InteractionHandler {
 							.setCustomId(FeedbackInputIds.Orthography)
 							.setStyle(TextInputStyle.Paragraph)
 							.setRequired(false),
-
-						new TextInputBuilder()
-							.setLabel("Promovido Em")
-							.setPlaceholder("01/12/2024")
-							.setCustomId(FeedbackInputIds.Promotion)
-							.setStyle(TextInputStyle.Short)
-							.setRequired(false),
 					],
 					listenInteraction: true,
 					title: "Avaliação",
 				},
 			);
 
-		const { habbo: targetHabbo } =
-			await this.container.utilities.habbo.inferTargetGuildMember(
-				result.Target,
-			);
+		const targetHabbo = (
+      await this.container.utilities.habbo.getProfile(result.Target)
+    ).unwrapOr(undefined);
 
 		if (!targetHabbo) {
 			await i.editReply({
-				content: "Não foi possível encontrar o usuário informado.",
+				content: "Não foi possível encontrar o usuário avaliado no Habbo, verifique se a conta do mesmo no jogo está como pública.",
 			});
 
 			return;
 		}
+
+    const targetDB = await this.container.prisma.user.findUnique({
+      where: { habboId: targetHabbo.uniqueId },
+      select: {
+        latestPromotionDate: true,
+      },
+    });
 
 		const { habbo: authorHabbo } =
 			await this.container.utilities.habbo.inferTargetGuildMember(
@@ -128,7 +126,7 @@ export class EvaluationFormInteractionHandler extends InteractionHandler {
 
 		if (!authorHabbo) {
 			await i.editReply({
-				content: "Não foi possível encontrar o usuário informado.",
+				content: "Não foi possível encontrar o autor informado.",
 			});
 
 			return;
@@ -183,10 +181,11 @@ export class EvaluationFormInteractionHandler extends InteractionHandler {
 				},
 				{
 					name: "Promovido (Data)",
-					value:
-						result.Promotion.length > 0
-							? result.Promotion
-							: "Nenhuma informação",
+					value: targetDB?.latestPromotionDate
+            ? new Date(
+                targetDB?.latestPromotionDate,
+              ).toLocaleDateString("pt-BR")
+            : "N/D",
 				},
 				{
 					name: "Desempenho",
