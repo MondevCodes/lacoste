@@ -293,23 +293,28 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
       }
 
 			try {
-        const onlyHabbo = (await this.container.utilities.habbo.getProfile(target)).unwrapOr(
-          undefined,
-        );
+        // const onlyHabbo = (await this.container.utilities.habbo.getProfile(target)).unwrapOr(
+        //   undefined,
+        // );
 
-        if (!onlyHabbo?.name) {
-          this.container.logger.warn(
-						`[OrganizationalFormInteractionHandler#run] Couldn't find target: ${target}.`,
-					);
+        // if (!onlyHabbo?.name) {
+        //   this.container.logger.warn(
+				// 		`[OrganizationalFormInteractionHandler#run] Couldn't find target: ${target}.`,
+				// 	);
 
-					members[group].push(target.replaceAll(MARKDOWN_CHARS_RE, "\\$&"));
-          notFoundUsers.push(target);
+				// 	members[group].push(target.replaceAll(MARKDOWN_CHARS_RE, "\\$&"));
+        //   notFoundUsers.push(target);
 
-					continue;
-        }
+				// 	continue;
+        // }
 
-        const targetMember = await this.container.prisma.user.findUnique({
-          where: { habboId: onlyHabbo.uniqueId },
+        const targetMember = await this.container.prisma.user.findFirst({
+          where: {
+            habboName: {
+              endsWith: target,
+              mode: "insensitive"
+            },
+          },
         });
 
 				// const inferredTarget = await Result.fromAsync(
@@ -347,7 +352,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
           }
 
 				members[group].push(
-					onlyHabbo.name.replaceAll(MARKDOWN_CHARS_RE, "\\$&"),
+					target.replaceAll(MARKDOWN_CHARS_RE, "\\$&"),
 				);
 			} catch (error) {
 				members[group].push(target.replaceAll(MARKDOWN_CHARS_RE, "\\$&"));
