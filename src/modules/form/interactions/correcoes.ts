@@ -162,14 +162,27 @@ export class CorrecoesFormInteractionHandler extends InteractionHandler {
       // 	return;
       // }
 
-      const targetMember = await this.container.prisma.user.findFirst({
+      const targetMember = await this.container.prisma.user.findMany({
+        take: 2,
         where: {
           habboName: {
             endsWith: target,
-            mode: "insensitive"
+            mode: "insensitive",
           },
         },
+        select: {
+          habboId: true,
+          habboName: true,
+        },
       });
+
+      if (targetMember.length > 1) {
+        await interactionFromModal.editReply({
+          content: `Encontrei mais de um usuário que o nome acaba com: **${target}** \nEscreva o nick corretamente ou seja mais específico`,
+        });
+
+        return;
+      }
 
       // const inferredTarget = await Result.fromAsync(
       // 	this.container.utilities.habbo.inferTargetGuildMember(target),
@@ -190,13 +203,17 @@ export class CorrecoesFormInteractionHandler extends InteractionHandler {
         return;
       }
 
-      if (targetMember)
-        await this.container.prisma.user.update({
-          where: { habboId: targetMember.habboId },
-          data: { reportsHistory: { push: new Date() } },
-        });
+      for await (const user of targetMember) {
+        if (targetMember)
+          await this.container.prisma.user.update({
+            where: { habboId: user.habboId },
+            data: { reportsHistory: { push: new Date() } },
+          });
 
-      members[group].push(target.replaceAll(MARKDOWN_CHARS_RE, "\\$&"));
+        members[group].push(
+          user.habboName.replaceAll(MARKDOWN_CHARS_RE, "\\$&")
+        );
+      }
     }
 
     this.container.logger.info("[CorrecaoFormInteractionHandler#run] Members", {
