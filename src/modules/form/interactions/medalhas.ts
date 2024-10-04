@@ -360,7 +360,7 @@ export class MedalInteractionHandler extends InteractionHandler {
                 value: targetMedal.name,
               },
               {
-                name: "",
+                name: ":trophy:",
                 value: `${targetMedalDB?.description}`,
                 inline: true,
               },
