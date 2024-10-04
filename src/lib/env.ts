@@ -37,8 +37,6 @@ export const EnvironmentSchema = z.object({
     OrderedSnowflake.extend({
       index: z.number().default(0),
       level: z.number().default(1),
-      required: Snowflake,
-      description: Snowflake,
     }),
   ),
 

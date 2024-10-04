@@ -260,7 +260,13 @@ export class MedalInteractionHandler extends InteractionHandler {
 
     const targetMedal = await guild.roles.fetch(targetMedalId);
 
-    if (!targetMedal || !targetMedalEnvironment) {
+    const targetMedalDB = await this.container.prisma.medals.findUnique({
+      where: {
+        discordId: targetMedalId,
+      }
+    });
+
+    if (!targetMedal || !targetMedalEnvironment || !targetMedalDB) {
       await interactionFromModal.editReply({
         content: "||WP121|| Ocorreu um erro, contate o desenvolvedor.",
       });
@@ -355,12 +361,12 @@ export class MedalInteractionHandler extends InteractionHandler {
               },
               {
                 name: "",
-                value: targetMedalEnvironment.description,
+                value: `${targetMedalDB?.description}`,
                 inline: true,
               },
               {
                 name: ":white_check_mark: Requisito",
-                value: targetMedalEnvironment.required,
+                value: `${targetMedalDB?.required}`,
                 inline: true,
               },
               {
