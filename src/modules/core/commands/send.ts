@@ -17,7 +17,6 @@ import { encodeButtonId as encodeHireButtonId } from "../../ticket/interactions/
 import { encodeButtonId as encodeNoteButtonId } from "../../ticket/interactions/notes";
 import { encodeButtonId as encodeWarnButtonId } from "../../ticket/interactions/warns";
 import { encodeButtonId as encodeOmbudsmanButtonId } from "../../ticket/interactions/ticket";
-import { encodeButtonId as encodeOmbudsmanMedalButtonId} from "../../ticket/interactions/ticketMedal";
 
 import { encodeButtonId as encodeGroupButtonId } from "../../econ/interactions/mod-group";
 import { encodeButtonId as encodeDepartmentButtonId } from "../../work/interactions/department";
@@ -273,7 +272,7 @@ export default class SendCommand extends Command {
 						.setColor(EmbedColors.Default)
 						.setTitle("Ouvidoria")
 						.setDescription(
-							"Para enviar sugestões, reclamações ou duvidas aperte no Ticket! Um administrador irá responder o mais rápido possível. Fique a vontade para enviar um elogio também.",
+							"Para enviar sugestões, reclamações, dúvidas ou solicitar medalhas aperte no Ticket! Um administrador irá responder o mais rápido possível. Fique a vontade para enviar um elogio também.",
 						)
 						.setImage(
 							"https://media.discordapp.net/attachments/1266124737277595729/1284254540283121766/image-2.png?ex=66e5f6be&is=66e4a53e&hm=2f1408921ad03a58727c13c9c88b2ccab7b337b4e67f0374a9bf378c07943283&=&format=webp&quality=lossless",
@@ -290,11 +289,6 @@ export default class SendCommand extends Command {
 							.setLabel("Enviar Elogios")
 							.setStyle(ButtonStyle.Secondary)
 							.setCustomId(FormIds.Elogio),
-
-						new ButtonBuilder()
-							.setLabel("Solicitar Medalha")
-							.setStyle(ButtonStyle.Success)
-							.setCustomId(encodeOmbudsmanMedalButtonId({ action: "OpenDefault" }))
 					),
 				],
 			});
