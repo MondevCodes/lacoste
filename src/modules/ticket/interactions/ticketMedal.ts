@@ -175,30 +175,30 @@ export class OmbudsmanInteractionHandler extends InteractionHandler {
         },
       });
 
-      // const dmChannel =
-      //   interaction.user.dmChannel || (await interaction.user.createDM());
+      const dmChannel =
+        interaction.user.dmChannel || (await interaction.user.createDM());
 
-      // const dmMessage = await dmChannel.send({
-      //   embeds: [
-      //     new EmbedBuilder()
-      //       .setColor(EmbedColors.Default)
-      //       .setTitle("Criação de Ticket de Medalha")
-      //       .setDescription(
-      //         `Seu ticket foi criado com Sucesso! Clique aqui: ${ticketChannel}`
-      //       )
-      //       .setFooter({
-      //         text: "Essa mensagem será apagada automaticamente em 1 minuto",
-      //       }),
-      //   ],
-      // });
-
-      // setTimeout(() => {
-      //   dmMessage.delete();
-      // }, 60000);
-
-      await interaction.editReply({
-        content: `Seu ticket de Medalha foi criado com Sucesso! Clique aqui: ${ticketChannel}`,
+      const dmMessage = await dmChannel.send({
+        embeds: [
+          new EmbedBuilder()
+            .setColor(EmbedColors.Default)
+            .setTitle("Criação de solicitação de Ticket de Medalha")
+            .setDescription(
+              `Seu ticket foi criado com Sucesso! Clique aqui: ${ticketChannel}`
+            )
+            .setFooter({
+              text: "Essa mensagem será apagada automaticamente em 1 minuto",
+            }),
+        ],
       });
+
+      setTimeout(() => {
+        dmMessage.delete();
+      }, 60000);
+
+      // await interaction.editReply({
+      //   content: `Seu ticket de Medalha foi criado com Sucesso! Clique aqui: ${ticketChannel}`,
+      // });
 
       return;
     }
