@@ -85,3 +85,12 @@ model Ticket {
 
   @@unique([channelId, messageId])
 }
+
+model Medals {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  discordId String @unique
+
+  required String?
+  description String?
+}
