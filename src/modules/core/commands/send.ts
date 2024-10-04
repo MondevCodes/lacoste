@@ -17,6 +17,7 @@ import { encodeButtonId as encodeHireButtonId } from "../../ticket/interactions/
 import { encodeButtonId as encodeNoteButtonId } from "../../ticket/interactions/notes";
 import { encodeButtonId as encodeWarnButtonId } from "../../ticket/interactions/warns";
 import { encodeButtonId as encodeOmbudsmanButtonId } from "../../ticket/interactions/ticket";
+import { encodeButtonId as encodeOmbudsmanMedalButtonId} from "../../ticket/interactions/ticketMedal";
 
 import { encodeButtonId as encodeGroupButtonId } from "../../econ/interactions/mod-group";
 import { encodeButtonId as encodeDepartmentButtonId } from "../../work/interactions/department";
@@ -104,6 +105,13 @@ export default class SendCommand extends Command {
 							.setLabel("Remover p/ Grupo")
 							.setStyle(ButtonStyle.Secondary)
 							.setCustomId(encodeGroupButtonId("Del")),
+					),
+
+          new ActionRowBuilder<ButtonBuilder>().addComponents(
+						new ButtonBuilder()
+							.setLabel("Entrega de Medalha")
+							.setStyle(ButtonStyle.Primary)
+							.setCustomId("LCST::MedalInteractionHandler"),
 					),
 				],
 			});
@@ -281,7 +289,12 @@ export default class SendCommand extends Command {
 						new ButtonBuilder()
 							.setLabel("Enviar Elogios")
 							.setStyle(ButtonStyle.Secondary)
-							.setCustomId(FormIds.Elogio)
+							.setCustomId(FormIds.Elogio),
+
+						new ButtonBuilder()
+							.setLabel("Solicitar Medalha")
+							.setStyle(ButtonStyle.Success)
+							.setCustomId(encodeOmbudsmanMedalButtonId({ action: "OpenDefault" }))
 					),
 				],
 			});
