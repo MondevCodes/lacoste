@@ -11,6 +11,7 @@ import {
 	Committees,
 	NotificationChannels,
 	Jobs,
+  Medals,
 } from "$lib/constants/schemas";
 
 const OrderedSnowflake = z.object({
@@ -30,6 +31,16 @@ export const EnvironmentSchema = z.object({
 
 	GUILD_ID: Snowflake,
 	TICKETS_CATEGORY: Snowflake,
+
+  MEDALS: typedRecord(
+    Medals,
+    OrderedSnowflake.extend({
+      index: z.number().default(0),
+      level: z.number().default(1),
+      required: Snowflake,
+      description: Snowflake,
+    }),
+  ),
 
 	JOBS_ROLES: typedRecord(
 		Jobs,

@@ -74,6 +74,42 @@ export const Jobs = z.enum([
 
 export type Job = z.infer<typeof Jobs>;
 
+export const Medals = z.enum([
+	"ESTILISTA",
+	"CONQUISTA",
+	"IMPACTANTE",
+
+	"ESTRELA_I",
+	"ESTRELA_II",
+	// "ESTRELA_III",
+
+  // "FORMACAO_PRES",
+
+  // "FORMACAO_DIR",
+
+  // "PILAR_I",
+  // "PILAR_II",
+  // "PILAR_III",
+
+  // "CONSTANCIA_I",
+  // "CONSTANCIA_II",
+  // "CONSTANCIA_III",
+
+  // "LENDARIO_I",
+  // "LENDARIO_II",
+  // "LENDARIO_III",
+
+  // "ASSIDUIDADE_I",
+  // "ASSIDUIDADE_II",
+  // "ASSIDUIDADE_III",
+
+  // "LEALDADE_I",
+  // "LEALDADE_II",
+  // "LEALDADE_III",
+]);
+
+export type Medal = z.infer<typeof Medals>;
+
 export const NotificationChannels = z.enum([
 	"TICKETS",
 	"CMB_LOGS",
