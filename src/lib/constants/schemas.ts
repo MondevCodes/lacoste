@@ -76,11 +76,11 @@ export type Job = z.infer<typeof Jobs>;
 
 export const Medals = z.enum([
 	"ESTILISTA",
-	"CONQUISTA",
-	"IMPACTANTE",
+	// "CONQUISTA",
+	// "IMPACTANTE",
 
-	"ESTRELA_I",
-	"ESTRELA_II",
+	// "ESTRELA_I",
+	// "ESTRELA_II",
 	// "ESTRELA_III",
 
   // "FORMACAO_PRES",
