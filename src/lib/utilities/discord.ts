@@ -14,13 +14,15 @@ import type {
 	Role,
 } from "discord.js";
 
-import type { Committee, Sector, System } from "$lib/constants/schemas";
-export type Category = "SECTOR" | "SYSTEM" | "COMMITTEE";
+import type { Committee, Sector, System, Job } from "$lib/constants/schemas";
+export type Category = "SECTOR" | "SYSTEM" | "COMMITTEE" | "JOB";
 
 export type Roles<T extends Category> = T extends "SECTOR"
 	? Sector
 	: T extends "SYSTEM"
 	  ? System
+    : T extends "JOB"
+    ? Job
 	  : T extends "COMMITTEE"
 		  ? Committee
 		  : never;
@@ -52,6 +54,7 @@ const ROLES_ORDER = {
 	COMMITTEE: ENVIRONMENT.COMMITTEES_ROLES,
 	SECTOR: ENVIRONMENT.SECTORS_ROLES,
 	SYSTEM: ENVIRONMENT.SYSTEMS_ROLES,
+  JOB: ENVIRONMENT.JOBS_ROLES,
 } satisfies Record<Category, object>;
 
 @ApplyOptions<Utility.Options>({
