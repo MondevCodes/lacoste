@@ -2,6 +2,7 @@ import {
   ButtonInteraction,
   ButtonStyle,
   EmbedBuilder,
+  ModalSubmitInteraction,
   Role,
   TextInputBuilder,
   TextInputStyle,
@@ -165,7 +166,7 @@ export class DepartmentInteractionHandler extends InteractionHandler {
         return;
       }
 
-      return await this.#return(targetMember.user.id, interaction);
+      return await this.#return(targetMember.user.id, interactionFromModal);
     }
 
     // ---------------
@@ -599,7 +600,7 @@ export class DepartmentInteractionHandler extends InteractionHandler {
     });
   }
 
-  async #return(id: string, interaction?: ButtonInteraction) {
+  async #return(id: string, interaction?: ModalSubmitInteraction) {
     const user = await this.container.prisma.user.findUnique({
       where: { discordId: id },
     });
