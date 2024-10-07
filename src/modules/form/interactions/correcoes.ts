@@ -73,9 +73,7 @@ export class CorrecoesFormInteractionHandler extends InteractionHandler {
     // 	roles: member.roles,
     // });
 
-    const isAuthorized = member.roles.cache.hasAny(
-      "1009452772200030289" || "1008077046955651193"
-    );
+    const isAuthorized = member.roles.cache.has("1009452772200030289");
 
     if (!isAuthorized) {
       await interaction.reply({
@@ -171,8 +169,8 @@ export class CorrecoesFormInteractionHandler extends InteractionHandler {
           },
         },
         select: {
-          habboId: true,
           habboName: true,
+          id: true,
         },
       });
 
@@ -197,7 +195,7 @@ export class CorrecoesFormInteractionHandler extends InteractionHandler {
         );
 
         await interactionFromModal.editReply({
-          content: `Não consegui encontrar o usuário como vinculado: **${target}** \nVerifique se o mesmo está realmente vinculado **ou vincule-o**`,
+          content: `Não consegui encontrar o usuário como vinculado: **${target}** \nVerifique se o mesmo está realmente vinculado **ou vincule-o**.`,
         });
 
         return;
@@ -206,7 +204,7 @@ export class CorrecoesFormInteractionHandler extends InteractionHandler {
       for await (const user of targetMember) {
         if (targetMember)
           await this.container.prisma.user.update({
-            where: { habboId: user.habboId },
+            where: { id: user.id },
             data: { reportsHistory: { push: new Date() } },
           });
 

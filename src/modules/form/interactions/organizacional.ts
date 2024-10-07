@@ -162,7 +162,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
         }
       );
 
-    const { result: resultPartial3 } =
+    const { result: resultPartial3, interaction: interaction3 } =
       await this.container.utilities.inquirer.awaitModal<OrganizationalFormInput>(
         i,
         {
@@ -314,14 +314,28 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
             },
           },
           select: {
-            habboId: true,
             habboName: true,
+            id: true,
           },
         });
 
         if (targetMember.length > 1) {
-          await interactionFromModal.editReply({
-            content: `Encontrei mais de um usuário que o nome acaba com: **${target}** \nEscreva o nick corretamente ou seja mais específico`,
+          await i
+            .deleteReply()
+            .catch(() =>
+              this.container.logger.error("[Form] Couldn't delete reply i.")
+            );
+
+          await interactionFromModal
+            .deleteReply()
+            .catch(() =>
+              this.container.logger.error(
+                "[Form] Couldn't delete reply interactionFromModal."
+              )
+            );
+
+          await interaction3.editReply({
+            content: `Encontrei mais de um usuário que o nome acaba com: **${target}** \nEscreva o nick corretamente ou seja mais específico.`,
           });
 
           return;
@@ -349,7 +363,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
           if (targetMember)
             if (group === "GeneralCommand") {
               await this.container.prisma.user.update({
-                where: { habboId: user.habboId },
+                where: { id: user.id },
                 data: {
                   reportsHistory: { push: new Date() },
                   reportsHistoryCG: { push: new Date() },
@@ -357,7 +371,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
               });
             } else {
               await this.container.prisma.user.update({
-                where: { habboId: user.habboId },
+                where: { id: user.id },
                 data: { reportsHistory: { push: new Date() } },
               });
             }
@@ -513,13 +527,23 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
     await i
       .deleteReply()
       .catch(() =>
-        this.container.logger.error("[Form] Couldn't delete reply.")
+        this.container.logger.error("[Form] Couldn't delete reply i.")
       );
 
     await interactionFromModal
       .deleteReply()
       .catch(() =>
-        this.container.logger.error("[Form] Couldn't delete reply.")
+        this.container.logger.error(
+          "[Form] Couldn't delete reply interactionFromModal."
+        )
+      );
+
+    await interaction3
+      .deleteReply()
+      .catch(() =>
+        this.container.logger.error(
+          "[Form] Couldn't delete reply interaction3."
+        )
       );
   }
 
