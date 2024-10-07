@@ -605,9 +605,8 @@ export class DepartmentInteractionHandler extends InteractionHandler {
     });
 
     if (!user) {
-      await interaction?.reply({
+      await interaction?.editReply({
         content: "[||E831||] Usuário não encontrado.",
-        ephemeral: true,
       });
 
       return;
@@ -636,9 +635,8 @@ export class DepartmentInteractionHandler extends InteractionHandler {
       },
     });
 
-    await interaction?.reply({
+    await interaction?.editReply({
       content: "Usuário retornado.",
-      ephemeral: true,
     });
 
     const notificationChannel = await this.container.client.channels.fetch(
