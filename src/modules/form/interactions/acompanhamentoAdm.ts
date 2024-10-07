@@ -29,7 +29,7 @@ enum FeedbackInputIds {
   QuestionOne = "QuestionOne",
   QuestionTwo = "QuestionTwo",
   QuestionThree = "QuestionThree",
-  QuestionFour = "QuestionFour",
+  // QuestionFour = "QuestionFour",
   QuestionFive = "QuestionFive",
   QuestionSix = "QuestionSix",
   QuestionSeven = "QuestionSeven",
@@ -124,12 +124,6 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
               .setStyle(TextInputStyle.Short)
               .setRequired(true),
 
-            new TextInputBuilder()
-              .setLabel("Explicou sobre as promoções manuais")
-              .setPlaceholder("Atribua uma nota de 0 a 1")
-              .setCustomId(FeedbackInputIds.QuestionFour)
-              .setStyle(TextInputStyle.Short)
-              .setRequired(true),
           ],
           listenInteraction: true,
           title: "Acompanhamento de Administração",
@@ -227,7 +221,7 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
       Number.parseInt(result.QuestionOne) +
       Number.parseInt(result.QuestionTwo) +
       Number.parseInt(result.QuestionThree) +
-      Number.parseInt(result.QuestionFour) +
+      // Number.parseInt(result.QuestionFour) +
       Number.parseInt(result.QuestionFive) +
       Number.parseInt(result.QuestionSix) +
       Number.parseInt(result.QuestionSeven);
@@ -283,15 +277,6 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
           inline: true,
         },
         {
-          name: "🖊️ Explicou sobre as promoções manuais",
-          value:
-            Number.parseInt(result.QuestionFour) < 2 &&
-            Number.parseInt(result.QuestionFour) >= 0
-              ? `${result.QuestionFour}/1`
-              : "N/A",
-          inline: true,
-        },
-        {
           name: "🖊️ Explicou as funções do CG e do seu Auxílio",
           value:
             Number.parseInt(result.QuestionFive) < 2 &&
@@ -320,7 +305,7 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
         },
         {
           name: "🏆 Nota de Desempenho",
-          value: finalRate < 8 && finalRate >= 0 ? `${finalRate}/7` : "N/A",
+          value: finalRate < 7 && finalRate >= 0 ? `${finalRate}/6` : "N/A",
           inline: true,
         },
         {
