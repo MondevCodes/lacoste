@@ -189,7 +189,7 @@ export class CorrecoesFormInteractionHandler extends InteractionHandler {
       // const { habbo: targetHabbo, member: targetMember } =
       // 	inferredTarget.unwrapOr({ habbo: undefined, member: undefined });
 
-      if (!targetMember) {
+      if (!targetMember || targetMember.length === 0) {
         this.container.logger.warn(
           `[CorreçãoFormInteractionHandler#run] Couldn't find target: ${target}.`
         );
@@ -202,7 +202,7 @@ export class CorrecoesFormInteractionHandler extends InteractionHandler {
       }
 
       for await (const user of targetMember) {
-        if (targetMember)
+        if (user)
           await this.container.prisma.user.update({
             where: { id: user.id },
             data: { reportsHistory: { push: new Date() } },

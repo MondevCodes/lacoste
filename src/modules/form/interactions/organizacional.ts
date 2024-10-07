@@ -348,7 +348,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
         // const { habbo: targetHabbo, member: targetMember } =
         // 	inferredTarget.unwrapOr({ habbo: undefined, member: undefined });
 
-        if (!targetMember) {
+        if (!targetMember || targetMember.length === 0) {
           this.container.logger.warn(
             `[OrganizationalFormInteractionHandler#run] Couldn't find target: ${target}.`
           );
@@ -360,7 +360,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
         }
 
         for await (const user of targetMember) {
-          if (targetMember)
+          if (user)
             if (group === "GeneralCommand") {
               await this.container.prisma.user.update({
                 where: { id: user.id },
