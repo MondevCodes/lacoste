@@ -335,7 +335,9 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
             );
 
           await interaction3.editReply({
-            content: `Encontrei mais de um usuário que o nome acaba com: **${target}** \nEscreva o nick corretamente ou seja mais específico.`,
+            content: `Encontrei mais de um usuário que o nome contém: **${target}** \nEscreva o nick corretamente ou seja mais específico.`,
+            embeds: [],
+            components: [],
           });
 
           return;
