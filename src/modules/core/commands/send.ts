@@ -70,9 +70,9 @@ export default class SendCommand extends Command {
         embeds: [
           new EmbedBuilder()
             .setColor(EmbedColors.Default)
-            .setTitle("Controle Financeiro")
+            .setTitle("Processos da Fundação ")
             .setDescription(
-              'Para adicionar ou remover um membro específico ou de um grupo (ex. setor estagiário), basta clicar no botão correspondente. Em adição ou remoção em grupo, use vírgula (",") para separar os nicks (ex. Brendo, Fortissima, Trobs).'
+              '**Controle Financeiro**\n Para adicionar ou remover de membro específico ou de um grupo (ex. setor estagiário), basta clicar no botão correspondente. Em adição ou remoção em grupo, use vírgula (",") para separar os nicks (ex: Brendo, Fortissima).\n\n **Medalhas**\n Siga a função correspondente.'
             )
             .setImage(
               "https://media.discordapp.net/attachments/1266124737277595729/1284254541067456592/image-5.png?ex=66e5f6be&is=66e4a53e&hm=0db96174008110c92e1f76104be96c56575504c6188ac9cfbcc347d6fdf1f5e1&=&format=webp&quality=lossless"
@@ -107,7 +107,38 @@ export default class SendCommand extends Command {
             new ButtonBuilder()
               .setLabel("Entrega de Medalha")
               .setStyle(ButtonStyle.Primary)
-              .setCustomId("LCST::MedalInteractionHandler")
+              .setCustomId("LCST::MedalInteractionHandler"),
+
+            new ButtonBuilder()
+              .setLabel("Retirar Medalha")
+              .setStyle(ButtonStyle.Primary)
+              .setCustomId("testing")
+              .setDisabled(true)
+          ),
+
+          new ActionRowBuilder<ButtonBuilder>().addComponents(
+            new ButtonBuilder()
+              .setLabel("Criar Medalha")
+              .setStyle(ButtonStyle.Success)
+              .setCustomId(FormIds.criarMedalha),
+
+            new ButtonBuilder()
+              .setLabel("Deletar Medalha")
+              .setStyle(ButtonStyle.Danger)
+              .setCustomId(FormIds.deletarMedalha)
+          ),
+
+          new ActionRowBuilder<ButtonBuilder>().addComponents(
+            new ButtonBuilder()
+              .setLabel("Listar Medalhas")
+              .setStyle(ButtonStyle.Primary)
+              .setCustomId(FormIds.listarMedalhas),
+
+            new ButtonBuilder()
+              .setLabel("Atualizar Medalha")
+              .setStyle(ButtonStyle.Secondary)
+              .setCustomId("testing2")
+              .setDisabled(true)
           ),
         ],
       });
