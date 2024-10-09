@@ -387,7 +387,7 @@ export class MedalInteractionHandler extends InteractionHandler {
               iconURL: interaction.user.displayAvatarURL(),
             })
             .setImage(
-              "https://media.discordapp.net/attachments/1289712570390810677/1290818444098277417/lac_2.gif?ex=6701239b&is=66ffd21b&hm=b68da3d686e912fdf7203991b8bd6b218628ea053272ed9c0c79fcc135a09310&="
+              "https://cdn.discordapp.com/attachments/1266124737277595729/1293707875901898764/lacmedalha_4.gif?ex=67085ad9&is=67070959&hm=b2f63238f29f3a5fde83af5319bf1fecf8e196e3eaf3e0289203ba7055724fee&"
             )
             .setDescription(
               `Olá, nosso colaborador **${
