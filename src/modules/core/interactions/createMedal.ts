@@ -151,6 +151,21 @@ export class CreateMedalInteractionHandler extends InteractionHandler {
       return;
     }
 
+    const existingMedalWithIndexLevel = await this.container.prisma.medals.findMany({
+      where: {
+        index: medalIndex,
+        level: medalLevel
+      },
+    });
+
+    if (existingMedalWithIndexLevel.length > 0) {
+      await interactionFromModal.editReply({
+        content: `O Index escolhido com o Level escolhido já existe no banco de dados.`,
+      });
+
+      return;
+    }
+
     const targetMedal = await guild.roles.fetch(result.Id);
 
     await this.container.prisma.medals
