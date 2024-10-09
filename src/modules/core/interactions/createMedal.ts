@@ -78,7 +78,7 @@ export class CreateMedalInteractionHandler extends InteractionHandler {
             .setCustomId(ComplimentInputIds.Index)
             .setLabel("Tipo (Número)")
             .setPlaceholder(
-              "Escolha o número do tipo da medalha. Por exemplo 'Estrela' é tipo 1, então as 3 medalhas 'Estrela' de níveis diferentes são tipo 1. Para verificar os tipos já existentes veja no botão 'Listar Medalhas'."
+              "Ex.: Para verificar já existentes botão 'Listar Medalhas'."
             )
             .setStyle(TextInputStyle.Short)
             .setRequired(true),
