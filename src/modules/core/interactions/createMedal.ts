@@ -106,6 +106,20 @@ export class CreateMedalInteractionHandler extends InteractionHandler {
         ],
       });
 
+    const existingMedal = await this.container.prisma.medals.findUnique({
+      where: {
+        discordId: result.Id,
+      },
+    });
+
+    if (existingMedal) {
+      await interactionFromModal.editReply({
+        content: `O Id escolhido já existe no banco de dados. <@&${result.Id}>`,
+      });
+
+      return;
+    }
+
     const medalIndex = Number.parseInt(result.Index);
     const medalLevel = Number.parseInt(result.Level);
 
@@ -138,20 +152,6 @@ export class CreateMedalInteractionHandler extends InteractionHandler {
     }
 
     const targetMedal = await guild.roles.fetch(result.Id);
-
-    const existingMedal = await this.container.prisma.medals.findUnique({
-      where: {
-        discordId: result.Id,
-      },
-    });
-
-    if (existingMedal) {
-      await interactionFromModal.editReply({
-        content: `O Id escolhido já existe no banco de dados. <@&${result.Id}>`,
-      });
-
-      return;
-    }
 
     await this.container.prisma.medals
       .create({
