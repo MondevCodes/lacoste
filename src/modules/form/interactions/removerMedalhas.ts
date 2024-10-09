@@ -57,7 +57,7 @@ export class RemoveMedalInteractionHandler extends InteractionHandler {
   public override async run(interaction: ButtonInteraction<InGuild>) {
     const { interaction: interactionFromModal, result } =
       await this.container.utilities.inquirer.awaitModal(interaction, {
-        title: "Remover Medalha",
+        title: "Retirar Medalha",
         listenInteraction: true,
 
         inputs: [
@@ -255,7 +255,7 @@ export class RemoveMedalInteractionHandler extends InteractionHandler {
     });
 
     await interactionFromModal.editReply({
-      content: `Medalha ${targetMedal.name} // <@&${targetMedalId}> removida com sucesso de **${existingUser.habboName}** ✅`,
+      content: `Medalha <@&${targetMedalId}> removida com sucesso de **${existingUser.habboName}** ✅`,
       embeds: [],
       components: [],
     });
