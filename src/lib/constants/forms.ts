@@ -11,4 +11,7 @@ export enum FormIds {
 	Organizacional = "LCST::Form/Organizacional",
 	OrganizacionalCorrecao = "LCST::Form/OrganizacionalCorrecao",
 	Elogio = "LCST::Form/Elogio",
+	criarMedalha = "LCST::Form/criarMedalha",
+	deletarMedalha = "LCST::Form/deletarMedalha",
+	listarMedalhas = "LCST::Form/listarMedalhas",
 }
