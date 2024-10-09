@@ -188,16 +188,6 @@ export class MedalInteractionHandler extends InteractionHandler {
       },
     });
 
-    const authorDB = await this.container.prisma.user.findUnique({
-      where: {
-        discordId: interaction.user.id,
-      },
-      select: {
-        id: true,
-        habboName: true,
-      },
-    });
-
     if (!existingUser) {
       await interactionFromModal.editReply({
         content:
@@ -359,33 +349,11 @@ export class MedalInteractionHandler extends InteractionHandler {
       ENVIRONMENT.NOTIFICATION_CHANNELS.GERAL
     );
 
-    const authorResult = await Result.fromAsync(
-      this.container.utilities.habbo.inferTargetGuildMember(
-        `@${interaction.user.tag}`,
-        true
-      )
-    );
-
-    let habboName: string | undefined = undefined;
-
-    if (authorResult) {
-      const { habbo: authorHabbo } = authorResult.unwrapOr({
-        member: undefined,
-        habbo: undefined,
-      });
-
-      habboName = authorHabbo?.name ?? undefined;
-    }
-
     if (notificationChannel?.isTextBased()) {
       await notificationChannel.send({
         embeds: [
           new EmbedBuilder()
             .setTitle("Medalha de Honra")
-            .setAuthor({
-              name: interaction.user.tag,
-              iconURL: interaction.user.displayAvatarURL(),
-            })
             .setImage(
               "https://cdn.discordapp.com/attachments/1266124737277595729/1293707875901898764/lacmedalha_4.gif?ex=67085ad9&is=67070959&hm=b2f63238f29f3a5fde83af5319bf1fecf8e196e3eaf3e0289203ba7055724fee&"
             )
@@ -423,7 +391,7 @@ export class MedalInteractionHandler extends InteractionHandler {
               },
               {
                 name: ":people_hugging: Entregue por",
-                value: `${authorDB?.habboName ?? habboName}`,
+                value: "Sistema Lacoste",
               },
             ])
             .setColor(EmbedColors.LalaRed)
