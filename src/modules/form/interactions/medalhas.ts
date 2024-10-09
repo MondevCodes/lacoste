@@ -133,12 +133,14 @@ export class MedalInteractionHandler extends InteractionHandler {
       interaction.guild ??
       (await interaction.client.guilds.fetch(interaction.guildId));
 
+    const allMedals = await this.container.prisma.medals.findMany();
+
     const medalChoices = await Promise.all(
-      values(ENVIRONMENT.MEDALS).map(
+      values(allMedals).map(
         async (value) =>
-          value.id &&
-          (guild.roles.cache.get(value.id) ??
-            (await guild.roles.fetch(value.id)))
+          value.discordId &&
+          (guild.roles.cache.get(value.discordId) ??
+            (await guild.roles.fetch(value.discordId)))
       )
     );
 
@@ -166,10 +168,6 @@ export class MedalInteractionHandler extends InteractionHandler {
 
       return;
     }
-
-    const targetMedalEnvironment = Object.values(ENVIRONMENT.MEDALS).find(
-      (medal) => medal.id === targetMedalId
-    );
 
     // Authorized
     // Authorized
@@ -263,10 +261,10 @@ export class MedalInteractionHandler extends InteractionHandler {
     const targetMedalDB = await this.container.prisma.medals.findUnique({
       where: {
         discordId: targetMedalId,
-      }
+      },
     });
 
-    if (!targetMedal || !targetMedalEnvironment || !targetMedalDB) {
+    if (!targetMedal || !targetMedalDB) {
       await interactionFromModal.editReply({
         content: "||WP121|| Ocorreu um erro, contate o desenvolvedor.",
       });
@@ -274,23 +272,47 @@ export class MedalInteractionHandler extends InteractionHandler {
       return;
     }
 
-    const previousMedal = Object.values(ENVIRONMENT.MEDALS).find(
-      (medal) =>
-        medal.index === targetMedalEnvironment?.index &&
-        medal.level === targetMedalEnvironment?.level - 1
-    );
+    const previousMedalDB = await this.container.prisma.medals.findFirst({
+      where: {
+        AND: [
+          {
+            index: targetMedalDB.index,
+            level: targetMedalDB.level - 1,
+          },
+        ],
+      },
+    });
 
-    if (previousMedal) {
+    // const previousMedal = Object.values(ENVIRONMENT.MEDALS).find(
+    //   (medal) =>
+    //     medal.index === targetMedalEnvironment?.index &&
+    //     medal.level === targetMedalEnvironment?.level - 1
+    // );
+
+    if (previousMedalDB) {
       await guild.members
         .removeRole({
           user: targetMember.id,
-          role: previousMedal.id,
+          role: previousMedalDB.discordId,
         })
         .catch(() =>
           this.container.logger.error(
             "[MedalInteractionHandler#run] Error to remove previous Medal level"
           )
         );
+
+      const newUserListRemoved = previousMedalDB.users.filter(
+        (userDiscordId) => userDiscordId !== targetMember.user.id
+      );
+
+      await this.container.prisma.medals.update({
+        where: {
+          discordId: previousMedalDB.discordId,
+        },
+        data: {
+          users: newUserListRemoved,
+        },
+      });
 
       await guild.members
         .addRole({
@@ -302,6 +324,15 @@ export class MedalInteractionHandler extends InteractionHandler {
             "[MedalInteractionHandler#run] Error to add target Medal"
           )
         );
+
+      await this.container.prisma.medals.update({
+        where: {
+          discordId: targetMedalDB.discordId,
+        },
+        data: {
+          users: { push: targetMember.user.id },
+        },
+      });
     } else {
       await guild.members
         .addRole({
@@ -313,6 +344,15 @@ export class MedalInteractionHandler extends InteractionHandler {
             "[MedalInteractionHandler#run] Error to add target Medal"
           )
         );
+
+      await this.container.prisma.medals.update({
+        where: {
+          discordId: targetMedalDB.discordId,
+        },
+        data: {
+          users: { push: targetMember.user.id },
+        },
+      });
     }
 
     const notificationChannel = await this.container.client.channels.fetch(
