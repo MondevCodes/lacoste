@@ -78,7 +78,7 @@ export class CreateMedalInteractionHandler extends InteractionHandler {
             .setCustomId(ComplimentInputIds.Index)
             .setLabel("Tipo (Número)")
             .setPlaceholder(
-              "Ex.: Para verificar já existentes botão 'Listar Medalhas'."
+              "Para verificar já existentes botão 'Listar Medalhas'."
             )
             .setStyle(TextInputStyle.Short)
             .setRequired(true),
@@ -151,16 +151,18 @@ export class CreateMedalInteractionHandler extends InteractionHandler {
       return;
     }
 
-    const existingMedalWithIndexLevel = await this.container.prisma.medals.findMany({
-      where: {
-        index: medalIndex,
-        level: medalLevel
-      },
-    });
+    const existingMedalWithIndexLevel =
+      await this.container.prisma.medals.findMany({
+        where: {
+          index: medalIndex,
+          level: medalLevel,
+        },
+      });
 
     if (existingMedalWithIndexLevel.length > 0) {
       await interactionFromModal.editReply({
-        content: `O Index escolhido com o Level escolhido já existe no banco de dados.`,
+        content:
+          "O Tipo escolhido com o Nível escolhido já existe no banco de dados.",
       });
 
       return;
