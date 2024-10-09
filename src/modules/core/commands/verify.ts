@@ -1,6 +1,6 @@
 import { EmbedBuilder, Message } from "discord.js";
 import { ApplyOptions } from "@sapphire/decorators";
-import { Args, Command} from "@sapphire/framework";
+import { Args, Command } from "@sapphire/framework";
 
 import { find, values } from "remeda";
 
@@ -9,23 +9,22 @@ import { EmbedColors } from "$lib/constants/discord";
 
 @ApplyOptions<Command.Options>({ name: "verificar" })
 export default class SendCommand extends Command {
-	public override async messageRun(message: Message, args: Args) {
-		if (!message.inGuild()) {
-			throw new Error("Cannot check permissions outside of a guild.");
-		}
+  public override async messageRun(message: Message, args: Args) {
+    if (!message.inGuild()) {
+      throw new Error("Cannot check permissions outside of a guild.");
+    }
 
-		const targetResult = await args.pickResult("string");
-		if (targetResult.isErr()) return;
+    const targetResult = await args.pickResult("string");
+    if (targetResult.isErr()) return;
 
-
-    const onlyHabbo = (await this.container.utilities.habbo.getProfile(targetResult.unwrap())).unwrapOr(
-			undefined,
-		);
+    const onlyHabbo = (
+      await this.container.utilities.habbo.getProfile(targetResult.unwrap())
+    ).unwrapOr(undefined);
 
     if (!onlyHabbo?.name) {
       await message.reply({
         content:
-				"Não consegui encontrar o perfil do usuário no Habbo, talvez sua conta esteja deletada ou renomeada? Veja se o perfil do usuário no jogo está como público.",
+          "Não consegui encontrar o perfil do usuário no Habbo, talvez sua conta esteja deletada ou renomeada? Veja se o perfil do usuário no jogo está como público.",
       });
 
       return;
@@ -39,7 +38,7 @@ export default class SendCommand extends Command {
         latestPromotionDate: true,
         latestPromotionRoleId: true,
         latestPromotionJobId: true,
-        discordLink: true
+        discordLink: true,
       },
     });
 
@@ -58,8 +57,9 @@ export default class SendCommand extends Command {
         return;
       }
 
-      const currentSectorEnvironment =
-			Object.values(ENVIRONMENT.SECTORS_ROLES).find((r) => r.id === targetDB.latestPromotionRoleId);
+      const currentSectorEnvironment = Object.values(
+        ENVIRONMENT.SECTORS_ROLES
+      ).find((r) => r.id === targetDB.latestPromotionRoleId);
 
       if (!currentSectorEnvironment) {
         await message.reply({
@@ -70,10 +70,13 @@ export default class SendCommand extends Command {
         return;
       }
 
-      const currentSector = await message.guild.roles.fetch(currentSectorEnvironment?.id);
+      const currentSector = await message.guild.roles.fetch(
+        currentSectorEnvironment?.id
+      );
 
-      const currentJobEnvironment =
-      Object.values(ENVIRONMENT.JOBS_ROLES).find((r) => r.id === targetDB.latestPromotionJobId);
+      const currentJobEnvironment = Object.values(ENVIRONMENT.JOBS_ROLES).find(
+        (r) => r.id === targetDB.latestPromotionJobId
+      );
 
       if (!currentJobEnvironment) {
         await message.reply({
@@ -84,30 +87,33 @@ export default class SendCommand extends Command {
         return;
       }
 
-      const currentJob = await message.guild.roles.fetch(currentJobEnvironment?.id);
+      const currentJob = await message.guild.roles.fetch(
+        currentJobEnvironment?.id
+      );
 
-        let shouldPromote =
+      let shouldPromote =
         /** isFirstPromotion */
-        !targetDB?.latestPromotionRoleId ||
-        !targetDB?.latestPromotionDate;
+        !targetDB?.latestPromotionRoleId || !targetDB?.latestPromotionDate;
 
       if (!shouldPromote) {
         const latestPromotionDate =
-        targetDB?.latestPromotionDate &&
-        new Date(targetDB?.latestPromotionDate);
+          targetDB?.latestPromotionDate &&
+          new Date(targetDB?.latestPromotionDate);
 
         const minDaysProm = currentJobEnvironment.minDaysProm;
 
         if (latestPromotionDate && minDaysProm) {
           const daysSinceLastPromotion = Math.floor(
-              (new Date().getTime() - latestPromotionDate.getTime()) /
-                (1000 * 3600 * 24),
+            (new Date().getTime() - latestPromotionDate.getTime()) /
+              (1000 * 3600 * 24)
           );
 
-          let daysForPromote = minDaysProm - daysSinceLastPromotion
-          shouldPromote = daysSinceLastPromotion >= minDaysProm
+          let daysForPromote = minDaysProm - daysSinceLastPromotion;
+          shouldPromote = daysSinceLastPromotion >= minDaysProm;
 
-          if (daysForPromote < 0) { daysForPromote = 0 }
+          if (daysForPromote < 0) {
+            daysForPromote = 0;
+          }
 
           await message.reply({
             embeds: [
@@ -122,15 +128,13 @@ export default class SendCommand extends Command {
                     name: "Ultima Promoção",
                     value: targetDB?.latestPromotionDate
                       ? new Date(
-                          targetDB?.latestPromotionDate,
+                          targetDB?.latestPromotionDate
                         ).toLocaleDateString("pt-BR")
                       : "N/D",
                   },
                   {
                     name: "Promoção Disponível?",
-                    value: shouldPromote
-                      ? "Sim"
-                      : "Não",
+                    value: shouldPromote ? "Sim" : "Não",
                   },
                   {
                     name: "Dias até a próxima Promoção",
@@ -138,7 +142,7 @@ export default class SendCommand extends Command {
                   },
                   {
                     name: "Discord Vinculado?",
-                    value: discordLinked ? "Vinculado ✅" : "Não Vinculado ❌"
+                    value: discordLinked ? "Vinculado ✅" : "Não Vinculado ❌",
                   },
                 ])
                 .setFooter({
@@ -147,16 +151,14 @@ export default class SendCommand extends Command {
                 })
                 .setColor(EmbedColors.LalaRed)
                 .setThumbnail(
-                  `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo.figureString}&size=b`,
+                  `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo.figureString}&size=b`
                 ),
             ],
           });
-
         } else {
           if (currentJob?.name !== "Vinculado") {
             await message.reply({
-              content:
-                `Erro: Função 'minDaysProm': ${minDaysProm} e 'latestPromotionDate': ${latestPromotionDate}, contate o Desenvolvedor.`,
+              content: `Erro: Função 'minDaysProm': ${minDaysProm} e 'latestPromotionDate': ${latestPromotionDate}, contate o Desenvolvedor.`,
             });
           }
 
@@ -173,13 +175,13 @@ export default class SendCommand extends Command {
                     name: "Ultima Promoção",
                     value: targetDB?.latestPromotionDate
                       ? new Date(
-                          targetDB?.latestPromotionDate,
+                          targetDB?.latestPromotionDate
                         ).toLocaleDateString("pt-BR")
                       : "N/D",
                   },
                   {
                     name: "Discord Vinculado?",
-                    value: discordLinked ? "Vinculado ✅" : "Não Vinculado ❌"
+                    value: discordLinked ? "Vinculado ✅" : "Não Vinculado ❌",
                   },
                 ])
                 .setFooter({
@@ -188,7 +190,7 @@ export default class SendCommand extends Command {
                 })
                 .setColor(EmbedColors.LalaRed)
                 .setThumbnail(
-                  `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo.figureString}&size=b`,
+                  `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo.figureString}&size=b`
                 ),
             ],
           });
@@ -202,97 +204,120 @@ export default class SendCommand extends Command {
     }
 
     const { habbo, member } =
-    await this.container.utilities.habbo.inferTargetGuildMember(
-      targetResult.unwrap(),
-    );
+      await this.container.utilities.habbo.inferTargetGuildMember(
+        targetResult.unwrap()
+      );
 
     if (!member) {
-			await message.reply({
-				content:
-					"Não consegui encontrar o perfil do Discord do usuário que estava com o mesmo ativo, talvez saiu do Servidor?",
-			});
-
-			return;
-		} else if (!habbo?.name) {
       await message.reply({
-				content:
-					"Não consegui encontrar o perfil do usuário no Habbo, talvez sua conta esteja deletada ou renomeada? Veja se o perfil do usuário no jogo está como público.",
-			});
+        content:
+          "Não consegui encontrar o perfil do Discord do usuário que estava com o mesmo ativo, talvez saiu do Servidor?",
+      });
+
+      return;
+    } else if (!habbo?.name) {
+      await message.reply({
+        content:
+          "Não consegui encontrar o perfil do usuário no Habbo, talvez sua conta esteja deletada ou renomeada? Veja se o perfil do usuário no jogo está como público.",
+      });
 
       return;
     }
 
-		const currentSectorId =
-			this.container.utilities.discord.inferHighestSectorRole(
-				member.roles.cache.map((r) => r.id),
-			);
+    const currentSectorId =
+      this.container.utilities.discord.inferHighestSectorRole(
+        member.roles.cache.map((r) => r.id)
+      );
 
     this.container.logger.info(
-			`[VerifyCommand#run] currentSectorId: ${currentSectorId}`,
-		);
+      `[VerifyCommand#run] currentSectorId: ${currentSectorId}`
+    );
 
-		if (!currentSectorId) {
-			await message.reply({
-				content:
-					"Não consegui encontrar o setor do usuário, talvez sua conta esteja deletada ou renomeada?",
-			});
+    if (!currentSectorId) {
+      await message.reply({
+        content:
+          "Não consegui encontrar o setor do usuário, talvez sua conta esteja deletada ou renomeada?",
+      });
 
-			return;
-		}
+      return;
+    }
 
-		const currentSector = await message.guild.roles.fetch(currentSectorId);
+    const currentSector = await message.guild.roles.fetch(currentSectorId);
 
-		const currentJobId = this.container.utilities.discord.inferHighestJobRole(
-			member.roles.cache.map((r) => r.id),
-		);
+    const currentJobId = this.container.utilities.discord.inferHighestJobRole(
+      member.roles.cache.map((r) => r.id)
+    );
 
     if (!currentJobId) {
-			await message.reply({
-				content:
-					"Não consegui encontrar o cargo do usuário, talvez sua conta esteja deletada ou renomeada?",
-			});
+      await message.reply({
+        content:
+          "Não consegui encontrar o cargo do usuário, talvez sua conta esteja deletada ou renomeada?",
+      });
 
-			return;
-		}
+      return;
+    }
 
-		const currentJob = currentJobId
-			? await message.guild.roles.fetch(currentJobId)
-			: member.roles.highest;
+    const currentJob = currentJobId
+      ? await message.guild.roles.fetch(currentJobId)
+      : member.roles.highest;
 
-		const databaseUser = await this.container.prisma.user.findUnique({
-			where: { habboId: habbo.uniqueId },
-			select: {
+    const databaseUser = await this.container.prisma.user.findUnique({
+      where: { habboId: habbo.uniqueId },
+      select: {
         id: true,
         latestPromotionDate: true,
         latestPromotionRoleId: true,
       },
-		});
+    });
 
-		let shouldPromote =
-			/** isFirstPromotion */
-			!databaseUser?.latestPromotionRoleId ||
-			!databaseUser?.latestPromotionDate;
+    let shouldPromote =
+      /** isFirstPromotion */
+      !databaseUser?.latestPromotionRoleId ||
+      !databaseUser?.latestPromotionDate;
+
+    const medals = await this.container.prisma.medals.findMany({
+      where: {
+        users: {
+          has: member.user.id,
+        },
+      },
+    });
+
+    let userMedals: string[] = [];
+    if (medals.length > 0) {
+      for await (const medal of medals) {
+        const targetMedal = await message.guild.roles.fetch(medal.discordId);
+
+        if (targetMedal) {
+          userMedals.push(targetMedal?.name);
+        }
+      }
+    }
+
+    const userMedalsList = userMedals.map((medalName) => medalName).join("\n");
 
     if (!shouldPromote) {
       const latestPromotionDate =
-      databaseUser?.latestPromotionDate &&
-      new Date(databaseUser?.latestPromotionDate);
+        databaseUser?.latestPromotionDate &&
+        new Date(databaseUser?.latestPromotionDate);
 
       const minDaysProm = find(
         values(ENVIRONMENT.JOBS_ROLES),
-        (x) => x.id === currentJobId,
+        (x) => x.id === currentJobId
       )?.minDaysProm;
 
       if (latestPromotionDate && minDaysProm) {
         const daysSinceLastPromotion = Math.floor(
-            (new Date().getTime() - latestPromotionDate.getTime()) /
-              (1000 * 3600 * 24),
+          (new Date().getTime() - latestPromotionDate.getTime()) /
+            (1000 * 3600 * 24)
         );
 
-        let daysForPromote = minDaysProm - daysSinceLastPromotion
-        shouldPromote = daysSinceLastPromotion >= minDaysProm
+        let daysForPromote = minDaysProm - daysSinceLastPromotion;
+        shouldPromote = daysSinceLastPromotion >= minDaysProm;
 
-        if (daysForPromote < 0) {daysForPromote = 0}
+        if (daysForPromote < 0) {
+          daysForPromote = 0;
+        }
 
         await message.reply({
           embeds: [
@@ -307,15 +332,13 @@ export default class SendCommand extends Command {
                   name: "Ultima Promoção",
                   value: databaseUser?.latestPromotionDate
                     ? new Date(
-                        databaseUser?.latestPromotionDate,
+                        databaseUser?.latestPromotionDate
                       ).toLocaleDateString("pt-BR")
                     : "N/D",
                 },
                 {
                   name: "Promoção Disponível?",
-                  value: shouldPromote
-                    ? "Sim"
-                    : "Não",
+                  value: shouldPromote ? "Sim" : "Não",
                 },
                 {
                   name: "Dias até a próxima Promoção",
@@ -323,7 +346,14 @@ export default class SendCommand extends Command {
                 },
                 {
                   name: "Discord Vinculado?",
-                  value: discordLinked ? "Vinculado ✅" : "Não Vinculado ❌"
+                  value: discordLinked ? "Vinculado ✅" : "Não Vinculado ❌",
+                },
+                {
+                  name: "Medalhas",
+                  value:
+                    userMedalsList.length > 0
+                      ? userMedalsList
+                      : "O colaborador não possui medalhas acumuladas",
                 },
               ])
               .setFooter({
@@ -332,16 +362,14 @@ export default class SendCommand extends Command {
               })
               .setColor(EmbedColors.LalaRed)
               .setThumbnail(
-                `https://www.habbo.com/habbo-imaging/avatarimage?figure=${habbo.figureString}&size=b`,
+                `https://www.habbo.com/habbo-imaging/avatarimage?figure=${habbo.figureString}&size=b`
               ),
           ],
         });
-
       } else {
         if (currentJob?.name !== "Vinculado") {
           await message.reply({
-            content:
-              `Erro: Função 'minDaysProm': ${minDaysProm} e 'latestPromotionDate': ${latestPromotionDate}, contate o Desenvolvedor.`,
+            content: `Erro: Função 'minDaysProm': ${minDaysProm} e 'latestPromotionDate': ${latestPromotionDate}, contate o Desenvolvedor.`,
           });
         }
 
@@ -358,13 +386,13 @@ export default class SendCommand extends Command {
                   name: "Ultima Promoção",
                   value: databaseUser?.latestPromotionDate
                     ? new Date(
-                        databaseUser?.latestPromotionDate,
+                        databaseUser?.latestPromotionDate
                       ).toLocaleDateString("pt-BR")
                     : "N/D",
                 },
                 {
                   name: "Discord Vinculado?",
-                  value: discordLinked ? "Vinculado ✅" : "Não Vinculado ❌"
+                  value: discordLinked ? "Vinculado ✅" : "Não Vinculado ❌",
                 },
               ])
               .setFooter({
@@ -373,7 +401,7 @@ export default class SendCommand extends Command {
               })
               .setColor(EmbedColors.LalaRed)
               .setThumbnail(
-                `https://www.habbo.com/habbo-imaging/avatarimage?figure=${habbo.figureString}&size=b`,
+                `https://www.habbo.com/habbo-imaging/avatarimage?figure=${habbo.figureString}&size=b`
               ),
           ],
         });
