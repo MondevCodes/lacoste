@@ -105,15 +105,14 @@ export default class SendCommand extends Command {
 
           new ActionRowBuilder<ButtonBuilder>().addComponents(
             new ButtonBuilder()
-              .setLabel("Entrega de Medalha")
+              .setLabel("Entregar Medalha")
               .setStyle(ButtonStyle.Primary)
               .setCustomId("LCST::MedalInteractionHandler"),
 
             new ButtonBuilder()
               .setLabel("Retirar Medalha")
               .setStyle(ButtonStyle.Primary)
-              .setCustomId("testing")
-              .setDisabled(true)
+              .setCustomId("LCST::RemoveMedalInteractionHandler")
           ),
 
           new ActionRowBuilder<ButtonBuilder>().addComponents(
@@ -135,7 +134,7 @@ export default class SendCommand extends Command {
               .setCustomId(FormIds.listarMedalhas),
 
             new ButtonBuilder()
-              .setLabel("Atualizar Medalha")
+              .setLabel("Editar Medalha")
               .setStyle(ButtonStyle.Secondary)
               .setCustomId("testing2")
               .setDisabled(true)
