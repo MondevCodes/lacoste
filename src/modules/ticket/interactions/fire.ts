@@ -706,6 +706,17 @@ export class FireInteractionHandler extends InteractionHandler {
 
     if (medals.length > 0) {
       for (const medal of medals) {
+        await guild.members
+          .removeRole({
+            user: targetUser.discordId,
+            role: medal.discordId,
+          })
+          .catch(() =>
+            this.container.logger.error(
+              "[FireInteractionHandler#run] Error to remove Medal"
+            )
+          );
+
         await this.container.prisma.medals.update({
           where: {
             id: medal.id,
