@@ -3,24 +3,15 @@ import {
   InteractionHandlerTypes,
 } from "@sapphire/framework";
 
-import {
-  EmbedBuilder,
-  TextInputStyle,
-  TextInputBuilder,
-  ButtonInteraction,
-  ButtonStyle,
-} from "discord.js";
+import { EmbedBuilder, ButtonInteraction, ButtonStyle } from "discord.js";
 
 import { ApplyOptions } from "@sapphire/decorators";
 
 import { EmbedColors } from "$lib/constants/discord";
 import { FormIds } from "$lib/constants/forms";
+import { values } from "remeda";
 
 type InGuild = "cached" | "raw";
-
-enum ComplimentInputIds {
-  Id = "Id",
-}
 
 @ApplyOptions<InteractionHandler.Options>({
   interactionHandlerType: InteractionHandlerTypes.Button,
@@ -58,51 +49,51 @@ export class DeleteMedalInteractionHandler extends InteractionHandler {
   }
 
   public override async run(interaction: ButtonInteraction<InGuild>) {
-    const { interaction: interactionFromModal, result } =
-      await this.container.utilities.inquirer.awaitModal(interaction, {
-        title: "Deletar Medalha [Configuração]",
-        listenInteraction: true,
-
-        inputs: [
-          new TextInputBuilder()
-            .setCustomId(ComplimentInputIds.Id)
-            .setLabel("Discord ID da Medalha")
-            .setPlaceholder("Ex.: 838328773892")
-            .setStyle(TextInputStyle.Short)
-            .setRequired(true),
-        ],
-      });
-
     const guild =
       interaction.guild ??
       (await interaction.client.guilds.fetch(interaction.guildId));
 
-    if (!guild.roles.cache.has(result.Id)) {
-      await interactionFromModal.editReply({
-        content: `O Id escolhido não existe no seu Servidor. <@&${result.Id}>`,
+    const allMedals = await this.container.prisma.medals.findMany();
+
+    const medalChoices = await Promise.all(
+      values(allMedals).map(
+        async (value) =>
+          value.discordId &&
+          (guild.roles.cache.get(value.discordId) ??
+            (await guild.roles.fetch(value.discordId)))
+      )
+    );
+
+    const [targetMedalId] =
+      await this.container.utilities.inquirer.awaitSelectMenu(interaction, {
+        choices: [
+          ...medalChoices.filter(Boolean).map((medal) => ({
+            id: medal.id,
+            label: medal.name,
+          })),
+        ],
+        placeholder: "Selecionar",
+        question: "Selecione a medalha que deseja deletar.",
       });
-
-      return;
-    }
-
-    const targetMedal = await guild.roles.fetch(result.Id);
 
     const existingMedal = await this.container.prisma.medals.findUnique({
       where: {
-        discordId: result.Id,
+        discordId: targetMedalId,
       },
     });
 
     if (!existingMedal) {
-      await interactionFromModal.editReply({
-        content: `O Id escolhido não existe no banco de dados. <@&${result.Id}>`,
+      await interaction.reply({
+        content: `O Id escolhido não existe no banco de dados. <@&${targetMedalId}>`,
       });
 
       return;
     }
 
+    const targetMedal = await guild.roles.fetch(targetMedalId);
+
     const isConfirmed = await this.container.utilities.inquirer.awaitButtons(
-      interactionFromModal,
+      interaction,
       {
         choices: [
           {
@@ -130,7 +121,7 @@ export class DeleteMedalInteractionHandler extends InteractionHandler {
     );
 
     if (isConfirmed.result === "false") {
-      await interactionFromModal
+      await interaction
         .deleteReply()
         .catch(() =>
           this.container.logger.error(
@@ -144,18 +135,18 @@ export class DeleteMedalInteractionHandler extends InteractionHandler {
     await this.container.prisma.medals
       .delete({
         where: {
-          discordId: result.Id,
+          discordId: targetMedalId,
         },
       })
       .catch((error) => {
-        interactionFromModal.editReply({
+        interaction.editReply({
           content: `Não foi possível deletar a Medalha no banco de dados, contate o Desenvolvedor. Erro: ||${error}|| `,
         });
 
         return;
       });
 
-    await interactionFromModal.editReply({
+    await interaction.editReply({
       embeds: [
         new EmbedBuilder()
           .setTitle("Medalha Deletada com Sucesso ✅")
