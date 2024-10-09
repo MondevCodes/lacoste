@@ -91,6 +91,11 @@ model Medals {
 
   discordId String @unique
 
+  index Int
+  level Int
+
   required String?
   description String?
+
+  users String[]
 }
