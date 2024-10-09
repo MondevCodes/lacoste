@@ -171,6 +171,7 @@ export class DeleteMedalInteractionHandler extends InteractionHandler {
           ])
           .setColor(EmbedColors.LalaRed),
       ],
+      components: [],
     });
   }
 }
