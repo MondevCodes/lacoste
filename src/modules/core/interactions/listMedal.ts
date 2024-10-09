@@ -105,7 +105,7 @@ export class DeleteMedalInteractionHandler extends InteractionHandler {
               },
               {
                 name: "Colaboradores que possuem",
-                value: usersWithMedal,
+                value: usersWithMedal || usersWithMedal.length > 1 ? usersWithMedal : "Ainda não há colaboradores.",
               },
             ])
             .setColor(EmbedColors.LalaRed),
