@@ -119,12 +119,12 @@ export default class SendCommand extends Command {
           new ActionRowBuilder<ButtonBuilder>().addComponents(
             new ButtonBuilder()
               .setLabel("Criar Medalha")
-              .setStyle(ButtonStyle.Success)
+              .setStyle(ButtonStyle.Primary)
               .setCustomId(FormIds.criarMedalha),
 
             new ButtonBuilder()
               .setLabel("Deletar Medalha")
-              .setStyle(ButtonStyle.Danger)
+              .setStyle(ButtonStyle.Secondary)
               .setCustomId(FormIds.deletarMedalha)
           ),
 
