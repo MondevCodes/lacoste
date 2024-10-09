@@ -696,6 +696,29 @@ export class FireInteractionHandler extends InteractionHandler {
       ],
     });
 
+    const medals = await this.container.prisma.medals.findMany({
+      where: {
+        users: {
+          has: targetUser.discordId,
+        },
+      },
+    });
+
+    if (medals.length > 0) {
+      for (const medal of medals) {
+        await this.container.prisma.medals.update({
+          where: {
+            id: medal.id,
+          },
+          data: {
+            users: {
+              set: medal.users.filter((id) => id !== targetUser.discordId),
+            },
+          },
+        });
+      }
+    }
+
     if (targetDBamount) {
       await this.container.prisma.transaction.deleteMany({
         where: {
