@@ -14,4 +14,5 @@ export enum FormIds {
 	criarMedalha = "LCST::Form/criarMedalha",
 	deletarMedalha = "LCST::Form/deletarMedalha",
 	listarMedalhas = "LCST::Form/listarMedalhas",
+	editarMedalha = "LCST::Form/editarMedalha",
 }
