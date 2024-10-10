@@ -150,7 +150,7 @@ export class UpdateMedalInteractionHandler extends InteractionHandler {
 
     const { interaction: interactionFromModal, result: modalResult } =
       await this.container.utilities.inquirer.awaitModal(interaction, {
-        title: `Editar Medalha ${targetMedal?.name} [Configuração]`,
+        title: `Editar Medalha [Configuração]`,
         listenInteraction: true,
 
         inputs: [
