@@ -98,6 +98,8 @@ export class UpdateMedalInteractionHandler extends InteractionHandler {
     if (!existingMedal) {
       await interaction.reply({
         content: `O Id escolhido não existe no banco de dados. <@&${targetMedalId}>`,
+        components: [],
+        embeds: [],
       });
 
       return;
@@ -197,6 +199,8 @@ export class UpdateMedalInteractionHandler extends InteractionHandler {
         .catch((error) => {
           interaction.editReply({
             content: `Não foi possível alterar o **Tipo** da Medalha no banco de dados, contate o Desenvolvedor. Erro: ||${error}|| `,
+            components: [],
+            embeds: [],
           });
 
           return;
@@ -217,6 +221,8 @@ export class UpdateMedalInteractionHandler extends InteractionHandler {
         .catch((error) => {
           interaction.editReply({
             content: `Não foi possível alterar o **Nível** da Medalha no banco de dados, contate o Desenvolvedor. Erro: ||${error}|| `,
+            components: [],
+            embeds: [],
           });
 
           return;
@@ -235,6 +241,8 @@ export class UpdateMedalInteractionHandler extends InteractionHandler {
         .catch((error) => {
           interaction.editReply({
             content: `Não foi possível alterar a **Descrição** da Medalha no banco de dados, contate o Desenvolvedor. Erro: ||${error}|| `,
+            components: [],
+            embeds: [],
           });
 
           return;
@@ -253,6 +261,8 @@ export class UpdateMedalInteractionHandler extends InteractionHandler {
         .catch((error) => {
           interaction.editReply({
             content: `Não foi possível alterar o **Requisito** da Medalha no banco de dados, contate o Desenvolvedor. Erro: ||${error}|| `,
+            components: [],
+            embeds: [],
           });
 
           return;
@@ -274,27 +284,40 @@ export class UpdateMedalInteractionHandler extends InteractionHandler {
             },
             {
               name: "Tipo",
-              value: modalResult.Index.length > 0 ? modalResult.Index : "* Não houve alterações",
+              value:
+                modalResult.Index.length > 0
+                  ? modalResult.Index
+                  : "* Não houve alterações",
               inline: true,
             },
             {
               name: "Nível",
-              value: modalResult.Level.length > 0 ? modalResult.Level : "* Não houve alterações",
+              value:
+                modalResult.Level.length > 0
+                  ? modalResult.Level
+                  : "* Não houve alterações",
               inline: true,
             },
             {
               name: "Requisito",
-              value: modalResult.Required.length > 0 ? modalResult.Required : "* Não houve alterações",
+              value:
+                modalResult.Required.length > 0
+                  ? modalResult.Required
+                  : "* Não houve alterações",
               inline: false,
             },
             {
               name: "Descrição",
-              value: modalResult.Description.length > 0 ? modalResult.Description : "* Não houve alterações",
+              value:
+                modalResult.Description.length > 0
+                  ? modalResult.Description
+                  : "* Não houve alterações",
             },
           ])
           .setColor(EmbedColors.LalaRed),
       ],
       components: [],
+      content: "",
     });
   }
 }

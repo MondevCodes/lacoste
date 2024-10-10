@@ -90,6 +90,8 @@ export class DeleteMedalInteractionHandler extends InteractionHandler {
 
       interaction.editReply({
         content: "Te mandei a lista completa na sua DM do Discord ✅",
+        components: [],
+        embeds: [],
       });
 
       await dmChannel.send({
@@ -180,6 +182,9 @@ export class DeleteMedalInteractionHandler extends InteractionHandler {
           ],
           placeholder: "Selecionar",
           question: "Selecione a medalha que deseja visualizar",
+          components: [],
+          embeds: [],
+          content: "",
         });
 
       const existingMedal = await this.container.prisma.medals.findUnique({
@@ -191,6 +196,8 @@ export class DeleteMedalInteractionHandler extends InteractionHandler {
       if (!existingMedal) {
         await interaction.editReply({
           content: `O Id escolhido não existe no banco de dados. <@&${targetMedalId}>`,
+          components: [],
+          embeds: [],
         });
 
         return;
@@ -251,6 +258,8 @@ export class DeleteMedalInteractionHandler extends InteractionHandler {
             ])
             .setColor(EmbedColors.LalaRed),
         ],
+        components: [],
+        content: "",
       });
     }
   }
