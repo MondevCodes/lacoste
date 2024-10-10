@@ -15,11 +15,11 @@ import { ApplyOptions } from "@sapphire/decorators";
 
 import { EmbedColors } from "$lib/constants/discord";
 import { FormIds } from "$lib/constants/forms";
-import { values } from "remeda";
 
 type InGuild = "cached" | "raw";
 
 enum ComplimentInputIds {
+  Id = "Id",
   Index = "Index",
   Level = "Level",
   Description = "Description",
@@ -62,42 +62,62 @@ export class UpdateMedalInteractionHandler extends InteractionHandler {
   }
 
   public override async run(interaction: ButtonInteraction<InGuild>) {
+    const { interaction: interactionFromModal, result: modalResult } =
+      await this.container.utilities.inquirer.awaitModal(interaction, {
+        title: `Editar Medalha [Configuração]`,
+        listenInteraction: true,
+
+        inputs: [
+          new TextInputBuilder()
+            .setCustomId(ComplimentInputIds.Id)
+            .setLabel("Discord ID da Medalha")
+            .setPlaceholder("Ex.: 838328773892")
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true),
+
+          new TextInputBuilder()
+            .setCustomId(ComplimentInputIds.Index)
+            .setLabel("Novo Tipo (Número)")
+            .setPlaceholder("> CASO NÃO HOUVER ALTERAÇÃO MANTER VAZIO <")
+            .setStyle(TextInputStyle.Short)
+            .setRequired(false),
+
+          new TextInputBuilder()
+            .setCustomId(ComplimentInputIds.Level)
+            .setLabel("Novo Nível")
+            .setPlaceholder("> CASO NÃO HOUVER ALTERAÇÃO MANTER VAZIO <")
+            .setStyle(TextInputStyle.Short)
+            .setRequired(false),
+
+          new TextInputBuilder()
+            .setCustomId(ComplimentInputIds.Description)
+            .setLabel("Nova Descrição")
+            .setPlaceholder("> CASO NÃO HOUVER ALTERAÇÃO MANTER VAZIO <")
+            .setStyle(TextInputStyle.Paragraph)
+            .setRequired(false),
+
+          new TextInputBuilder()
+            .setCustomId(ComplimentInputIds.Required)
+            .setLabel("Novo Requisito")
+            .setPlaceholder("> CASO NÃO HOUVER ALTERAÇÃO MANTER VAZIO <")
+            .setStyle(TextInputStyle.Paragraph)
+            .setRequired(false),
+        ],
+      });
+
     const guild =
       interaction.guild ??
       (await interaction.client.guilds.fetch(interaction.guildId));
 
-    const allMedals = await this.container.prisma.medals.findMany();
-
-    const medalChoices = await Promise.all(
-      values(allMedals).map(
-        async (value) =>
-          value.discordId &&
-          (guild.roles.cache.get(value.discordId) ??
-            (await guild.roles.fetch(value.discordId)))
-      )
-    );
-
-    const [targetMedalId] =
-      await this.container.utilities.inquirer.awaitSelectMenu(interaction, {
-        choices: [
-          ...medalChoices.filter(Boolean).map((medal) => ({
-            id: medal.id,
-            label: medal.name,
-          })),
-        ],
-        placeholder: "Selecionar",
-        question: "Selecione a medalha que deseja editar",
-      });
-
     const existingMedal = await this.container.prisma.medals.findUnique({
       where: {
-        discordId: targetMedalId,
+        discordId: modalResult.Id,
       },
     });
 
     if (!existingMedal) {
       await interaction.reply({
-        content: `O Id escolhido não existe no banco de dados. <@&${targetMedalId}>`,
+        content: `O Id escolhido não existe no banco de dados. <@&${modalResult.Id}>`,
         components: [],
         embeds: [],
       });
@@ -105,7 +125,7 @@ export class UpdateMedalInteractionHandler extends InteractionHandler {
       return;
     }
 
-    const targetMedal = await guild.roles.fetch(targetMedalId);
+    const targetMedal = await guild.roles.fetch(modalResult.Id);
 
     const isConfirmed = await this.container.utilities.inquirer.awaitButtons(
       interaction,
@@ -148,51 +168,13 @@ export class UpdateMedalInteractionHandler extends InteractionHandler {
       return;
     }
 
-    await interaction.deferReply();
-
-    const { interaction: interactionFromModal, result: modalResult } =
-      await this.container.utilities.inquirer.awaitModal(interaction, {
-        title: `Editar Medalha [Configuração]`,
-        listenInteraction: true,
-
-        inputs: [
-          new TextInputBuilder()
-            .setCustomId(ComplimentInputIds.Index)
-            .setLabel("Novo Tipo (Número)")
-            .setPlaceholder("> CASO NÃO HOUVER ALTERAÇÃO MANTER VAZIO <")
-            .setStyle(TextInputStyle.Short)
-            .setRequired(false),
-
-          new TextInputBuilder()
-            .setCustomId(ComplimentInputIds.Level)
-            .setLabel("Novo Nível")
-            .setPlaceholder("> CASO NÃO HOUVER ALTERAÇÃO MANTER VAZIO <")
-            .setStyle(TextInputStyle.Short)
-            .setRequired(false),
-
-          new TextInputBuilder()
-            .setCustomId(ComplimentInputIds.Description)
-            .setLabel("Nova Descrição")
-            .setPlaceholder("> CASO NÃO HOUVER ALTERAÇÃO MANTER VAZIO <")
-            .setStyle(TextInputStyle.Paragraph)
-            .setRequired(false),
-
-          new TextInputBuilder()
-            .setCustomId(ComplimentInputIds.Required)
-            .setLabel("Novo Requisito")
-            .setPlaceholder("> CASO NÃO HOUVER ALTERAÇÃO MANTER VAZIO <")
-            .setStyle(TextInputStyle.Paragraph)
-            .setRequired(false),
-        ],
-      });
-
     if (modalResult.Index.length > 0) {
       const medalIndex = Number.parseInt(modalResult.Index);
 
       await this.container.prisma.medals
         .update({
           where: {
-            discordId: targetMedalId,
+            discordId: modalResult.Id,
           },
           data: {
             index: medalIndex,
@@ -214,7 +196,7 @@ export class UpdateMedalInteractionHandler extends InteractionHandler {
       await this.container.prisma.medals
         .update({
           where: {
-            discordId: targetMedalId,
+            discordId: modalResult.Id,
           },
           data: {
             level: medalLevel,
@@ -234,7 +216,7 @@ export class UpdateMedalInteractionHandler extends InteractionHandler {
       await this.container.prisma.medals
         .update({
           where: {
-            discordId: targetMedalId,
+            discordId: modalResult.Id,
           },
           data: {
             description: modalResult.Description,
@@ -254,7 +236,7 @@ export class UpdateMedalInteractionHandler extends InteractionHandler {
       await this.container.prisma.medals
         .update({
           where: {
-            discordId: targetMedalId,
+            discordId: modalResult.Id,
           },
           data: {
             required: modalResult.Required,
@@ -286,22 +268,34 @@ export class UpdateMedalInteractionHandler extends InteractionHandler {
             },
             {
               name: "Tipo",
-              value: modalResult.Index.length > 0 ? modalResult.Index : "* Não houve alterações",
+              value:
+                modalResult.Index.length > 0
+                  ? modalResult.Index
+                  : "* Não houve alterações",
               inline: true,
             },
             {
               name: "Nível",
-              value: modalResult.Level.length > 0 ? modalResult.Level : "* Não houve alterações",
+              value:
+                modalResult.Level.length > 0
+                  ? modalResult.Level
+                  : "* Não houve alterações",
               inline: true,
             },
             {
               name: "Requisito",
-              value: modalResult.Required.length > 0 ? modalResult.Required : "* Não houve alterações",
+              value:
+                modalResult.Required.length > 0
+                  ? modalResult.Required
+                  : "* Não houve alterações",
               inline: false,
             },
             {
               name: "Descrição",
-              value: modalResult.Description.length > 0 ? modalResult.Description : "* Não houve alterações",
+              value:
+                modalResult.Description.length > 0
+                  ? modalResult.Description
+                  : "* Não houve alterações",
             },
           ])
           .setColor(EmbedColors.LalaRed),
