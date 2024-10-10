@@ -128,7 +128,7 @@ export class UpdateMedalInteractionHandler extends InteractionHandler {
     const targetMedal = await guild.roles.fetch(modalResult.Id);
 
     const isConfirmed = await this.container.utilities.inquirer.awaitButtons(
-      interaction,
+      interactionFromModal,
       {
         choices: [
           {
