@@ -148,6 +148,8 @@ export class UpdateMedalInteractionHandler extends InteractionHandler {
       return;
     }
 
+    await interaction.deferReply();
+
     const { interaction: interactionFromModal, result: modalResult } =
       await this.container.utilities.inquirer.awaitModal(interaction, {
         title: `Editar Medalha [Configuração]`,
@@ -284,34 +286,22 @@ export class UpdateMedalInteractionHandler extends InteractionHandler {
             },
             {
               name: "Tipo",
-              value:
-                modalResult.Index.length > 0
-                  ? modalResult.Index
-                  : "* Não houve alterações",
+              value: modalResult.Index.length > 0 ? modalResult.Index : "* Não houve alterações",
               inline: true,
             },
             {
               name: "Nível",
-              value:
-                modalResult.Level.length > 0
-                  ? modalResult.Level
-                  : "* Não houve alterações",
+              value: modalResult.Level.length > 0 ? modalResult.Level : "* Não houve alterações",
               inline: true,
             },
             {
               name: "Requisito",
-              value:
-                modalResult.Required.length > 0
-                  ? modalResult.Required
-                  : "* Não houve alterações",
+              value: modalResult.Required.length > 0 ? modalResult.Required : "* Não houve alterações",
               inline: false,
             },
             {
               name: "Descrição",
-              value:
-                modalResult.Description.length > 0
-                  ? modalResult.Description
-                  : "* Não houve alterações",
+              value: modalResult.Description.length > 0 ? modalResult.Description : "* Não houve alterações",
             },
           ])
           .setColor(EmbedColors.LalaRed),
