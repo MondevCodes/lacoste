@@ -3,12 +3,13 @@ import {
   InteractionHandlerTypes,
 } from "@sapphire/framework";
 
-import { EmbedBuilder, ButtonInteraction } from "discord.js";
+import { EmbedBuilder, ButtonInteraction, ButtonStyle } from "discord.js";
 
 import { ApplyOptions } from "@sapphire/decorators";
 
 import { EmbedColors } from "$lib/constants/discord";
 import { FormIds } from "$lib/constants/forms";
+import { values } from "remeda";
 
 type InGuild = "cached" | "raw";
 
@@ -52,21 +53,153 @@ export class DeleteMedalInteractionHandler extends InteractionHandler {
       interaction.guild ??
       (await interaction.client.guilds.fetch(interaction.guildId));
 
+    const listOptions = await this.container.utilities.inquirer.awaitButtons(
+      interaction,
+      {
+        choices: [
+          {
+            id: "one",
+            label: "Apenas uma",
+            style: ButtonStyle.Primary,
+          },
+          {
+            id: "all",
+            label: "Lista completa",
+            style: ButtonStyle.Secondary,
+          },
+        ] as const,
+        question: {
+          embeds: [
+            new EmbedBuilder()
+              .setTitle("Opções de visualizar Medalhas")
+              .setDescription(
+                "Deseja ver apenas uma medalha selecionada aqui ou a lista completa na sua DM?"
+              )
+              .setColor(EmbedColors.Default),
+          ],
+          content: "",
+        },
+      }
+    );
+
     const medalsDB = await this.container.prisma.medals.findMany();
 
-    const dmChannel =
-      interaction.user.dmChannel || (await interaction.user.createDM());
+    if (listOptions.result === "all") {
+      const dmChannel =
+        interaction.user.dmChannel || (await interaction.user.createDM());
 
-    interaction.reply({
-      content: "Te mandei a lista na sua DM do Discord ✅",
-      ephemeral: true,
-    });
+      interaction.editReply({
+        content: "Te mandei a lista completa na sua DM do Discord ✅",
+      });
 
-    for await (const medal of medalsDB) {
-      const targetMedal = await guild.roles.fetch(medal.discordId);
+      await dmChannel.send({
+        content: `**LISTA MEDALHAS INÍCIO** [${new Date().toLocaleDateString(
+          "pt-BR"
+        )}]`,
+      });
+
+      for await (const medal of medalsDB) {
+        const targetMedal = await guild.roles.fetch(medal.discordId);
+
+        const usersWithMedalDB = await Promise.all(
+          medal.users.map(async (userDiscordId) => {
+            return await this.container.prisma.user.findUnique({
+              where: { discordId: userDiscordId },
+              select: {
+                habboName: true,
+              },
+            });
+          })
+        );
+
+        const usersWithMedal = usersWithMedalDB
+          .map((user) => user?.habboName)
+          .join("\n");
+
+        await dmChannel.send({
+          embeds: [
+            new EmbedBuilder()
+              .setTitle(`${targetMedal?.name}`)
+              .addFields([
+                {
+                  name: "ID",
+                  value: medal.discordId,
+                },
+                {
+                  name: "Tipo",
+                  value: `${medal.index}`,
+                  inline: true,
+                },
+                {
+                  name: "Nível",
+                  value: `${medal.level}`,
+                  inline: true,
+                },
+                {
+                  name: "Requisito",
+                  value: `${medal.required}`,
+                  inline: false,
+                },
+                {
+                  name: "Descrição",
+                  value: `${medal.description}`,
+                },
+                {
+                  name: "Colaboradores que possuem",
+                  value:
+                    usersWithMedal || usersWithMedal.length > 1
+                      ? usersWithMedal
+                      : "Ainda não há colaboradores.",
+                },
+              ])
+              .setColor(EmbedColors.LalaRed),
+          ],
+        });
+      }
+
+      await dmChannel.send({
+        content: "**FIM DA LISTA DE MEDALHAS**",
+      });
+    } else if (listOptions.result === "one") {
+      const medalChoices = await Promise.all(
+        values(medalsDB).map(
+          async (value) =>
+            value.discordId &&
+            (guild.roles.cache.get(value.discordId) ??
+              (await guild.roles.fetch(value.discordId)))
+        )
+      );
+
+      const [targetMedalId] =
+        await this.container.utilities.inquirer.awaitSelectMenu(interaction, {
+          choices: [
+            ...medalChoices.filter(Boolean).map((medal) => ({
+              id: medal.id,
+              label: medal.name,
+            })),
+          ],
+          placeholder: "Selecionar",
+          question: "Selecione a medalha que deseja visualizar",
+        });
+
+      const existingMedal = await this.container.prisma.medals.findUnique({
+        where: {
+          discordId: targetMedalId,
+        },
+      });
+
+      if (!existingMedal) {
+        await interaction.editReply({
+          content: `O Id escolhido não existe no banco de dados. <@&${targetMedalId}>`,
+        });
+
+        return;
+      }
+
+      const targetMedal = await guild.roles.fetch(targetMedalId);
 
       const usersWithMedalDB = await Promise.all(
-        medal.users.map(async (userDiscordId) => {
+        existingMedal.users.map(async (userDiscordId) => {
           return await this.container.prisma.user.findUnique({
             where: { discordId: userDiscordId },
             select: {
@@ -80,33 +213,33 @@ export class DeleteMedalInteractionHandler extends InteractionHandler {
         .map((user) => user?.habboName)
         .join("\n");
 
-      await dmChannel.send({
+      await interaction.editReply({
         embeds: [
           new EmbedBuilder()
             .setTitle(`${targetMedal?.name}`)
             .addFields([
               {
                 name: "ID",
-                value: medal.discordId,
+                value: existingMedal.discordId,
               },
               {
                 name: "Tipo",
-                value: `${medal.index}`,
+                value: `${existingMedal.index}`,
                 inline: true,
               },
               {
                 name: "Nível",
-                value: `${medal.level}`,
+                value: `${existingMedal.level}`,
                 inline: true,
               },
               {
                 name: "Requisito",
-                value: `${medal.required}`,
+                value: `${existingMedal.required}`,
                 inline: false,
               },
               {
                 name: "Descrição",
-                value: `${medal.description}`,
+                value: `${existingMedal.description}`,
               },
               {
                 name: "Colaboradores que possuem",
