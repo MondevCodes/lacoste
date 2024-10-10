@@ -164,6 +164,7 @@ export class DeleteMedalInteractionHandler extends InteractionHandler {
       });
     } else if (listOptions.result === "one") {
       await interaction.editReply({
+        content: "Carregando...",
         embeds: [],
         components: [],
       });
