@@ -163,6 +163,11 @@ export class DeleteMedalInteractionHandler extends InteractionHandler {
         content: "**FIM DA LISTA DE MEDALHAS**",
       });
     } else if (listOptions.result === "one") {
+      await interaction.editReply({
+        embeds: [],
+        components: [],
+      });
+
       const medalChoices = await Promise.all(
         values(medalsDB).map(
           async (value) =>
