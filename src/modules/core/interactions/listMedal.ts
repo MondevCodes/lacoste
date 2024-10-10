@@ -57,6 +57,11 @@ export class DeleteMedalInteractionHandler extends InteractionHandler {
     const dmChannel =
       interaction.user.dmChannel || (await interaction.user.createDM());
 
+    interaction.reply({
+      content: "Te mandei a lista na sua DM do Discord ✅",
+      ephemeral: true,
+    });
+
     for await (const medal of medalsDB) {
       const targetMedal = await guild.roles.fetch(medal.discordId);
 
@@ -74,11 +79,6 @@ export class DeleteMedalInteractionHandler extends InteractionHandler {
       const usersWithMedal = usersWithMedalDB
         .map((user) => user?.habboName)
         .join("\n");
-
-      interaction.reply({
-        content: "Te mandei a lista na sua DM do Discord ✅",
-        ephemeral: true,
-      });
 
       await dmChannel.send({
         embeds: [
