@@ -75,7 +75,7 @@ export class DeleteMedalInteractionHandler extends InteractionHandler {
         .map((user) => user?.habboName)
         .join("\n");
 
-      await interaction.reply({
+      interaction.reply({
         content: "Te mandei a lista na sua DM do Discord ✅",
         ephemeral: true,
       });
