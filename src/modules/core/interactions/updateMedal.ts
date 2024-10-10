@@ -116,7 +116,7 @@ export class UpdateMedalInteractionHandler extends InteractionHandler {
     });
 
     if (!existingMedal) {
-      await interactionFromModal.reply({
+      await interactionFromModal.editReply({
         content: `O Id escolhido não existe no banco de dados. <@&${modalResult.Id}>`,
         components: [],
         embeds: [],
