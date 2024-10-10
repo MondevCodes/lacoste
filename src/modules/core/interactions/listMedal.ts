@@ -75,6 +75,11 @@ export class DeleteMedalInteractionHandler extends InteractionHandler {
         .map((user) => user?.habboName)
         .join("\n");
 
+      await interaction.reply({
+        content: "Te mandei a lista na sua DM do Discord ✅",
+        ephemeral: true,
+      });
+
       await dmChannel.send({
         embeds: [
           new EmbedBuilder()
@@ -105,17 +110,15 @@ export class DeleteMedalInteractionHandler extends InteractionHandler {
               },
               {
                 name: "Colaboradores que possuem",
-                value: usersWithMedal || usersWithMedal.length > 1 ? usersWithMedal : "Ainda não há colaboradores.",
+                value:
+                  usersWithMedal || usersWithMedal.length > 1
+                    ? usersWithMedal
+                    : "Ainda não há colaboradores.",
               },
             ])
             .setColor(EmbedColors.LalaRed),
         ],
       });
     }
-
-    await interaction.reply({
-      content: "Te mandei a lista na sua DM do Discord ✅",
-      ephemeral: true,
-    });
   }
 }
