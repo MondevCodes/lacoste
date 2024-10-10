@@ -136,8 +136,7 @@ export default class SendCommand extends Command {
             new ButtonBuilder()
               .setLabel("Editar Medalha")
               .setStyle(ButtonStyle.Secondary)
-              .setCustomId("testing2")
-              .setDisabled(true)
+              .setCustomId(FormIds.editarMedalha)
           ),
         ],
       });
