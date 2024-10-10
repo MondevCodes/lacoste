@@ -116,7 +116,7 @@ export class UpdateMedalInteractionHandler extends InteractionHandler {
     });
 
     if (!existingMedal) {
-      await interaction.reply({
+      await interactionFromModal.reply({
         content: `O Id escolhido não existe no banco de dados. <@&${modalResult.Id}>`,
         components: [],
         embeds: [],
@@ -181,7 +181,7 @@ export class UpdateMedalInteractionHandler extends InteractionHandler {
           },
         })
         .catch((error) => {
-          interaction.editReply({
+          interactionFromModal.editReply({
             content: `Não foi possível alterar o **Tipo** da Medalha no banco de dados, contate o Desenvolvedor. Erro: ||${error}|| `,
             components: [],
             embeds: [],
@@ -203,7 +203,7 @@ export class UpdateMedalInteractionHandler extends InteractionHandler {
           },
         })
         .catch((error) => {
-          interaction.editReply({
+          interactionFromModal.editReply({
             content: `Não foi possível alterar o **Nível** da Medalha no banco de dados, contate o Desenvolvedor. Erro: ||${error}|| `,
             components: [],
             embeds: [],
@@ -223,7 +223,7 @@ export class UpdateMedalInteractionHandler extends InteractionHandler {
           },
         })
         .catch((error) => {
-          interaction.editReply({
+          interactionFromModal.editReply({
             content: `Não foi possível alterar a **Descrição** da Medalha no banco de dados, contate o Desenvolvedor. Erro: ||${error}|| `,
             components: [],
             embeds: [],
@@ -243,7 +243,7 @@ export class UpdateMedalInteractionHandler extends InteractionHandler {
           },
         })
         .catch((error) => {
-          interaction.editReply({
+          interactionFromModal.editReply({
             content: `Não foi possível alterar o **Requisito** da Medalha no banco de dados, contate o Desenvolvedor. Erro: ||${error}|| `,
             components: [],
             embeds: [],
