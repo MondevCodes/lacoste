@@ -171,6 +171,14 @@ export class UpdateMedalInteractionHandler extends InteractionHandler {
     if (modalResult.Index.length > 0) {
       const medalIndex = Number.parseInt(modalResult.Index);
 
+      if (medalIndex < 0) {
+        await interactionFromModal.editReply({
+          content: `O tipo da medalha deve ser MAIOR ou IGUAL a 0, você escolheu **${medalIndex}**`,
+        });
+
+        return;
+      }
+
       await this.container.prisma.medals
         .update({
           where: {
@@ -192,6 +200,14 @@ export class UpdateMedalInteractionHandler extends InteractionHandler {
     }
     if (modalResult.Level.length > 0) {
       const medalLevel = Number.parseInt(modalResult.Level);
+
+      if (medalLevel > 3 || medalLevel < 1) {
+        await interactionFromModal.editReply({
+          content: `O nível da medalha deve ser entre 1 a 3, você escolheu **${medalLevel}**`,
+        });
+
+        return;
+      }
 
       await this.container.prisma.medals
         .update({
