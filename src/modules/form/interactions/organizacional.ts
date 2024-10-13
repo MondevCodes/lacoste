@@ -99,8 +99,8 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
               .setRequired(true),
 
             new TextInputBuilder()
-              .setLabel("Auxílio do Comando")
-              .setPlaceholder("Auxílio do Comando")
+              .setLabel("Auxílio de Sede")
+              .setPlaceholder("Auxílio de Sede")
               .setCustomId(OrganizationalFormInputIds.CommandAssistance)
               .setStyle(TextInputStyle.Paragraph)
               .setRequired(false),
@@ -412,7 +412,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
           value: result[OrganizationalFormInputIds.TopPosition],
         },
         {
-          name: "👥 Auxílio do Comando",
+          name: "👥 Auxílio de Sede",
           value: this.#joinList(
             members.CommandAssistance.map((x) =>
               typeof x === "string" ? x : x.user.toString()
