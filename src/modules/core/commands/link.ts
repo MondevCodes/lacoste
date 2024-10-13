@@ -79,7 +79,7 @@ export class LinkCommand extends Command {
 
         await message.reply({
           content:
-            "Parece que o usuário do Habbo informado não existe, verifique o nome e tente novamente.",
+            "Não consegui encontrar o perfil do usuário no Habbo, verifique o nome e veja se o perfil do usuário no jogo está como público.",
         });
 
         return;
@@ -181,7 +181,7 @@ export class LinkCommand extends Command {
 
       await message.reply({
         content:
-          "Parece que o usuário informado não existe no Habbo, verifique o nome e tente novamente.",
+          "Não consegui encontrar o perfil do usuário no Habbo, verifique o nome e veja se o perfil do usuário no jogo está como público.",
       });
 
       return;
