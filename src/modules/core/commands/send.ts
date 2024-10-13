@@ -75,7 +75,7 @@ export default class SendCommand extends Command {
               '**Controle Financeiro**\n Para adicionar ou remover de membro específico ou de um grupo (ex. setor estagiário), basta clicar no botão correspondente. Em adição ou remoção em grupo, use vírgula (",") para separar os nicks (ex: Brendo, Fortissima).\n\n **Medalhas**\n Siga a função correspondente.'
             )
             .setImage(
-              "https://media.discordapp.net/attachments/1266124737277595729/1284254541067456592/image-5.png?ex=66e5f6be&is=66e4a53e&hm=0db96174008110c92e1f76104be96c56575504c6188ac9cfbcc347d6fdf1f5e1&=&format=webp&quality=lossless"
+              "https://cdn.discordapp.com/attachments/1294794325598933103/1294794427231109151/LacFundacao_4.gif?ex=670cf787&is=670ba607&hm=0d4d3c5f4410572bcb1edd7f0582cfcbe3cb83e9afbb76f23adafe4dec2dddbd&"
             ),
         ],
         components: [
@@ -152,7 +152,7 @@ export default class SendCommand extends Command {
               "Selecione o tipo de formulário que deseja e responda o questionário que será aberto. Ao finalizar, seu formulário será enviado para a equipe de avaliação."
             )
             .setImage(
-              "https://media.discordapp.net/attachments/1266124737277595729/1284254541298270312/image-6.png?ex=66e5f6be&is=66e4a53e&hm=8811a2e730b5bbd9e6f0f4955ad1bd2abf51be27062531e587131081a54dabd5&=&format=webp&quality=lossless"
+              "https://cdn.discordapp.com/attachments/1294794325598933103/1294797992876052510/LacAV.gif?ex=670cfad9&is=670ba959&hm=3226d067f404eb71a282fd078ce7db1a119437691290c423cd7a92ec16d63c64&"
             ),
         ],
         components: [
@@ -181,7 +181,7 @@ export default class SendCommand extends Command {
               "Clique no botão abaixo para abrir o questionário que, ao finalizar, será enviado para o canal de sugestões ou reclamações."
             )
             .setImage(
-              "https://media.discordapp.net/attachments/1217954543417950329/1224064093808365808/image.png?ex=661c2185&is=6609ac85&hm=9ac4561c8ea78258982f3648d5d7d5ba146b3ea7a0be20b99535c2c11d940eef&=&format=webp"
+              "https://cdn.discordapp.com/attachments/1294794325598933103/1294794522731217028/LacDir.gif?ex=670cf79e&is=670ba61e&hm=863287f386e44ea07dbc4bea2712f326da5bde40556f57365ef4d505b460f805&"
             ),
         ],
         components: [
@@ -210,7 +210,7 @@ export default class SendCommand extends Command {
               "Selecione o tipo de formulário que deseja e responda o questionário que será aberto. Ao finalizar, seu formulário será enviado para o canal de relatórios."
             )
             .setImage(
-              "https://media.discordapp.net/attachments/1266124737277595729/1284254540488769669/image-3.png?ex=66e5f6be&is=66e4a53e&hm=198411ebcf5541fcd3b20d1682ed2df1d456239c8dcc7476d9c1a2dc410877ef&=&format=webp&quality=lossless"
+              "https://cdn.discordapp.com/attachments/1294794325598933103/1294796987853574255/LacORG.gif?ex=670cf9ea&is=670ba86a&hm=215638161d82a0589dd2b75e6c1291c527d630980a2b75660351e4b6452ef1e1&"
             ),
         ],
         components: [
@@ -239,7 +239,7 @@ export default class SendCommand extends Command {
               "Considere nossas normas atuais antes de aplicar uma função.\nFique atento ao canal que será gerado e as perguntas feitas pelo BOT, em seguida o registro da mesma será publicado. \n\nClique no botão que corresponda à ação desejada."
             )
             .setImage(
-              "https://media.discordapp.net/attachments/1266124737277595729/1284254540056760413/image-1.png?ex=66e5f6be&is=66e4a53e&hm=fcaf2c3d944f3ef2fcfe9d5c369a82e39204b70f40a4edd218feb9b04d0866c2&=&format=webp&quality=lossless"
+              "https://cdn.discordapp.com/attachments/1294794325598933103/1294795359503122442/LacADM.gif?ex=670cf865&is=670ba6e5&hm=3e0824aafa7444f7492d161f0e0927599573d6d9cfda783a7c493f84914bad45&"
             ),
         ],
         components: [
@@ -297,7 +297,7 @@ export default class SendCommand extends Command {
               "Para enviar sugestões, reclamações, dúvidas ou solicitar medalhas aperte no Ticket! Um administrador irá responder o mais rápido possível. Fique a vontade para enviar um elogio também."
             )
             .setImage(
-              "https://media.discordapp.net/attachments/1266124737277595729/1284254540283121766/image-2.png?ex=66e5f6be&is=66e4a53e&hm=2f1408921ad03a58727c13c9c88b2ccab7b337b4e67f0374a9bf378c07943283&=&format=webp&quality=lossless"
+              "https://cdn.discordapp.com/attachments/1294794325598933103/1294799812083978310/LacOUV.gif?ex=670cfc8b&is=670bab0b&hm=06d4f379b45be6584ef9996703243e666fab321cb5bc0bb063376cfae86bfc09&"
             ),
         ],
         components: [
@@ -326,7 +326,7 @@ export default class SendCommand extends Command {
               "Escolha o tipo de ação que deseja fazer o clique no botão abaixo, preencha os formulários corretamente e aguarde a aprovação do seu pedido."
             )
             .setImage(
-              "https://media.discordapp.net/attachments/1266124737277595729/1284254541725962281/image.png?ex=66e5f6bf&is=66e4a53f&hm=58cb45e7011c2a79941c035706386b672cb133820dbbb15b553fff5499ce61c5&=&format=webp&quality=lossless"
+              "https://cdn.discordapp.com/attachments/1294794325598933103/1294796116965199922/LacPRO.gif?ex=670cf91a&is=670ba79a&hm=be26a0beb0606810bb06659e771773e4ad14c53432b995e6cd2aa5affbe27c40&"
             ),
         ],
         components: [
@@ -355,7 +355,7 @@ export default class SendCommand extends Command {
               "Mudou seu apelido no Habbo? Clique no botão abaixo para automaticamente atualizar o seu perfil."
             )
             .setImage(
-              "https://media.discordapp.net/attachments/1266124737277595729/1284254540753014976/image-4.png?ex=66e5f6be&is=66e4a53e&hm=7b53a778d894641cef1e209db75fcdbfb744c07475140ecfa5d9208fd0cc03d4&=&format=webp&quality=lossless"
+              "https://cdn.discordapp.com/attachments/1294794325598933103/1294798656171409489/LacAV_1.gif?ex=670cfb77&is=670ba9f7&hm=82f2eaf9a7098c409689d77e931d4210d8d7803e9a3cc3917cb9d65ad411a7a2&"
             ),
         ],
         components: [
