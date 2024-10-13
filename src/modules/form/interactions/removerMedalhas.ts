@@ -200,6 +200,7 @@ export class RemoveMedalInteractionHandler extends InteractionHandler {
               )
               .setColor(EmbedColors.Default),
           ],
+          content: "",
         },
       }
     );
