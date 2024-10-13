@@ -23,6 +23,7 @@ import { HabboUser } from "$lib/utilities/habbo";
 enum FixFormInputIds {
   Time = "Time",
   Nicks = "Nicks",
+  CGNicks = "CGNicks",
 }
 
 type OrganizationalFormInput = keyof typeof FixFormInputIds;
@@ -101,7 +102,14 @@ export class CorrecoesFormInteractionHandler extends InteractionHandler {
               .setPlaceholder(">> ATENÇÃO: SEPARE OS NICKS POR LINHA <<")
               .setCustomId(FixFormInputIds.Nicks)
               .setStyle(TextInputStyle.Paragraph)
-              .setRequired(true),
+              .setRequired(false),
+
+            new TextInputBuilder()
+              .setLabel("Nicks para correção como CG")
+              .setPlaceholder(">> ATENÇÃO: SEPARE OS NICKS POR LINHA <<")
+              .setCustomId(FixFormInputIds.CGNicks)
+              .setStyle(TextInputStyle.Paragraph)
+              .setRequired(false),
           ],
           listenInteraction: true,
           title: "Formulário Correção",
@@ -115,6 +123,7 @@ export class CorrecoesFormInteractionHandler extends InteractionHandler {
 
     const targets = {
       Nicks: result.Nicks,
+      CGNicks: result.CGNicks,
     };
 
     type Targets = keyof typeof targets;
@@ -126,6 +135,7 @@ export class CorrecoesFormInteractionHandler extends InteractionHandler {
 
     const members: Record<Targets, (GuildMember | string)[]> = {
       Nicks: [],
+      CGNicks: [],
     };
 
     const unparsedTargets: [keyof typeof targets, string][] = [];
@@ -203,10 +213,20 @@ export class CorrecoesFormInteractionHandler extends InteractionHandler {
 
       for await (const user of targetMember) {
         if (user)
-          await this.container.prisma.user.update({
-            where: { id: user.id },
-            data: { reportsHistory: { push: new Date() } },
-          });
+          if (group === "CGNicks") {
+            await this.container.prisma.user.update({
+              where: { id: user.id },
+              data: {
+                reportsHistory: { push: new Date() },
+                reportsHistoryCG: { push: new Date() },
+              },
+            });
+          } else {
+            await this.container.prisma.user.update({
+              where: { id: user.id },
+              data: { reportsHistory: { push: new Date() } },
+            });
+          }
 
         members[group].push(
           user.habboName.replaceAll(MARKDOWN_CHARS_RE, "\\$&")
@@ -255,12 +275,26 @@ export class CorrecoesFormInteractionHandler extends InteractionHandler {
           value: result[FixFormInputIds.Time],
         },
         {
-          name: "🔧 Nicks corrigidos",
-          value: this.#joinList(
-            members.Nicks.map((x) =>
-              typeof x === "string" ? x : x.user.toString()
-            )
-          ),
+          name: "🧍🔧 Nicks corrigidos (Todos)",
+          value:
+            members.Nicks.length > 0
+              ? this.#joinList(
+                  members.Nicks.map((x) =>
+                    typeof x === "string" ? x : x.user.toString()
+                  )
+                )
+              : "* Não houve nicks adicionados",
+        },
+        {
+          name: "🏢🔧 Nicks corrigidos (CG)",
+          value:
+            members.CGNicks.length > 0
+              ? this.#joinList(
+                  members.CGNicks.map((x) =>
+                    typeof x === "string" ? x : x.user.toString()
+                  )
+                )
+              : "* Não houve nicks adicionados",
         }
       )
       .setFooter({
