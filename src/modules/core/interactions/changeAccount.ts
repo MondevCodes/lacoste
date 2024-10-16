@@ -286,7 +286,7 @@ export class ChangeAccountInteractionHandler extends InteractionHandler {
         //     ],
         //   });
 
-        await interaction.reply({
+        await interaction.followUp({
           content:
             "Função troca de conta do Discord ainda não está disponível.",
           ephemeral: true,
