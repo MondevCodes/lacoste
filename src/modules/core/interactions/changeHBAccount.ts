@@ -44,6 +44,9 @@ export type Action = "Request" | "Approve" | "Reject";
 
 type ParsedData = { action: Action };
 
+let existingUser: undefined | any;
+let newHabbo: undefined | HabboUser;
+
 @ApplyOptions<InteractionHandler.Options>({
   interactionHandlerType: InteractionHandlerTypes.Button,
 })
@@ -77,9 +80,6 @@ export class ChangeHBAccountInteractionHandler extends InteractionHandler {
     const cachedGuild = await this.container.client.guilds.fetch(
       ENVIRONMENT.GUILD_ID
     );
-
-    let existingUser: undefined | any;
-    let newHabbo: undefined | HabboUser;
 
     if (action === "Request") {
       const { interaction: interactionFromModal, result } =
