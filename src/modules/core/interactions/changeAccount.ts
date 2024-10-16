@@ -18,7 +18,6 @@ import {
 import { EmbedColors } from "$lib/constants/discord";
 import { FormIds } from "$lib/constants/forms";
 import { ENVIRONMENT } from "$lib/env";
-import { encodeButtonId } from "src/modules/ticket/interactions/fire";
 
 enum ChangeAccountInputIds {
   oldHabbo = "oldHabbo",
@@ -28,6 +27,10 @@ enum ChangeAccountInputIds {
   newDiscord = "newDiscord",
 
   additional = "additional",
+}
+
+function encodeButtonId(action: Action) {
+  return `${FormIds.trocarConta}/${action}`;
 }
 
 export type Action = "Approve" | "Reject";
