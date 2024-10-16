@@ -29,11 +29,11 @@ enum ChangeAccountInputIds {
   additional = "additional",
 }
 
-function encodeButtonId(action: Action) {
+export function encodeButtonId(action: Action) {
   return `${FormIds.trocarConta}/${action}`;
 }
 
-export type Action = "Approve" | "Reject";
+export type Action = "Request" | "Approve" | "Reject";
 
 type ParsedData = { action: Action };
 
