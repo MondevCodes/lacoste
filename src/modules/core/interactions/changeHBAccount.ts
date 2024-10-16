@@ -265,9 +265,11 @@ export class ChangeHBAccountInteractionHandler extends InteractionHandler {
         }
 
         if (!newHabbo) {
-          await interaction.editReply({
+          await interaction.message.edit({
             content:
               "Não consegui encontrar a conta nova do Habbo no jogo, contate o Desenvolvedor.",
+            components: [],
+            embeds: [],
           });
 
           return;
@@ -292,7 +294,7 @@ export class ChangeHBAccountInteractionHandler extends InteractionHandler {
             },
           })
           .catch((error) => {
-            interaction.editReply({
+            interaction.message.edit({
               content: `Não foi possível alterar os dados do usuário no banco de dados, contate o Desenvolvedor. Erro: ||${error}|| `,
               components: [],
               embeds: [],
@@ -308,9 +310,11 @@ export class ChangeHBAccountInteractionHandler extends InteractionHandler {
         });
 
         if (!authorApprovedDB) {
-          await interaction.editReply({
+          await interaction.message.edit({
             content:
               "Não consegui encontrar o autor da aprovação, contate o Desenvolvedor.",
+              components: [],
+              embeds: [],
           });
 
           return;
