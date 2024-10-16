@@ -110,6 +110,11 @@ export class ChangeAccountInteractionHandler extends InteractionHandler {
           },
         }
       );
+
+      if (interaction.replied || interaction.deferred) {
+        await interaction.deferReply({ ephemeral: true });
+      }
+
       if (options.result === "habbo") {
         const { interaction: interactionFromModal, result } =
           await this.container.utilities.inquirer.awaitModal(interaction, {
