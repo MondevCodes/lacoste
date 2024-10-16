@@ -195,7 +195,7 @@ export class ChangeHBAccountInteractionHandler extends InteractionHandler {
           },
           {
             name: ":inbox_tray: Conta NOVA",
-            value: existingUser.habboName,
+            value: newHabbo.name,
             inline: true,
           },
           {
