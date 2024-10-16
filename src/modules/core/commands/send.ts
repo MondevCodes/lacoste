@@ -22,7 +22,7 @@ import { encodeButtonId as encodeGroupButtonId } from "../../econ/interactions/m
 import { encodeButtonId as encodeDepartmentButtonId } from "../../work/interactions/department";
 import { encodeButtonId as encodeIndividualButtonId } from "../../econ/interactions/mod-individual";
 
-import { encodeButtonId as encodeChangeButtonId } from "../../core/interactions/changeAccount";
+import { encodeButtonId as encodeChangeButtonId } from "../../core/interactions/changeHBAccount";
 
 @ApplyOptions<Command.Options>({ name: "send" })
 export default class SendCommand extends Command {
@@ -363,14 +363,22 @@ export default class SendCommand extends Command {
         components: [
           new ActionRowBuilder<ButtonBuilder>().addComponents(
             new ButtonBuilder()
-              .setLabel("Renomear")
-              .setStyle(ButtonStyle.Success)
-              .setCustomId(FormIds.Renome),
+              .setLabel("Trocar conta do Habbo")
+              .setStyle(ButtonStyle.Primary)
+              .setCustomId(encodeChangeButtonId("Request")),
 
             new ButtonBuilder()
-              .setLabel("Trocar de Conta")
-              .setStyle(ButtonStyle.Primary)
-              .setCustomId(encodeChangeButtonId("Request"))
+              .setLabel("Trocar conta do Discord")
+              .setStyle(ButtonStyle.Secondary)
+              .setCustomId("testingDC")
+              .setDisabled(true)
+          ),
+
+          new ActionRowBuilder<ButtonBuilder>().addComponents(
+            new ButtonBuilder()
+              .setLabel("Renomear")
+              .setStyle(ButtonStyle.Success)
+              .setCustomId(FormIds.Renome)
           ),
         ],
       });
