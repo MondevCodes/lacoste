@@ -18,6 +18,7 @@ import {
 import { EmbedColors } from "$lib/constants/discord";
 import { FormIds } from "$lib/constants/forms";
 import { ENVIRONMENT } from "$lib/env";
+import { HabboUser } from "$lib/utilities/habbo";
 
 enum ChangeAccountInputIds {
   oldHabbo = "oldHabbo",
@@ -71,192 +72,241 @@ export class ChangeAccountInteractionHandler extends InteractionHandler {
       ENVIRONMENT.GUILD_ID
     );
 
-    const options = await this.container.utilities.inquirer.awaitButtons(
-      interaction,
-      {
-        choices: [
-          {
-            id: "habbo",
-            label: "Habbo",
-            style: ButtonStyle.Primary,
+    let options: undefined | any;
+    let existingUser: undefined | any;
+    let newHabbo: undefined | HabboUser;
+
+    if (action === "Request") {
+      options = await this.container.utilities.inquirer.awaitButtons(
+        interaction,
+        {
+          choices: [
+            {
+              id: "habbo",
+              label: "Habbo",
+              style: ButtonStyle.Primary,
+            },
+            {
+              id: "discord",
+              label: "Discord",
+              style: ButtonStyle.Secondary,
+            },
+          ] as const,
+          question: {
+            embeds: [
+              new EmbedBuilder()
+                .setTitle("Troca de Conta")
+                .setDescription(
+                  "Deseja uma troca de conta do Habbo ou do Discord?"
+                )
+                .setColor(EmbedColors.Default),
+            ],
           },
-          {
-            id: "discord",
-            label: "Discord",
-            style: ButtonStyle.Secondary,
-          },
-        ] as const,
-        question: {
-          embeds: [
-            new EmbedBuilder()
-              .setTitle("Troca de Conta")
-              .setDescription(
-                "Deseja uma troca de conta do Habbo ou do Discord?"
-              )
-              .setColor(EmbedColors.Default),
-          ],
-        },
-      }
-    );
-
-    if (options.result === "habbo") {
-      const { interaction: interactionFromModal, result } =
-        await this.container.utilities.inquirer.awaitModal(interaction, {
-          title: "Trocar conta do Habbo",
-          listenInteraction: true,
-
-          inputs: [
-            new TextInputBuilder()
-              .setCustomId(ChangeAccountInputIds.oldHabbo)
-              .setLabel("Nick ANTIGO do Habbo")
-              .setPlaceholder("Ex.: Mamao")
-              .setStyle(TextInputStyle.Short)
-              .setRequired(true),
-
-            new TextInputBuilder()
-              .setCustomId(ChangeAccountInputIds.newHabbo)
-              .setLabel("Nick NOVO do Habbo")
-              .setPlaceholder("Ex.: Brendo")
-              .setStyle(TextInputStyle.Short)
-              .setRequired(true),
-
-            new TextInputBuilder()
-              .setCustomId(ChangeAccountInputIds.additional)
-              .setLabel("Observação")
-              .setPlaceholder(
-                "Caso queira adicionar uma observação escreva aqui, se não deixe vazio"
-              )
-              .setStyle(TextInputStyle.Paragraph)
-              .setRequired(false),
-          ],
-        });
-
-      const existingUser = await this.container.prisma.user.findUnique({
-        where: {
-          habboName: result.oldHabbo,
-        },
-      });
-
-      if (!existingUser) {
-        await interactionFromModal.editReply({
-          content: `Não consegui encontrar a conta antiga do Habbo registrado no nosso banco de dados, tem certeza que escreveu corretamente? **${result.oldHabbo}**`,
-        });
-
-        return;
-      }
-
-      const newHabbo = (
-        await this.container.utilities.habbo.getProfile(result.newHabbo)
-      ).unwrapOr(undefined);
-
-      if (!newHabbo) {
-        await interactionFromModal.editReply({
-          content: `Não consegui encontrar a conta nova do Habbo no jogo, verifique se escreveu corretamente e se a conta do mesmo está como pública. **${result.newHabbo}**`,
-        });
-
-        return;
-      }
-
-      const newAlreadyExist = await this.container.prisma.user.findUnique({
-        where: {
-          habboName: newHabbo.name,
-        },
-      });
-
-      if (newAlreadyExist) {
-        await interactionFromModal.editReply({
-          content: `A conta nova do Habbo já está registrada e vinculada. **${newHabbo.name}**`,
-        });
-
-        return;
-      }
-
-      const authorDB = await this.container.prisma.user.findUnique({
-        where: {
-          discordId: interaction.user.id,
-        },
-      });
-
-      if (!authorDB) {
-        await interactionFromModal.editReply({
-          content:
-            "Não consegui encontrar o autor da requisição, contate o Desenvolvedor.",
-        });
-
-        return;
-      }
-
-      const approvalChannel = await cachedGuild.channels.fetch(
-        ENVIRONMENT.NOTIFICATION_CHANNELS.APPROVAL_REQUEST
+        }
       );
+      if (options.result === "habbo") {
+        const { interaction: interactionFromModal, result } =
+          await this.container.utilities.inquirer.awaitModal(interaction, {
+            title: "Trocar conta do Habbo",
+            listenInteraction: true,
 
-      if (!approvalChannel?.isTextBased()) {
-        throw new Error("Can't send message to non-text channel.");
-      }
+            inputs: [
+              new TextInputBuilder()
+                .setCustomId(ChangeAccountInputIds.oldHabbo)
+                .setLabel("Nick ANTIGO do Habbo")
+                .setPlaceholder("Ex.: Mamao")
+                .setStyle(TextInputStyle.Short)
+                .setRequired(true),
 
-      const approvalEmbed = new EmbedBuilder()
-        .setTitle("Solicitação de Troca de Conta do HABBO")
-        .setColor(EmbedColors.Default)
-        .setAuthor({
-          name: interaction.user.tag,
-          iconURL: interaction.user.displayAvatarURL(),
-        })
-        .addFields([
-          {
-            name: "👤 Solicitador",
-            value: authorDB.habboName,
-          },
-          {
-            name: ":outbox_tray: Conta ANTIGA",
-            value: existingUser.habboName,
-            inline: true,
-          },
-          {
-            name: ":inbox_tray: Conta NOVA",
-            value: existingUser.habboName,
-            inline: true,
-          },
-          {
-            name: "🗒️ Observação",
-            value:
-              result.additional.length > 0
-                ? result.additional
-                : "* Não houve nenhuma observação.",
-            inline: false,
-          },
-        ])
-        .setThumbnail(
-          `https://www.habbo.com/habbo-imaging/avatarimage?figure=${newHabbo.figureString}`
-        );
+              new TextInputBuilder()
+                .setCustomId(ChangeAccountInputIds.newHabbo)
+                .setLabel("Nick NOVO do Habbo")
+                .setPlaceholder("Ex.: Brendo")
+                .setStyle(TextInputStyle.Short)
+                .setRequired(true),
 
-      await approvalChannel.send({
-        embeds: [approvalEmbed],
-        components: [this.#APPROVAL_ROW],
-        content: `Apenas para <@&${ENVIRONMENT.SECTORS_ROLES.FUNDAÇÃO.id}>`,
-      });
-
-      await interactionFromModal.editReply({
-        content: "Solicitação enviada. ✅",
-      });
-
-      if (action === "Reject") {
-        const member = !(interaction.member instanceof GuildMember)
-          ? await cachedGuild.members.fetch(interaction.member.user.id)
-          : interaction.member;
-
-        const isAuthorized =
-          this.container.utilities.discord.hasPermissionByRole({
-            category: "SECTOR",
-            checkFor: "FUNDAÇÃO",
-            roles: member.roles,
+              new TextInputBuilder()
+                .setCustomId(ChangeAccountInputIds.additional)
+                .setLabel("Observação")
+                .setPlaceholder(
+                  "Caso queira adicionar uma observação escreva aqui, se não deixe vazio"
+                )
+                .setStyle(TextInputStyle.Paragraph)
+                .setRequired(false),
+            ],
           });
 
-        if (isAuthorized) {
-          await interaction.message.delete();
+        existingUser = await this.container.prisma.user.findUnique({
+          where: {
+            habboName: result.oldHabbo,
+          },
+        });
+
+        if (!existingUser) {
+          await interactionFromModal.editReply({
+            content: `Não consegui encontrar a conta antiga do Habbo registrado no nosso banco de dados, tem certeza que escreveu corretamente? **${result.oldHabbo}**`,
+          });
 
           return;
         }
-      } else if (action === "Approve") {
+
+        newHabbo = (
+          await this.container.utilities.habbo.getProfile(result.newHabbo)
+        ).unwrapOr(undefined);
+
+        if (!newHabbo) {
+          await interactionFromModal.editReply({
+            content: `Não consegui encontrar a conta nova do Habbo no jogo, verifique se escreveu corretamente e se a conta do mesmo está como pública. **${result.newHabbo}**`,
+          });
+
+          return;
+        }
+
+        const newAlreadyExist = await this.container.prisma.user.findUnique({
+          where: {
+            habboName: newHabbo.name,
+          },
+        });
+
+        if (newAlreadyExist) {
+          await interactionFromModal.editReply({
+            content: `A conta nova do Habbo já está registrada e vinculada. **${newHabbo.name}**`,
+          });
+
+          return;
+        }
+
+        const authorDB = await this.container.prisma.user.findUnique({
+          where: {
+            discordId: interaction.user.id,
+          },
+        });
+
+        if (!authorDB) {
+          await interactionFromModal.editReply({
+            content:
+              "Não consegui encontrar o autor da requisição, contate o Desenvolvedor.",
+          });
+
+          return;
+        }
+
+        const approvalChannel = await cachedGuild.channels.fetch(
+          ENVIRONMENT.NOTIFICATION_CHANNELS.APPROVAL_REQUEST
+        );
+
+        if (!approvalChannel?.isTextBased()) {
+          throw new Error("Can't send message to non-text channel.");
+        }
+
+        const approvalEmbed = new EmbedBuilder()
+          .setTitle("Solicitação de Troca de Conta do HABBO")
+          .setColor(EmbedColors.Default)
+          .setAuthor({
+            name: interaction.user.tag,
+            iconURL: interaction.user.displayAvatarURL(),
+          })
+          .addFields([
+            {
+              name: "👤 Solicitador",
+              value: authorDB.habboName,
+            },
+            {
+              name: ":outbox_tray: Conta ANTIGA",
+              value: existingUser.habboName,
+              inline: true,
+            },
+            {
+              name: ":inbox_tray: Conta NOVA",
+              value: existingUser.habboName,
+              inline: true,
+            },
+            {
+              name: "🗒️ Observação",
+              value:
+                result.additional.length > 0
+                  ? result.additional
+                  : "* Não houve nenhuma observação.",
+              inline: false,
+            },
+          ])
+          .setThumbnail(
+            `https://www.habbo.com/habbo-imaging/avatarimage?figure=${newHabbo.figureString}`
+          );
+
+        await approvalChannel.send({
+          embeds: [approvalEmbed],
+          components: [this.#APPROVAL_ROW],
+          content: `Apenas para <@&${ENVIRONMENT.SECTORS_ROLES.FUNDAÇÃO.id}>`,
+        });
+
+        await interactionFromModal.editReply({
+          content: "Solicitação enviada. ✅",
+        });
+      } else if (options.result === "discord") {
+        // const { interaction: interactionFromModal, result } =
+        //   await this.container.utilities.inquirer.awaitModal(interaction, {
+        //     title: "Trocar conta do Discord",
+        //     listenInteraction: true,
+
+        //     inputs: [
+        //       new TextInputBuilder()
+        //         .setCustomId(ChangeAccountInputIds.oldDiscord)
+        //         .setLabel("Discord ID da Medalha")
+        //         .setPlaceholder("Ex.: 838328773892")
+        //         .setStyle(TextInputStyle.Short)
+        //         .setRequired(true),
+
+        //       new TextInputBuilder()
+        //         .setCustomId(ChangeAccountInputIds.newDiscord)
+        //         .setLabel("Novo Tipo (Número)")
+        //         .setPlaceholder("> CASO NÃO HOUVER ALTERAÇÃO MANTER VAZIO <")
+        //         .setStyle(TextInputStyle.Short)
+        //         .setRequired(true),
+
+        //       new TextInputBuilder()
+        //         .setCustomId(ChangeAccountInputIds.additional)
+        //         .setLabel("Observação")
+        //         .setPlaceholder(
+        //           "Caso queira adicionar uma observação escreva aqui, se não deixe vazio"
+        //         )
+        //         .setStyle(TextInputStyle.Paragraph)
+        //         .setRequired(false),
+        //     ],
+        //   });
+
+        await interaction.reply({
+          content:
+            "Função troca de conta do Discord ainda não está disponível.",
+          ephemeral: true,
+        });
+
+        return;
+      }
+    }
+
+    if (action === "Reject") {
+      const member = !(interaction.member instanceof GuildMember)
+        ? await cachedGuild.members.fetch(interaction.member.user.id)
+        : interaction.member;
+
+      const isAuthorized = this.container.utilities.discord.hasPermissionByRole(
+        {
+          category: "SECTOR",
+          checkFor: "FUNDAÇÃO",
+          roles: member.roles,
+        }
+      );
+
+      if (isAuthorized) {
+        await interaction.message.delete();
+
+        return;
+      }
+    }
+
+    if (action === "Approve") {
+      if (options.result === "habbo") {
         const member = !(interaction.member instanceof GuildMember)
           ? await cachedGuild.members.fetch(interaction.member.user.id)
           : interaction.member;
@@ -275,6 +325,14 @@ export class ChangeAccountInteractionHandler extends InteractionHandler {
 
           if (!notificationChannel?.isTextBased()) {
             throw new Error("Can't send message to non-text channel.");
+          }
+
+          if (!newHabbo) {
+            await interaction.editReply({
+              content: "Não consegui encontrar a conta nova do Habbo no jogo, contate o Desenvolvedor.",
+            });
+
+            return;
           }
 
           if (existingUser.discordLink !== false) {
@@ -312,7 +370,7 @@ export class ChangeAccountInteractionHandler extends InteractionHandler {
           });
 
           if (!authorApprovedDB) {
-            await interactionFromModal.editReply({
+            await interaction.editReply({
               content:
                 "Não consegui encontrar o autor da aprovação, contate o Desenvolvedor.",
             });
@@ -336,45 +394,9 @@ export class ChangeAccountInteractionHandler extends InteractionHandler {
 
           await interaction.message.delete();
         }
+      } else if (options.result === "discord") {
+
       }
-    } else if (options.result === "discord") {
-      // const { interaction: interactionFromModal, result } =
-      //   await this.container.utilities.inquirer.awaitModal(interaction, {
-      //     title: "Trocar conta do Discord",
-      //     listenInteraction: true,
-
-      //     inputs: [
-      //       new TextInputBuilder()
-      //         .setCustomId(ChangeAccountInputIds.oldDiscord)
-      //         .setLabel("Discord ID da Medalha")
-      //         .setPlaceholder("Ex.: 838328773892")
-      //         .setStyle(TextInputStyle.Short)
-      //         .setRequired(true),
-
-      //       new TextInputBuilder()
-      //         .setCustomId(ChangeAccountInputIds.newDiscord)
-      //         .setLabel("Novo Tipo (Número)")
-      //         .setPlaceholder("> CASO NÃO HOUVER ALTERAÇÃO MANTER VAZIO <")
-      //         .setStyle(TextInputStyle.Short)
-      //         .setRequired(true),
-
-      //       new TextInputBuilder()
-      //         .setCustomId(ChangeAccountInputIds.additional)
-      //         .setLabel("Observação")
-      //         .setPlaceholder(
-      //           "Caso queira adicionar uma observação escreva aqui, se não deixe vazio"
-      //         )
-      //         .setStyle(TextInputStyle.Paragraph)
-      //         .setRequired(false),
-      //     ],
-      //   });
-
-      await interaction.reply({
-        content: "Função troca de conta do Discord ainda não está disponível.",
-        ephemeral: true,
-      });
-
-      return;
     }
   }
 }
