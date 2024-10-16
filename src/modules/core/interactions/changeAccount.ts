@@ -34,6 +34,12 @@ export function encodeButtonId(action: Action) {
   return `${FormIds.trocarConta}/${action}`;
 }
 
+export function decodeButtonId(id: string): Action {
+  return id.replace(`${FormIds.trocarConta}/`, "") as Action;
+}
+
+export const BASE_BUTTON_ID_REGEX = new RegExp(`^${FormIds.trocarConta}/`);
+
 export type Action = "Request" | "Approve" | "Reject";
 
 type ParsedData = { action: Action };
@@ -43,9 +49,9 @@ type ParsedData = { action: Action };
 })
 export class ChangeAccountInteractionHandler extends InteractionHandler {
   public override async parse(interaction: ButtonInteraction) {
-    return interaction.customId === FormIds.trocarConta
-      ? this.some()
-      : this.none();
+    if (!interaction.customId.match(BASE_BUTTON_ID_REGEX)) return this.none();
+
+    return this.some({ action: decodeButtonId(interaction.customId) });
   }
 
   #APPROVAL_ROW = new ActionRowBuilder<ButtonBuilder>().addComponents(
@@ -329,7 +335,8 @@ export class ChangeAccountInteractionHandler extends InteractionHandler {
 
           if (!newHabbo) {
             await interaction.editReply({
-              content: "Não consegui encontrar a conta nova do Habbo no jogo, contate o Desenvolvedor.",
+              content:
+                "Não consegui encontrar a conta nova do Habbo no jogo, contate o Desenvolvedor.",
             });
 
             return;
@@ -395,7 +402,6 @@ export class ChangeAccountInteractionHandler extends InteractionHandler {
           await interaction.message.delete();
         }
       } else if (options.result === "discord") {
-
       }
     }
   }
