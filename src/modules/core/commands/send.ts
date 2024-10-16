@@ -22,6 +22,8 @@ import { encodeButtonId as encodeGroupButtonId } from "../../econ/interactions/m
 import { encodeButtonId as encodeDepartmentButtonId } from "../../work/interactions/department";
 import { encodeButtonId as encodeIndividualButtonId } from "../../econ/interactions/mod-individual";
 
+import { encodeButtonId as encodeChangeButtonId } from "../../core/interactions/changeAccount";
+
 @ApplyOptions<Command.Options>({ name: "send" })
 export default class SendCommand extends Command {
   public override async messageRun(message: Message, args: Args) {
@@ -363,14 +365,12 @@ export default class SendCommand extends Command {
             new ButtonBuilder()
               .setLabel("Renomear")
               .setStyle(ButtonStyle.Success)
-              .setCustomId(FormIds.Renome)
-          ),
-          
-          new ActionRowBuilder<ButtonBuilder>().addComponents(
+              .setCustomId(FormIds.Renome),
+
             new ButtonBuilder()
               .setLabel("Trocar de Conta")
               .setStyle(ButtonStyle.Primary)
-              .setCustomId(FormIds.trocarConta)
+              .setCustomId(encodeChangeButtonId("Request"))
           ),
         ],
       });
