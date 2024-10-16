@@ -145,7 +145,7 @@ export class ComplimentFormInteractionHandler extends InteractionHandler {
 
       if (targetDBHabbo.discordLink !== false) {
         await channel.send(
-          `<@${interaction.user.id}> 📨 <@${targetDBHabbo.discordId}>`
+          `<@${interaction.user.id}> 📨 <@${targetDBHabbo.discordId}> | @everyone`
         );
       }
     } else {
