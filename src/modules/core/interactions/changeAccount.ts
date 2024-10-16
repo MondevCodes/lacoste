@@ -111,10 +111,6 @@ export class ChangeAccountInteractionHandler extends InteractionHandler {
         }
       );
 
-      if (interaction.replied || interaction.deferred) {
-        await interaction.deferReply({ ephemeral: true });
-      }
-
       if (options.result === "habbo") {
         const { interaction: interactionFromModal, result } =
           await this.container.utilities.inquirer.awaitModal(interaction, {
@@ -286,7 +282,7 @@ export class ChangeAccountInteractionHandler extends InteractionHandler {
         //     ],
         //   });
 
-        await interaction.followUp({
+        await interaction.reply({
           content:
             "Função troca de conta do Discord ainda não está disponível.",
           ephemeral: true,
