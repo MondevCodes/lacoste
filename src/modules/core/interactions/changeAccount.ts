@@ -112,6 +112,8 @@ export class ChangeAccountInteractionHandler extends InteractionHandler {
       );
 
       if (options.result === "habbo") {
+        await interaction.deferReply({ ephemeral: true });
+
         const { result } = await this.container.utilities.inquirer.awaitModal(
           interaction,
           {
