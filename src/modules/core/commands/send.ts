@@ -123,7 +123,7 @@ export default class SendCommand extends Command {
 
             new ButtonBuilder()
               .setLabel("Deletar Medalha")
-              .setStyle(ButtonStyle.Secondary)
+              .setStyle(ButtonStyle.Primary)
               .setCustomId(FormIds.deletarMedalha)
           ),
 
@@ -135,7 +135,7 @@ export default class SendCommand extends Command {
 
             new ButtonBuilder()
               .setLabel("Editar Medalha")
-              .setStyle(ButtonStyle.Secondary)
+              .setStyle(ButtonStyle.Primary)
               .setCustomId(FormIds.editarMedalha)
           ),
         ],
@@ -364,6 +364,13 @@ export default class SendCommand extends Command {
               .setLabel("Renomear")
               .setStyle(ButtonStyle.Success)
               .setCustomId(FormIds.Renome)
+          ),
+          
+          new ActionRowBuilder<ButtonBuilder>().addComponents(
+            new ButtonBuilder()
+              .setLabel("Trocar de Conta")
+              .setStyle(ButtonStyle.Primary)
+              .setCustomId(FormIds.trocarConta)
           ),
         ],
       });
