@@ -112,8 +112,9 @@ export class ChangeAccountInteractionHandler extends InteractionHandler {
       );
 
       if (options.result === "habbo") {
-        const { interaction: interactionFromModal, result } =
-          await this.container.utilities.inquirer.awaitModal(interaction, {
+        const { result } = await this.container.utilities.inquirer.awaitModal(
+          interaction,
+          {
             title: "Trocar conta do Habbo",
             listenInteraction: true,
 
@@ -141,7 +142,8 @@ export class ChangeAccountInteractionHandler extends InteractionHandler {
                 .setStyle(TextInputStyle.Paragraph)
                 .setRequired(false),
             ],
-          });
+          }
+        );
 
         existingUser = await this.container.prisma.user.findUnique({
           where: {
@@ -150,7 +152,7 @@ export class ChangeAccountInteractionHandler extends InteractionHandler {
         });
 
         if (!existingUser) {
-          await interactionFromModal.editReply({
+          await interaction.editReply({
             content: `Não consegui encontrar a conta antiga do Habbo registrado no nosso banco de dados, tem certeza que escreveu corretamente? **${result.oldHabbo}**`,
           });
 
@@ -162,7 +164,7 @@ export class ChangeAccountInteractionHandler extends InteractionHandler {
         ).unwrapOr(undefined);
 
         if (!newHabbo) {
-          await interactionFromModal.editReply({
+          await interaction.editReply({
             content: `Não consegui encontrar a conta nova do Habbo no jogo, verifique se escreveu corretamente e se a conta do mesmo está como pública. **${result.newHabbo}**`,
           });
 
@@ -176,7 +178,7 @@ export class ChangeAccountInteractionHandler extends InteractionHandler {
         });
 
         if (newAlreadyExist) {
-          await interactionFromModal.editReply({
+          await interaction.editReply({
             content: `A conta nova do Habbo já está registrada e vinculada. **${newHabbo.name}**`,
           });
 
@@ -190,7 +192,7 @@ export class ChangeAccountInteractionHandler extends InteractionHandler {
         });
 
         if (!authorDB) {
-          await interactionFromModal.editReply({
+          await interaction.editReply({
             content:
               "Não consegui encontrar o autor da requisição, contate o Desenvolvedor.",
           });
@@ -247,7 +249,7 @@ export class ChangeAccountInteractionHandler extends InteractionHandler {
           content: `Apenas para <@&${ENVIRONMENT.SECTORS_ROLES.FUNDAÇÃO.id}>`,
         });
 
-        await interactionFromModal.editReply({
+        await interaction.editReply({
           content: "Solicitação enviada. ✅",
         });
       } else if (options.result === "discord") {
