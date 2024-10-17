@@ -22,7 +22,8 @@ import { encodeButtonId as encodeGroupButtonId } from "../../econ/interactions/m
 import { encodeButtonId as encodeDepartmentButtonId } from "../../work/interactions/department";
 import { encodeButtonId as encodeIndividualButtonId } from "../../econ/interactions/mod-individual";
 
-import { encodeButtonId as encodeChangeButtonId } from "../../core/interactions/changeHBAccount";
+import { encodeButtonId as encodeChangeHBButtonId } from "../../core/interactions/changeHBAccount";
+import { encodeButtonId as encodeChangeDCButtonId } from "../../core/interactions/changeDiscordAccount";
 
 @ApplyOptions<Command.Options>({ name: "send" })
 export default class SendCommand extends Command {
@@ -352,12 +353,12 @@ export default class SendCommand extends Command {
         embeds: [
           new EmbedBuilder()
             .setColor(EmbedColors.Default)
-            .setTitle("Alterar Nickname")
+            .setTitle("Alterar Conta")
             .setDescription(
-              "Mudou seu apelido no Habbo? Clique no botão abaixo para automaticamente atualizar o seu perfil."
+              "**Alteração de Nickname**\nMudou seu apelido no Habbo? Clique no botão 'Renomear' para automaticamente atualizar o seu perfil.\n\n**Alteração de Conta do Habbo**\nMudou de conta no Habbo? Clique no botão 'Trocar conta do Habbo' para seus dados serem atualizados.\nAguarde a aprovação.\n\n**Alteração de Conta do Discord**\nMudou de conta no discord? Clique no botão 'Trocar conta do discord' para seus dados serem atualizados.\nAguarde a aprovação."
             )
             .setImage(
-              "https://cdn.discordapp.com/attachments/1294794325598933103/1294798656171409489/LacAV_1.gif?ex=670cfb77&is=670ba9f7&hm=82f2eaf9a7098c409689d77e931d4210d8d7803e9a3cc3917cb9d65ad411a7a2&"
+              "https://cdn.discordapp.com/attachments/1289380909824348221/1295969977613942835/LacOUV_2.gif?ex=6711e718&is=67109598&hm=c453201da7f83d238095b143064a47f674add3a2694acd8ecf0de49c9b62db30&"
             ),
         ],
         components: [
@@ -365,13 +366,12 @@ export default class SendCommand extends Command {
             new ButtonBuilder()
               .setLabel("Trocar conta do Habbo")
               .setStyle(ButtonStyle.Primary)
-              .setCustomId(encodeChangeButtonId("Request")),
+              .setCustomId(encodeChangeHBButtonId("Request")),
 
             new ButtonBuilder()
               .setLabel("Trocar conta do Discord")
               .setStyle(ButtonStyle.Secondary)
-              .setCustomId("testingDC")
-              .setDisabled(true)
+              .setCustomId(encodeChangeDCButtonId("Request"))
           ),
 
           new ActionRowBuilder<ButtonBuilder>().addComponents(
