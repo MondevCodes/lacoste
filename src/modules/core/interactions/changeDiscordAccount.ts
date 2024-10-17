@@ -372,16 +372,6 @@ export class ChangeDiscordAccountInteractionHandler extends InteractionHandler {
               data: {
                 users: {
                   push: newDiscord.user.id,
-                },
-              },
-            });
-
-            await this.container.prisma.medals.update({
-              where: {
-                discordId: medal.discordId,
-              },
-              data: {
-                users: {
                   set: medal.users.filter(
                     (id) => id !== existingUser.discordId
                   ),
