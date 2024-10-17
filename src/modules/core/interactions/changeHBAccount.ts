@@ -18,7 +18,6 @@ import {
 import { EmbedColors } from "$lib/constants/discord";
 import { FormIds } from "$lib/constants/forms";
 import { ENVIRONMENT } from "$lib/env";
-import { HabboUser } from "$lib/utilities/habbo";
 
 enum ChangeAccountInputIds {
   oldHabbo = "oldHabbo",
@@ -43,9 +42,6 @@ export const BASE_BUTTON_ID_REGEX = new RegExp(`^${FormIds.trocarHabboConta}/`);
 export type Action = "Request" | "Approve" | "Reject";
 
 type ParsedData = { action: Action };
-
-let existingUser: undefined | any;
-let newHabbo: undefined | HabboUser;
 
 @ApplyOptions<InteractionHandler.Options>({
   interactionHandlerType: InteractionHandlerTypes.Button,
@@ -113,7 +109,7 @@ export class ChangeHBAccountInteractionHandler extends InteractionHandler {
           ],
         });
 
-      existingUser = await this.container.prisma.user.findUnique({
+      const existingUser = await this.container.prisma.user.findUnique({
         where: {
           habboName: result.oldHabbo,
         },
@@ -127,7 +123,7 @@ export class ChangeHBAccountInteractionHandler extends InteractionHandler {
         return;
       }
 
-      newHabbo = (
+      const newHabbo = (
         await this.container.utilities.habbo.getProfile(result.newHabbo)
       ).unwrapOr(undefined);
 
@@ -264,12 +260,63 @@ export class ChangeHBAccountInteractionHandler extends InteractionHandler {
           throw new Error("Can't send message to non-text channel.");
         }
 
+        const embedFields = interaction.message.embeds[0].fields;
+
+        const newHabboField = embedFields.find(
+          (field) => field.name === ":inbox_tray: Conta NOVA"
+        );
+
+        if (!newHabboField) {
+          await interaction.message.edit({
+            content:
+              "Não consegui encontrar o campo ':inbox_tray: Conta NOVA' no Embed, contate o Desenvolvedor.",
+            components: [],
+            embeds: [],
+          });
+
+          return;
+        }
+
+        const newHabbo = (
+          await this.container.utilities.habbo.getProfile(newHabboField?.value)
+        ).unwrapOr(undefined);
+
         if (!newHabbo) {
           await interaction.message.edit({
             content:
               "Não consegui encontrar a conta nova do Habbo no jogo, contate o Desenvolvedor.",
             components: [],
             embeds: [],
+          });
+
+          return;
+        }
+
+        const existingUserField = embedFields.find(
+          (field) => field.name === ":outbox_tray: Conta ANTIGA"
+        );
+
+        if (!existingUserField) {
+          await interaction.message.edit({
+            content:
+              "Não consegui encontrar o campo ':outbox_tray: Conta ANTIGA' no Embed, contate o Desenvolvedor.",
+            components: [],
+            embeds: [],
+          });
+
+          return;
+        }
+
+        const existingUser = await this.container.prisma.user.findUnique({
+          where: {
+            habboName: existingUserField?.value,
+          },
+        });
+
+        if (!existingUser) {
+          await interaction.message.edit({
+            content:
+              "Não consegui encontrar a conta antiga do Habbo registrado no nosso banco de dados, contate o Desenvolvedor",
           });
 
           return;
@@ -313,8 +360,8 @@ export class ChangeHBAccountInteractionHandler extends InteractionHandler {
           await interaction.message.edit({
             content:
               "Não consegui encontrar o autor da aprovação, contate o Desenvolvedor.",
-              components: [],
-              embeds: [],
+            components: [],
+            embeds: [],
           });
 
           return;
