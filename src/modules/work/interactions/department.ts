@@ -671,8 +671,8 @@ export class DepartmentInteractionHandler extends InteractionHandler {
       },
     })
     .catch((error) => {
-      await interaction?.editReply({
-        content: `Não foi possível remover os dados de afastamento do usuário no banco de dados, tente novamente ou contate o Desenvolvedor. Erro: ||${error}||`,
+      interaction?.editReply({
+        content: `Não foi possível remover os dados do afastamento do usuário no banco de dados, tente novamente ou contate o Desenvolvedor. Erro: ||${error}||`,
         components: [],
         embeds: [],
       });
