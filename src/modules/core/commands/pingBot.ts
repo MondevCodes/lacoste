@@ -29,7 +29,7 @@ export class pingBot extends Command {
         new EmbedBuilder()
           .setTitle("Latência do Bot 🤖")
           .setDescription(
-            `A latência do Bot está **${latencyStatus}** com ping de **${botPing}ms**\n ${ENVIRONMENT.JOBS_ROLES.ADMINISTRADOR.id}`
+            `A latência do Bot está **${latencyStatus}** com ping de **${botPing}ms**`
           )
           .setColor(embedColor),
       ],
