@@ -197,7 +197,7 @@ export class InterviewFormInteractionHandler extends InteractionHandler {
 				},
 				{
 					name: "Conhece o serv. do Market. e o de Condutas?",
-					value: result.Servs,
+					value: resultPartial.Servs,
 				},
 				{
 					name: "Como podemos melhorar sua experiência?",
