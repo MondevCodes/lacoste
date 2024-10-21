@@ -17,4 +17,5 @@ export enum FormIds {
 	editarMedalha = "LCST::Form/editarMedalha",
 	trocarHabboConta = "LCST::Form/trocarHabboConta",
 	trocarDiscordConta = "LCST::Form/trocarDiscordConta",
+	Rebaixamento = "LCST::Form/Rebaixamento",
 }
