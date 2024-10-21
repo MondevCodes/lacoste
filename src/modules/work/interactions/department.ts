@@ -294,7 +294,7 @@ export class DepartmentInteractionHandler extends InteractionHandler {
       role: renewalRole,
     });
 
-    const { id } =await this.container.prisma.user.update({
+    await this.container.prisma.user.update({
       where: {
         discordId: targetMember.user.id,
       },
@@ -302,6 +302,15 @@ export class DepartmentInteractionHandler extends InteractionHandler {
         activeRenewal: renewalPeriod,
         activeRenewalStartedAt: new Date(),
       },
+    })
+    .catch((error) => {
+      interaction?.editReply({
+        content: `Não foi possível adicionar os dados de afastamento do usuário no banco de dados, tente novamente ou contate o Desenvolvedor. Erro: ||${error}||`,
+        components: [],
+        embeds: [],
+      });
+
+      return;
     });
 
     const targetDB = await this.container.prisma.user.findUnique({
@@ -451,7 +460,7 @@ export class DepartmentInteractionHandler extends InteractionHandler {
       });
 
       await this.container.prisma.user.update({
-        where: { id },
+        where: { id: targetDB.id },
         data: { activeRenewalMessageId: dmMsg.id },
       })
       .catch((error) => {
