@@ -294,7 +294,7 @@ export class DepartmentInteractionHandler extends InteractionHandler {
       role: renewalRole,
     });
 
-    const { id } = await this.container.prisma.user.update({
+    await this.container.prisma.user.update({
       where: {
         discordId: targetMember.user.id,
       },
@@ -302,7 +302,33 @@ export class DepartmentInteractionHandler extends InteractionHandler {
         activeRenewal: renewalPeriod,
         activeRenewalStartedAt: new Date(),
       },
+    })
+    .catch((error) => {
+      interaction?.editReply({
+        content: `Não foi possível adicionar os dados de afastamento do usuário no banco de dados, tente novamente ou contate o Desenvolvedor. Erro: ||${error}||`,
+        components: [],
+        embeds: [],
+      });
+
+      return;
     });
+
+    const targetDB = await this.container.prisma.user.findUnique({
+      where: {
+        discordId: targetMember.user.id
+      }
+    });
+
+    if (!targetDB) {
+      await interaction?.editReply({
+        content:
+          "Não consegui encontrar o usuário escolhido no banco de dados, contate o Desenvolvedor.",
+          components: [],
+          embeds: [],
+      });
+
+      return;
+    }
 
     const dmChannel = targetMember.dmChannel || (await targetMember.createDM());
 
@@ -434,8 +460,17 @@ export class DepartmentInteractionHandler extends InteractionHandler {
       });
 
       await this.container.prisma.user.update({
-        where: { id },
+        where: { id: targetDB?.id },
         data: { activeRenewalMessageId: dmMsg.id },
+      })
+      .catch((error) => {
+        interaction?.editReply({
+          content: `Não foi possível adicionar os dados de mensagem do afastamento do usuário no banco de dados, tente novamente ou contate o Desenvolvedor. Erro: ||${error}||`,
+          components: [],
+          embeds: [],
+        });
+
+        return;
       });
     }
   }
@@ -634,6 +669,15 @@ export class DepartmentInteractionHandler extends InteractionHandler {
         activeRenewalMessageId: null,
         activeRenewalStartedAt: null,
       },
+    })
+    .catch((error) => {
+      await interaction?.editReply({
+        content: `Não foi possível remover os dados de afastamento do usuário no banco de dados, tente novamente ou contate o Desenvolvedor. Erro: ||${error}||`,
+        components: [],
+        embeds: [],
+      });
+
+      return;
     });
 
     await interaction?.editReply({
@@ -645,6 +689,34 @@ export class DepartmentInteractionHandler extends InteractionHandler {
     );
 
     if (notificationChannel?.isTextBased()) {
+      if (!interaction) {
+        this.container.logger.warn(
+          "[Utilities/DiscordUtility] Interation error."
+        );
+
+        return;
+      }
+
+      const authorDB = await this.container.prisma.user.findUnique({
+        where: {
+          discordId: interaction?.user.id,
+        },
+        select: {
+          habboName: true,
+        },
+      });
+
+      if (!authorDB) {
+        await interaction?.editReply({
+          content:
+            "Não consegui encontrar o autor da requisição, contate o Desenvolvedor.",
+            components: [],
+            embeds: [],
+        });
+
+        return;
+      }
+
       const { member: targetMember, habbo: targetHabbo } =
         await this.container.utilities.habbo.inferTargetGuildMember(
           user.habboId
@@ -672,6 +744,10 @@ export class DepartmentInteractionHandler extends InteractionHandler {
               `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`
             )
             .setFields([
+              {
+                name: "👤 Autor",
+                value: authorDB.habboName,
+              },
               {
                 name: "👤 Usuário",
                 value: `${
