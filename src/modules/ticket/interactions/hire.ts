@@ -317,10 +317,7 @@ export class HireInteractionHandler extends InteractionHandler {
           );
 
         if (isConfirmed === "False") {
-          await modalInteraction.reply({
-            content: "Operação cancelada.",
-            ephemeral: true,
-          });
+          await modalInteraction.deleteReply();
 
           return;
         }
@@ -537,10 +534,7 @@ export class HireInteractionHandler extends InteractionHandler {
         });
 
       if (isConfirmed === "False") {
-        await modalInteraction.reply({
-          content: "Operação cancelada.",
-          ephemeral: true,
-        });
+        await modalInteraction.deleteReply();
 
         return;
       }

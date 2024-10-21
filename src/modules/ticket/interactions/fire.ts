@@ -280,10 +280,7 @@ export class FireInteractionHandler extends InteractionHandler {
           );
 
         if (isConfirmed === "False") {
-          await modalInteraction.reply({
-            content: "Operação cancelada.",
-            ephemeral: true,
-          });
+          await modalInteraction.deleteReply();
 
           return;
         }
@@ -453,10 +450,7 @@ export class FireInteractionHandler extends InteractionHandler {
         });
 
       if (isConfirmed === "False") {
-        await modalInteraction.reply({
-          content: "Operação cancelada.",
-          ephemeral: true,
-        });
+        await modalInteraction.deleteReply();
 
         return;
       }
@@ -673,7 +667,7 @@ export class FireInteractionHandler extends InteractionHandler {
             iconURL: interactionDisplayAvatar,
           })
           .setDescription(
-            `Seu saldo foi zerado pelo motivo que o Colaborador foi demitido por ${habboInteractionAcceptName}`
+            `Seu saldo foi zerado pelo motivo que o Colaborador foi demitido por ${habboInteractionName}`
           )
           .setColor(EmbedColors.LalaRed)
           .addFields([
@@ -705,7 +699,7 @@ export class FireInteractionHandler extends InteractionHandler {
     });
 
     if (medals.length > 0) {
-      for (const medal of medals) {
+      for await (const medal of medals) {
         await guild.members
           .removeRole({
             user: targetUser.discordId,
