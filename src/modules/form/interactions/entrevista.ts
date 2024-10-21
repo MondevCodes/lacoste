@@ -22,8 +22,10 @@ import { MarkdownCharactersRegex } from "$lib/constants/regexes";
 enum FeedbackInputIds {
 	Target = "Target",
 	Author = "Author",
-	Clarification = "Clarification",
-	Functionality = "Functionality",
+	Opinion = "Opinion",
+	Rules = "Rules",
+	Functions = "Functions",
+	Servs = "Servs",
 	Feedback = "Feedback",
 }
 
@@ -80,32 +82,58 @@ export class InterviewFormInteractionHandler extends InteractionHandler {
 							.setRequired(true),
 
 						new TextInputBuilder()
-							.setLabel("Suas novas funções estão claras?")
-							.setCustomId(FeedbackInputIds.Clarification)
-							.setStyle(TextInputStyle.Short)
-							.setRequired(true),
-
-						new TextInputBuilder()
-							.setLabel("Gostava de sua função anterior?")
-							.setCustomId(FeedbackInputIds.Functionality)
-							.setStyle(TextInputStyle.Short)
-							.setRequired(true),
-
-						new TextInputBuilder()
-							.setLabel("Elogio ou reclamação sobre a promoção")
-							.setCustomId(FeedbackInputIds.Feedback)
+							.setLabel("O que está achando da Lacoste?")
+							.setCustomId(FeedbackInputIds.Opinion)
 							.setStyle(TextInputStyle.Paragraph)
-							.setRequired(false),
+							.setRequired(true),
+
+						new TextInputBuilder()
+							.setLabel("Você sabe as regras da Lacoste? Cite uma.")
+							.setCustomId(FeedbackInputIds.Rules)
+							.setStyle(TextInputStyle.Paragraph)
+							.setRequired(true),
+
+						new TextInputBuilder()
+							.setLabel("Você tem ciência de suas funções? Descreva.")
+							.setCustomId(FeedbackInputIds.Functions)
+							.setStyle(TextInputStyle.Paragraph)
+							.setRequired(true),
+
+						new TextInputBuilder()
+							.setLabel("Conhece o serv. do Market. e o de Condutas?")
+							.setCustomId(FeedbackInputIds.Servs)
+							.setStyle(TextInputStyle.Paragraph)
+							.setRequired(true),
 					],
 					listenInteraction: true,
 					title: "Entrevista",
 				},
 			);
 
+      const { result: resultPartial, interaction: interactionFromModal } =
+      await this.container.utilities.inquirer.awaitModal<FeedbackInput>(
+        interaction,
+        {
+          inputs: [
+            new TextInputBuilder()
+            .setLabel("Como podemos melhorar sua experiência?")
+            .setCustomId(FeedbackInputIds.Feedback)
+            .setStyle(TextInputStyle.Paragraph)
+            .setRequired(true),
+          ],
+          listenInteraction: true,
+          title: "Entrevista",
+          startButtonLabel: "Continuar",
+        }
+      );
+
 		if (!i.deferred) {
 			await i.deferReply({ ephemeral: true }).catch(() => null);
 		}
 
+		if (!interactionFromModal.deferred) {
+			await interactionFromModal.deferReply({ ephemeral: true }).catch(() => null);
+		}
 
     const targetHabbo = (
       await this.container.utilities.habbo.getProfile(result.Target)
@@ -165,16 +193,24 @@ export class InterviewFormInteractionHandler extends InteractionHandler {
 					)}`,
 				},
 				{
-					name: "Suas novas funções estão claras?",
-					value: result.Clarification,
+					name: "O que está achando da Lacoste?",
+					value: result.Opinion,
 				},
 				{
-					name: "Gostava de sua função anterior?",
-					value: result.Functionality,
+					name: "Você sabe as regras da Lacoste? Cite uma.",
+					value: result.Rules,
 				},
 				{
-					name: "Elogio ou reclamação sobre a promoção",
-					value: result.Feedback.length > 0 ? result.Feedback : "N/A",
+					name: "Você tem ciência de suas funções? Descreva.",
+					value: result.Functions,
+				},
+				{
+					name: "Conhece o serv. do Market. e o de Condutas?",
+					value: result.Servs,
+				},
+				{
+					name: "Como podemos melhorar sua experiência?",
+					value: resultPartial.Feedback,
 				},
 			])
 			.setAuthor({
@@ -202,5 +238,13 @@ export class InterviewFormInteractionHandler extends InteractionHandler {
 		});
 
 		await i.deleteReply().catch(() => null);
+
+    await interactionFromModal
+    .deleteReply()
+    .catch(() =>
+      this.container.logger.error(
+        "[Form] Couldn't delete reply interactionFromModal."
+      )
+    );
 	}
 }
