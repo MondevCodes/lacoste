@@ -16,7 +16,7 @@ import { encodeButtonId as encodeFireButtonId } from "../../ticket/interactions/
 import { encodeButtonId as encodeHireButtonId } from "../../ticket/interactions/hire";
 import { encodeButtonId as encodeNoteButtonId } from "../../ticket/interactions/notes";
 import { encodeButtonId as encodeWarnButtonId } from "../../ticket/interactions/warns";
-import { encodeButtonId as encodeDowngradeButtonId } from "../../ticket/interactions/downgrade";
+// import { encodeButtonId as encodeDowngradeButtonId } from "../../ticket/interactions/downgrade";
 import { encodeButtonId as encodeOmbudsmanButtonId } from "../../ticket/interactions/ticket";
 
 import { encodeButtonId as encodeGroupButtonId } from "../../econ/interactions/mod-group";
@@ -266,7 +266,7 @@ export default class SendCommand extends Command {
             new ButtonBuilder()
               .setLabel("Rebaixar")
               .setStyle(ButtonStyle.Danger)
-              .setCustomId(encodeDowngradeButtonId("Request"))
+              .setCustomId("teste")
           ),
           new ActionRowBuilder<ButtonBuilder>().addComponents(
             new ButtonBuilder()
