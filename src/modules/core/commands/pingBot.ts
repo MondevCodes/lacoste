@@ -1,5 +1,4 @@
 import { EmbedColors } from "$lib/constants/discord";
-import { ENVIRONMENT } from "$lib/env";
 import { ApplyOptions } from "@sapphire/decorators";
 import { Command } from "@sapphire/framework";
 
