@@ -106,7 +106,7 @@ export class InterviewFormInteractionHandler extends InteractionHandler {
 
       const { result: resultPartial, interaction: interactionFromModal } =
       await this.container.utilities.inquirer.awaitModal<FeedbackInput>(
-        interaction,
+        i,
         {
           inputs: [
             new TextInputBuilder()
@@ -127,21 +127,12 @@ export class InterviewFormInteractionHandler extends InteractionHandler {
         }
       );
 
-		if (!i.deferred) {
-			await i.deferReply({ ephemeral: true }).catch(() => null);
-		}
-
-		if (!interactionFromModal.deferred) {
-			await interactionFromModal.deferReply({ ephemeral: true }).catch(() => null);
-		}
-
     const targetHabbo = (
       await this.container.utilities.habbo.getProfile(result.Target)
     ).unwrapOr(undefined);
 
 		if (!targetHabbo) {
-			await i.reply({
-				ephemeral: true,
+			await interactionFromModal.editReply({
 				content: "Não foi possível encontrar o usuário avaliado no Habbo, verifique se a conta do mesmo no jogo está como pública.",
 			});
 
@@ -155,7 +146,7 @@ export class InterviewFormInteractionHandler extends InteractionHandler {
 		);
 
 		if (inferredAuthor.isErr()) {
-			await i.editReply({
+			await interactionFromModal.editReply({
 				content: "Não foi possível encontrar o autor informado.",
 			});
 
@@ -165,7 +156,7 @@ export class InterviewFormInteractionHandler extends InteractionHandler {
 		const { habbo: authorHabbo } = inferredAuthor.unwrapOr(null);
 
 		if (!authorHabbo) {
-			await i.editReply({
+			await interactionFromModal.editReply({
 				content: "Não foi possível encontrar o autor informado.",
 			});
 
