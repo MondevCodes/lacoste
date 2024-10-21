@@ -98,12 +98,6 @@ export class InterviewFormInteractionHandler extends InteractionHandler {
 							.setCustomId(FeedbackInputIds.Functions)
 							.setStyle(TextInputStyle.Paragraph)
 							.setRequired(true),
-
-						new TextInputBuilder()
-							.setLabel("Conhece o serv. do Market. e o de Condutas?")
-							.setCustomId(FeedbackInputIds.Servs)
-							.setStyle(TextInputStyle.Paragraph)
-							.setRequired(true),
 					],
 					listenInteraction: true,
 					title: "Entrevista",
@@ -115,6 +109,12 @@ export class InterviewFormInteractionHandler extends InteractionHandler {
         interaction,
         {
           inputs: [
+            new TextInputBuilder()
+            .setLabel("Conhece o serv. do Market. e o de Condutas?")
+            .setCustomId(FeedbackInputIds.Servs)
+            .setStyle(TextInputStyle.Paragraph)
+            .setRequired(true),
+
             new TextInputBuilder()
             .setLabel("Como podemos melhorar sua experiência?")
             .setCustomId(FeedbackInputIds.Feedback)
