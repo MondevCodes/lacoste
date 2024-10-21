@@ -1,4 +1,5 @@
 import { EmbedColors } from "$lib/constants/discord";
+import { ENVIRONMENT } from "$lib/env";
 import { ApplyOptions } from "@sapphire/decorators";
 import { Command } from "@sapphire/framework";
 
@@ -28,7 +29,7 @@ export class pingBot extends Command {
         new EmbedBuilder()
           .setTitle("Latência do Bot 🤖")
           .setDescription(
-            `A latência do Bot está **${latencyStatus}** com ping de **${botPing}ms**`
+            `A latência do Bot está **${latencyStatus}** com ping de **${botPing}ms**\n ${ENVIRONMENT.JOBS_ROLES.ADMINISTRADOR}`
           )
           .setColor(embedColor),
       ],
