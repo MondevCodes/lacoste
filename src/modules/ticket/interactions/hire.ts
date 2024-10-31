@@ -381,7 +381,7 @@ export class HireInteractionHandler extends InteractionHandler {
         await approvalChannel.send({
           embeds: [approvalEmbed],
           components: [this.#APPROVAL_ROW],
-          content: `<@&${ENVIRONMENT.SECTORS_ROLES.PRESIDÊNCIA.id}>`,
+          content: `Apenas para <@&${ENVIRONMENT.SECTORS_ROLES.FUNDAÇÃO.id}>`,
         });
 
         await modalInteraction.deleteReply();
