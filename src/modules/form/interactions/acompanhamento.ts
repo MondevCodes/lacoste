@@ -23,6 +23,7 @@ import { merge } from "remeda";
 enum FeedbackInputIds {
   Target = "Target",
   Promoted = "Promoted",
+  Simulation = "Simulation",
   Performance = "Performance",
   PerformanceRate = "PerformanceRate",
   // NeedsMoreFollowUp = "NeedsMoreFollowUp",
@@ -157,7 +158,14 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
               .setLabel("Observação")
               .setPlaceholder("Ex.: Muito bom")
               .setCustomId(FeedbackInputIds.Performance)
-              .setStyle(TextInputStyle.Short)
+              .setStyle(TextInputStyle.Paragraph)
+              .setRequired(true),
+
+            new TextInputBuilder()
+              .setLabel("O promotor realizou uma simulação?")
+              .setPlaceholder("Sim / S ou Não / N")
+              .setCustomId(FeedbackInputIds.Simulation)
+              .setStyle(TextInputStyle.Paragraph)
               .setRequired(true),
           ],
           title: "Acompanhamento de Gerência",
@@ -338,39 +346,44 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
       embeds: [embed],
     });
 
-    await promotionChannel.send({
-      embeds: [
-        new EmbedBuilder()
-          .setDescription("### Simulação de Promoção\n\n")
-          .setAuthor({
-            name: targetMember.user.tag,
-            iconURL: targetMember.user.displayAvatarURL(),
-          })
-          .addFields([
-            {
-              name: "👤 Promotor ",
-              value: `${targetHabbo.name ?? `@${targetMember.user.tag}`}`,
-            },
-            {
-              name: "📝 Cargo Anterior",
-              value: `<@&${ENVIRONMENT.JOBS_ROLES.VINCULADO.id}>`,
-              inline: false,
-            },
-            {
-              name: "📗 Cargo Promovido",
-              value: `<@&${ENVIRONMENT.JOBS_ROLES.ESTAGIÁRIO.id}>`,
-            },
-            {
-              name: "🔍 Supervisionado por",
-              value: `${habboInteractionName ?? `@${interaction.user.tag}`}`,
-            },
-          ])
-          .setColor(EmbedColors.Success)
-          .setThumbnail(
-            `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`
-          ),
-      ],
-    });
+    if (
+      result.Simulation.toLowerCase() === "sim" ||
+      result.Simulation.toLowerCase() === "s"
+    ) {
+      await promotionChannel.send({
+        embeds: [
+          new EmbedBuilder()
+            .setDescription("### Simulação de Promoção\n\n")
+            .setAuthor({
+              name: targetMember.user.tag,
+              iconURL: targetMember.user.displayAvatarURL(),
+            })
+            .addFields([
+              {
+                name: "👤 Promotor ",
+                value: `${targetHabbo.name ?? `@${targetMember.user.tag}`}`,
+              },
+              {
+                name: "📝 Cargo Anterior",
+                value: `<@&${ENVIRONMENT.JOBS_ROLES.VINCULADO.id}>`,
+                inline: false,
+              },
+              {
+                name: "📗 Cargo Promovido",
+                value: `<@&${ENVIRONMENT.JOBS_ROLES.ESTAGIÁRIO.id}>`,
+              },
+              {
+                name: "🔍 Supervisionado por",
+                value: `${habboInteractionName ?? `@${interaction.user.tag}`}`,
+              },
+            ])
+            .setColor(EmbedColors.Success)
+            .setThumbnail(
+              `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`
+            ),
+        ],
+      });
+    }
 
     await i
       .deleteReply()
