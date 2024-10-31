@@ -341,22 +341,14 @@ export class FireInteractionHandler extends InteractionHandler {
         return;
       }
 
-      const { member: targetMember, habbo: targetHabbo } =
+      const { member: targetMemberPrivate, habbo: targetHabbo } =
         await this.container.utilities.habbo.inferTargetGuildMember(
           result.Target
         );
 
-      if (!targetMember) {
-        await modalInteraction.editReply({
-          content: "Não foi possível encontrar o usuário informado no Discord.",
-        });
-
-        return;
-      }
-
       const targetUserDb = await this.container.prisma.user.findUnique({
         where: {
-          discordId: targetMember.id,
+          habboName: result.Target,
         },
         select: {
           id: true,
@@ -432,10 +424,12 @@ export class FireInteractionHandler extends InteractionHandler {
             : null
         )
         .setFooter({
-          text: `@${targetMember.user.tag} | ${
+          text: `@${targetUser.user.tag ?? targetMemberPrivate?.user.tag} | ${
             targetUserDb.habboName ?? targetHabbo?.name
           }`,
-          iconURL: targetMember.displayAvatarURL(),
+          iconURL:
+            targetUser.displayAvatarURL() ??
+            targetMemberPrivate?.displayAvatarURL(),
         })
         .setTitle("Você tem certeza que deseja demiti-lo(a)?");
 
@@ -701,8 +695,8 @@ export class FireInteractionHandler extends InteractionHandler {
           ])
           .setThumbnail(
             onlyHabbo
-            ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo?.figureString}`
-            : null
+              ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo?.figureString}`
+              : null
           ),
       ],
     });
