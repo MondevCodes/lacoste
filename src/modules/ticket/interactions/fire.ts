@@ -150,17 +150,17 @@ export class FireInteractionHandler extends InteractionHandler {
         await this.container.utilities.habbo.getProfile(result.Target)
       ).unwrapOr(undefined);
 
-      if (!onlyHabbo?.name) {
-        await modalInteraction.editReply({
-          content:
-            "Não consegui encontrar o perfil do usuário no Habbo, talvez sua conta esteja deletada ou renomeada? Veja se o perfil do usuário no jogo está como público.",
-        });
+      // if (!onlyHabbo?.name) {
+      //   await modalInteraction.editReply({
+      //     content:
+      //       "Não consegui encontrar o perfil do usuário no Habbo, talvez sua conta esteja deletada ou renomeada? Veja se o perfil do usuário no jogo está como público.",
+      //   });
 
-        return;
-      }
+      //   return;
+      // }
 
       const targetDBOnlyHabbo = await this.container.prisma.user.findUnique({
-        where: { habboId: onlyHabbo.uniqueId },
+        where: { habboName: result.Target },
         select: {
           id: true,
           discordId: true,
@@ -230,7 +230,7 @@ export class FireInteractionHandler extends InteractionHandler {
           return;
         }
 
-        habboTargetStorage = onlyHabbo.name;
+        habboTargetStorage = targetDBOnlyHabbo.habboName;
 
         const authorResult = await Result.fromAsync(
           this.container.utilities.habbo.inferTargetGuildMember(
@@ -250,10 +250,12 @@ export class FireInteractionHandler extends InteractionHandler {
 
         const confirmationEmbed = new EmbedBuilder()
           .setThumbnail(
-            `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo.figureString}`
+            onlyHabbo
+              ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo.figureString}&size=b`
+              : null
           )
           .setFooter({
-            text: `${onlyHabbo.name ?? targetDBOnlyHabbo.habboName}`,
+            text: `${targetDBOnlyHabbo.habboName ?? onlyHabbo?.name}`,
           })
           .setTitle("Você tem certeza que deseja demiti-lo(a)?");
 
@@ -296,7 +298,7 @@ export class FireInteractionHandler extends InteractionHandler {
         const approvalEmbed = new EmbedBuilder()
           .setTitle(
             `Solicitação de Demissão de ${
-              onlyHabbo.name ?? targetDBOnlyHabbo.habboName
+              targetDBOnlyHabbo.habboName ?? onlyHabbo?.name
             }`
           )
           .setColor(EmbedColors.Default)
@@ -322,7 +324,9 @@ export class FireInteractionHandler extends InteractionHandler {
             },
           ])
           .setThumbnail(
-            `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo.figureString}&size=b`
+            onlyHabbo
+              ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo.figureString}&size=b`
+              : null
           );
 
         await approvalChannel.send({
@@ -359,6 +363,7 @@ export class FireInteractionHandler extends InteractionHandler {
           discordId: true,
           latestPromotionDate: true,
           latestPromotionRoleId: true,
+          habboName: true,
         },
       });
 
@@ -402,7 +407,7 @@ export class FireInteractionHandler extends InteractionHandler {
         return;
       }
 
-      habboTargetStorage = targetHabbo?.name;
+      habboTargetStorage = targetUserDb.habboName;
 
       const authorResult = await Result.fromAsync(
         this.container.utilities.habbo.inferTargetGuildMember(
@@ -422,10 +427,14 @@ export class FireInteractionHandler extends InteractionHandler {
 
       const confirmationEmbed = new EmbedBuilder()
         .setThumbnail(
-          `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}`
+          targetHabbo
+            ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}`
+            : null
         )
         .setFooter({
-          text: `@${targetMember.user.tag} | ${targetHabbo?.name ?? "N/D"}`,
+          text: `@${targetMember.user.tag} | ${
+            targetUserDb.habboName ?? targetHabbo?.name
+          }`,
           iconURL: targetMember.displayAvatarURL(),
         })
         .setTitle("Você tem certeza que deseja demiti-lo(a)?");
@@ -464,7 +473,11 @@ export class FireInteractionHandler extends InteractionHandler {
       }
 
       const approvalEmbed = new EmbedBuilder()
-        .setTitle(`Solicitação de Demissão de ${targetHabbo?.name}`)
+        .setTitle(
+          `Solicitação de Demissão de ${
+            targetUserDb.habboName ?? targetHabbo?.name
+          }`
+        )
         .setColor(EmbedColors.Default)
         .setAuthor({
           name: interaction.user.tag,
@@ -488,7 +501,9 @@ export class FireInteractionHandler extends InteractionHandler {
           },
         ])
         .setThumbnail(
-          `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`
+          targetHabbo
+            ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}`
+            : null
         );
 
       await approvalChannel.send({
@@ -685,7 +700,9 @@ export class FireInteractionHandler extends InteractionHandler {
             },
           ])
           .setThumbnail(
-            `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo?.figureString}&size=b`
+            onlyHabbo
+            ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo?.figureString}`
+            : null
           ),
       ],
     });
