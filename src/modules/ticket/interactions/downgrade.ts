@@ -147,17 +147,17 @@ export class DowngradeInteractionHandler extends InteractionHandler {
         await this.container.utilities.habbo.getProfile(result.Target)
       ).unwrapOr(undefined);
 
-      if (!onlyHabbo?.name) {
-        await modalInteraction.editReply({
-          content:
-            "Não consegui encontrar o perfil do usuário no Habbo, talvez sua conta esteja deletada ou renomeada? Veja se o perfil do usuário no jogo está como público.",
-        });
+      // if (!onlyHabbo?.name) {
+      //   await modalInteraction.editReply({
+      //     content:
+      //       "Não consegui encontrar o perfil do usuário no Habbo, talvez sua conta esteja deletada ou renomeada? Veja se o perfil do usuário no jogo está como público.",
+      //   });
 
-        return;
-      }
+      //   return;
+      // }
 
       const targetDBOnlyHabbo = await this.container.prisma.user.findUnique({
-        where: { habboId: onlyHabbo.uniqueId },
+        where: { habboName: result.Target },
         select: {
           id: true,
           discordId: true,
@@ -286,14 +286,16 @@ export class DowngradeInteractionHandler extends InteractionHandler {
 
         const confirmationEmbed = new EmbedBuilder()
           .setThumbnail(
-            `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo.figureString}`
+            onlyHabbo
+            ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo?.figureString}`
+            : null
           )
           .setFooter({
-            text: `${onlyHabbo.name ?? targetDBOnlyHabbo.habboName}`,
+            text: `${targetDBOnlyHabbo.habboName ?? onlyHabbo?.name}`,
           })
           .setTitle("Você tem certeza?")
           .setDescription(
-            `Você está rebaixando ${onlyHabbo.name} para <@&${selectedJob.id}>.`
+            `Você está rebaixando ${targetDBOnlyHabbo.habboName} para <@&${selectedJob.id}>.`
           )
           .setColor(EmbedColors.Default);
 
@@ -335,7 +337,7 @@ export class DowngradeInteractionHandler extends InteractionHandler {
 
         const approvalEmbed = new EmbedBuilder()
           .setTitle(
-            `Solicitação de Rebaixamento para ${onlyHabbo?.name} como ${selectedJob.name}`
+            `Solicitação de Rebaixamento para ${targetDBOnlyHabbo.habboName ?? onlyHabbo?.name} como ${selectedJob.name}`
           )
           .setColor(EmbedColors.Default)
           .setAuthor({
@@ -367,7 +369,9 @@ export class DowngradeInteractionHandler extends InteractionHandler {
             },
           ])
           .setImage(
-            `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo?.figureString}&size=b`
+            onlyHabbo
+            ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo?.figureString}`
+            : null
           );
 
         await this.container.prisma.user.update({
@@ -514,18 +518,20 @@ export class DowngradeInteractionHandler extends InteractionHandler {
 
       const confirmationEmbed = new EmbedBuilder()
         .setThumbnail(
-          `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}`
+          targetHabbo
+          ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}`
+          : null
         )
         .setFooter({
           text: `@${targetMember.user.tag} | ${
-            targetHabbo?.name ?? targetUserDb.habboName
+            targetUserDb.habboName ?? targetHabbo?.name
           }`,
           iconURL: targetMember.displayAvatarURL(),
         })
         .setTitle("Você tem certeza?")
         .setDescription(
           `Você está rebaixando ${
-            targetHabbo?.name ?? targetUserDb.habboName
+            targetUserDb.habboName ?? targetHabbo?.name
           } para <@&${selectedJob.id}>.`
         )
         .setColor(EmbedColors.Default);
@@ -565,7 +571,7 @@ export class DowngradeInteractionHandler extends InteractionHandler {
 
       const approvalEmbed = new EmbedBuilder()
         .setTitle(
-          `Solicitação de Rebaixamento para ${targetHabbo?.name} como ${selectedJob.name}`
+          `Solicitação de Rebaixamento para ${targetUserDb.habboName ?? targetHabbo?.name} como ${selectedJob.name}`
         )
         .setColor(EmbedColors.Default)
         .setAuthor({
@@ -597,7 +603,9 @@ export class DowngradeInteractionHandler extends InteractionHandler {
           },
         ])
         .setImage(
-          `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`
+          targetHabbo
+          ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}`
+          : null
         );
 
       await this.container.prisma.user.update({

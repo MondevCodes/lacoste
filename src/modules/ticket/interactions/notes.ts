@@ -146,17 +146,17 @@ export class NotesInteractionHandler extends InteractionHandler {
         await this.container.utilities.habbo.getProfile(result.Target)
       ).unwrapOr(undefined);
 
-      if (!onlyHabbo?.name) {
-        await modalInteraction.editReply({
-          content:
-            "Não consegui encontrar o perfil do usuário no Habbo, talvez sua conta esteja deletada ou renomeada? Veja se o perfil do usuário no jogo está como público.",
-        });
+      // if (!onlyHabbo?.name) {
+      //   await modalInteraction.editReply({
+      //     content:
+      //       "Não consegui encontrar o perfil do usuário no Habbo, talvez sua conta esteja deletada ou renomeada? Veja se o perfil do usuário no jogo está como público.",
+      //   });
 
-        return;
-      }
+      //   return;
+      // }
 
       const targetDBOnlyHabbo = await this.container.prisma.user.findUnique({
-        where: { habboId: onlyHabbo.uniqueId },
+        where: { habboName: result.Target },
         select: {
           id: true,
           discordId: true,
@@ -231,7 +231,7 @@ export class NotesInteractionHandler extends InteractionHandler {
           throw new Error("Can't send message to non-text channel.");
         }
 
-        habboTargetStorage = onlyHabbo.name;
+        habboTargetStorage = targetDBOnlyHabbo.habboName;
 
         const authorResult = await Result.fromAsync(
           this.container.utilities.habbo.inferTargetGuildMember(
@@ -252,7 +252,7 @@ export class NotesInteractionHandler extends InteractionHandler {
         const approvalEmbed = new EmbedBuilder()
           .setTitle(
             `Solicitação de Anotação para ${
-              onlyHabbo.name ?? targetDBOnlyHabbo.habboName
+              targetDBOnlyHabbo.habboName ?? onlyHabbo?.name
             }`
           )
           .setColor(EmbedColors.Default)
@@ -275,7 +275,9 @@ export class NotesInteractionHandler extends InteractionHandler {
             },
           ])
           .setThumbnail(
-            `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo.figureString}`
+            onlyHabbo
+            ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo?.figureString}`
+            : null
           );
 
         await approvalChannel.send({
@@ -307,7 +309,7 @@ export class NotesInteractionHandler extends InteractionHandler {
 
       const targetUserId = await this.container.prisma.user.findUnique({
         where: { discordId: targetMember.id },
-        select: { id: true, discordId: true },
+        select: { id: true, discordId: true, habboName: true, },
       });
 
       if (!targetUserId) {
@@ -345,7 +347,7 @@ export class NotesInteractionHandler extends InteractionHandler {
           targetUser.roles.cache.map((r) => r.id)
         );
 
-      habboTargetStorage = targetHabbo?.name;
+      habboTargetStorage = targetUserId.habboName;
 
       const authorResult = await Result.fromAsync(
         this.container.utilities.habbo.inferTargetGuildMember(
@@ -364,7 +366,7 @@ export class NotesInteractionHandler extends InteractionHandler {
       }
 
       const approvalEmbed = new EmbedBuilder()
-        .setTitle(`Solicitação de Anotação para ${targetHabbo?.name}`)
+        .setTitle(`Solicitação de Anotação para ${targetUserId.habboName}`)
         .setColor(EmbedColors.Default)
         .setAuthor({
           name: interaction.user.tag,
@@ -388,7 +390,9 @@ export class NotesInteractionHandler extends InteractionHandler {
           },
         ])
         .setThumbnail(
-          `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}`
+          targetHabbo
+          ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}`
+          : null
         );
 
       await approvalChannel.send({

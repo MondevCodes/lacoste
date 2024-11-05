@@ -15,7 +15,6 @@ import { ENVIRONMENT } from "$lib/env";
 
 import type { ButtonInteraction } from "discord.js";
 import { EmbedColors } from "$lib/constants/discord";
-import { HabboUser } from "$lib/utilities/habbo";
 
 export type Action = "Add" | "Del";
 
@@ -165,26 +164,26 @@ export class ModGroupInteractionHandler extends InteractionHandler {
 			return;
 		}
 
-		const members: HabboUser[] = [];
+		const members: string[] = [];
 
 		for await (const target of targets) {
-      const targetMember = (
-        await this.container.utilities.habbo.getProfile(target)
-      ).unwrapOr(undefined);
+      // const targetMember = (
+      //   await this.container.utilities.habbo.getProfile(target)
+      // ).unwrapOr(undefined);
 
-			if (!targetMember) {
-				// await i.editReply({
-				// 	content: "Não foi possível encontrar o usuário informado.",
-				// 	components: [],
-				// 	embeds: [],
-				// });
+			// if (!targetMember) {
+			// 	// await i.editReply({
+			// 	// 	content: "Não foi possível encontrar o usuário informado.",
+			// 	// 	components: [],
+			// 	// 	embeds: [],
+			// 	// });
 
-				continue;
-			}
+			// 	continue;
+			// }
 
 			const targetUser = await this.container.prisma.user.findUnique({
 				where: {
-					habboId: targetMember.uniqueId,
+					habboName: target,
 				},
 				select: {
 					id: true,
@@ -205,7 +204,7 @@ export class ModGroupInteractionHandler extends InteractionHandler {
 				`[ModGroupInteractionHandler#run] Adding ${amount} to ${target} in group.`,
 			);
 
-			members.push(targetMember);
+			members.push(target);
 		}
 
 		// const disqualifiedMembers = members.filter(
@@ -232,7 +231,7 @@ export class ModGroupInteractionHandler extends InteractionHandler {
 			.addFields([
 				{
 					name: "Usuários",
-					value: `- ${members.map((x) => x.name.toString()).join("\n- ")}`,
+					value: `- ${members.map((x) => x.toString()).join("\n- ")}`,
 				},
 			])
 			.setFooter({
@@ -284,12 +283,12 @@ export class ModGroupInteractionHandler extends InteractionHandler {
 			const {
 				_sum: { amount: totalAmount },
 			} = await this.container.prisma.transaction.aggregate({
-				where: { user: { habboId: member.uniqueId } },
+				where: { user: { habboName: member } },
 				_sum: { amount: true },
 			});
 
 			fields.push(
-				`- ${member.name.toString()}: \`\`${MONETARY_INTL.format(
+				`- ${member.toString()}: \`\`${MONETARY_INTL.format(
 					totalAmount ?? 0,
 				)}\`\` -> \`\`${MONETARY_INTL.format(
 					data.action === "Add"
@@ -300,7 +299,7 @@ export class ModGroupInteractionHandler extends InteractionHandler {
 
 			await this.container.prisma.user.update({
 				where: {
-					habboId: member.uniqueId,
+					habboName: member,
 				},
 				data: {
 					ReceivedTransactions: {

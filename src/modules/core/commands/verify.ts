@@ -21,17 +21,17 @@ export default class SendCommand extends Command {
       await this.container.utilities.habbo.getProfile(targetResult.unwrap())
     ).unwrapOr(undefined);
 
-    if (!onlyHabbo?.name) {
-      await message.reply({
-        content:
-          "Não consegui encontrar o perfil do usuário no Habbo, talvez sua conta esteja deletada ou renomeada? Veja se o perfil do usuário no jogo está como público.",
-      });
+    // if (!onlyHabbo?.name) {
+    //   await message.reply({
+    //     content:
+    //       "Não consegui encontrar o perfil do usuário no Habbo, talvez sua conta esteja deletada ou renomeada? Veja se o perfil do usuário no jogo está como público.",
+    //   });
 
-      return;
-    }
+    //   return;
+    // }
 
     const targetDB = await this.container.prisma.user.findUnique({
-      where: { habboId: onlyHabbo.uniqueId },
+      where: { habboName: targetResult.unwrap() },
       select: {
         id: true,
         discordId: true,
@@ -39,8 +39,18 @@ export default class SendCommand extends Command {
         latestPromotionRoleId: true,
         latestPromotionJobId: true,
         discordLink: true,
+        habboName: true,
       },
     });
+
+    if (!targetDB) {
+      await message.reply({
+        content:
+          "O usuário **não está vinculado** na nossa base de dados, verifique o nome ou **vincule-o**.",
+      });
+
+      return;
+    }
 
     let discordLinked: boolean | undefined;
 
@@ -118,7 +128,7 @@ export default class SendCommand extends Command {
           await message.reply({
             embeds: [
               new EmbedBuilder()
-                .setTitle(`Verificação de ${onlyHabbo.name}`)
+                .setTitle(`Verificação de ${targetDB.habboName}`)
                 .setFields([
                   {
                     name: "Setor // Cargo",
@@ -151,7 +161,9 @@ export default class SendCommand extends Command {
                 })
                 .setColor(EmbedColors.LalaRed)
                 .setThumbnail(
-                  `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo.figureString}&size=b`
+                  onlyHabbo
+                  ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo?.figureString}`
+                  : null
                 ),
             ],
           });
@@ -165,7 +177,7 @@ export default class SendCommand extends Command {
           await message.reply({
             embeds: [
               new EmbedBuilder()
-                .setTitle(`Verificação de ${onlyHabbo.name}`)
+                .setTitle(`Verificação de ${targetDB.habboName}`)
                 .setFields([
                   {
                     name: "Setor // Cargo",
@@ -190,7 +202,9 @@ export default class SendCommand extends Command {
                 })
                 .setColor(EmbedColors.LalaRed)
                 .setThumbnail(
-                  `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo.figureString}&size=b`
+                  onlyHabbo
+                  ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo?.figureString}`
+                  : null
                 ),
             ],
           });
@@ -212,13 +226,6 @@ export default class SendCommand extends Command {
       await message.reply({
         content:
           "Não consegui encontrar o perfil do Discord do usuário que estava com o mesmo ativo, talvez saiu do Servidor?",
-      });
-
-      return;
-    } else if (!habbo?.name) {
-      await message.reply({
-        content:
-          "Não consegui encontrar o perfil do usuário no Habbo, talvez sua conta esteja deletada ou renomeada? Veja se o perfil do usuário no jogo está como público.",
       });
 
       return;
@@ -262,11 +269,12 @@ export default class SendCommand extends Command {
       : member.roles.highest;
 
     const databaseUser = await this.container.prisma.user.findUnique({
-      where: { habboId: habbo.uniqueId },
+      where: { discordId: member.user.id },
       select: {
         id: true,
         latestPromotionDate: true,
         latestPromotionRoleId: true,
+        habboName: true,
       },
     });
 
@@ -322,7 +330,7 @@ export default class SendCommand extends Command {
         await message.reply({
           embeds: [
             new EmbedBuilder()
-              .setTitle(`Verificação de ${habbo.name}`)
+              .setTitle(`Verificação de ${databaseUser.habboName}`)
               .setFields([
                 {
                   name: "Setor // Cargo",
@@ -362,7 +370,9 @@ export default class SendCommand extends Command {
               })
               .setColor(EmbedColors.LalaRed)
               .setThumbnail(
-                `https://www.habbo.com/habbo-imaging/avatarimage?figure=${habbo.figureString}&size=b`
+                habbo
+                ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${habbo?.figureString}`
+                : null
               ),
           ],
         });
@@ -376,7 +386,7 @@ export default class SendCommand extends Command {
         await message.reply({
           embeds: [
             new EmbedBuilder()
-              .setTitle(`Verificação de ${habbo.name}`)
+              .setTitle(`Verificação de ${databaseUser?.habboName}`)
               .setFields([
                 {
                   name: "Setor // Cargo",
@@ -401,7 +411,9 @@ export default class SendCommand extends Command {
               })
               .setColor(EmbedColors.LalaRed)
               .setThumbnail(
-                `https://www.habbo.com/habbo-imaging/avatarimage?figure=${habbo.figureString}&size=b`
+                habbo
+                ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${habbo?.figureString}`
+                : null
               ),
           ],
         });

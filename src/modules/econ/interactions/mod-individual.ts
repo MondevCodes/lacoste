@@ -117,17 +117,17 @@ export class ModIndividualInteractionHandler extends InteractionHandler {
       await this.container.utilities.habbo.getProfile(result.Target)
     ).unwrapOr(undefined);
 
-    if (!targetHabbo) {
-      await i.editReply({
-        content:
-          "Não foi possível encontrar o usuário informado no Habbo, verifique se o mesmo está com o perfil público no jogo.",
-      });
+    // if (!targetHabbo) {
+    //   await i.editReply({
+    //     content:
+    //       "Não foi possível encontrar o usuário informado no Habbo, verifique se o mesmo está com o perfil público no jogo.",
+    //   });
 
-      return;
-    }
+    //   return;
+    // }
 
     const targetUser = await this.container.prisma.user.findUnique({
-      where: { habboId: targetHabbo.uniqueId },
+      where: { habboName: result.Target },
       select: {
         id: true,
         latestPromotionDate: true,
@@ -189,7 +189,7 @@ export class ModIndividualInteractionHandler extends InteractionHandler {
       content: `${
         data.action === "Add" ? "Adicionado" : "Removido"
       } **${amount}** Câmbios ao perfil de ${
-        targetHabbo?.name || targetUser?.habboName
+        targetUser?.habboName || targetHabbo?.name
       }!`,
     });
 
@@ -210,13 +210,15 @@ export class ModIndividualInteractionHandler extends InteractionHandler {
           })
           .setTitle("Alteração de Saldo (Individual)")
           .setThumbnail(
-            `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`
+            targetHabbo
+            ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}`
+            : null
           )
           .setDescription(
             `**${amount} Câmbios** ${
               data.action === "Add" ? "adicionado" : "removido"
             } individualmente por ${interaction.user} para ${
-              targetHabbo?.name ?? targetUser?.habboName
+              targetUser?.habboName ?? targetHabbo?.name
             }`
           )
           .addFields([
