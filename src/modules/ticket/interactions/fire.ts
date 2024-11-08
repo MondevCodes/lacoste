@@ -316,7 +316,7 @@ export class FireInteractionHandler extends InteractionHandler {
             },
             {
               name: "📗 Cargo",
-              value: currentJob.name ?? "N/D",
+              value: `${currentJob}`,
             },
             {
               name: "🗒️ Motivo",
@@ -487,7 +487,7 @@ export class FireInteractionHandler extends InteractionHandler {
           },
           {
             name: "📗 Cargo",
-            value: currentJobRole.name ?? "N/D",
+            value: `${currentJobRole}`,
           },
           {
             name: "🗒️ Motivo",

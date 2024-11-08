@@ -168,6 +168,14 @@ export class NotesInteractionHandler extends InteractionHandler {
         },
       });
 
+      if (!targetDBOnlyHabbo) {
+        await modalInteraction.editReply({
+          content: `Não consegui encontrar o usuário **${result.Target}** como vinculado na nossa base de dados, verifique o nome e tente novamente.`,
+        });
+
+        return;
+      }
+
       // START USER WITHOUT DISCORD
       if (targetDBOnlyHabbo?.discordLink === false) {
         const guild =
@@ -276,8 +284,8 @@ export class NotesInteractionHandler extends InteractionHandler {
           ])
           .setThumbnail(
             onlyHabbo
-            ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo?.figureString}`
-            : null
+              ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo?.figureString}`
+              : null
           );
 
         await approvalChannel.send({
@@ -294,14 +302,19 @@ export class NotesInteractionHandler extends InteractionHandler {
         // END WITHOUT DISCORD
       }
 
-      const { member: targetMember, habbo: targetHabbo } =
+      const { habbo: targetHabbo } =
         await this.container.utilities.habbo.inferTargetGuildMember(
           result.Target
         );
 
+      const targetMember = await cachedGuild.members.fetch(
+        targetDBOnlyHabbo.discordId
+      );
+
       if (!targetMember) {
         await modalInteraction.editReply({
-          content: "Não foi possível encontrar o usuário informado.",
+          content:
+            "Não foi possível encontrar o usuário informado presente no Servidor.",
         });
 
         return;
@@ -309,7 +322,7 @@ export class NotesInteractionHandler extends InteractionHandler {
 
       const targetUserId = await this.container.prisma.user.findUnique({
         where: { discordId: targetMember.id },
-        select: { id: true, discordId: true, habboName: true, },
+        select: { id: true, discordId: true, habboName: true },
       });
 
       if (!targetUserId) {
@@ -380,9 +393,8 @@ export class NotesInteractionHandler extends InteractionHandler {
           {
             name: "📗 Cargo do Colaborador",
             value: highestJobRoleId
-              ? (await targetMember.guild.roles.fetch(highestJobRoleId))
-                  ?.name ?? "N/A"
-              : "N/A",
+              ? `${(await targetMember.guild.roles.fetch(highestJobRoleId))}`
+              : "N/A"
           },
           {
             name: "🗒️ Anotação",
@@ -391,8 +403,8 @@ export class NotesInteractionHandler extends InteractionHandler {
         ])
         .setThumbnail(
           targetHabbo
-          ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}`
-          : null
+            ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}`
+            : null
         );
 
       await approvalChannel.send({

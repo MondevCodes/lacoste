@@ -169,6 +169,14 @@ export class DowngradeInteractionHandler extends InteractionHandler {
         },
       });
 
+      if (!targetDBOnlyHabbo) {
+        await modalInteraction.editReply({
+          content: `Não consegui encontrar o usuário **${result.Target}** como vinculado na nossa base de dados, verifique o nome e tente novamente.`,
+        });
+
+        return;
+      }
+
       // START USER WITHOUT DISCORD
       if (targetDBOnlyHabbo?.discordLink === false) {
         const guild =
@@ -277,8 +285,8 @@ export class DowngradeInteractionHandler extends InteractionHandler {
           await modalInteraction.editReply({
             content:
               "Não consegui encontrar o autor da requisição, contate o Desenvolvedor.",
-              components: [],
-              embeds: [],
+            components: [],
+            embeds: [],
           });
 
           return;
@@ -287,8 +295,8 @@ export class DowngradeInteractionHandler extends InteractionHandler {
         const confirmationEmbed = new EmbedBuilder()
           .setThumbnail(
             onlyHabbo
-            ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo?.figureString}`
-            : null
+              ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo?.figureString}`
+              : null
           )
           .setFooter({
             text: `${targetDBOnlyHabbo.habboName ?? onlyHabbo?.name}`,
@@ -337,7 +345,9 @@ export class DowngradeInteractionHandler extends InteractionHandler {
 
         const approvalEmbed = new EmbedBuilder()
           .setTitle(
-            `Solicitação de Rebaixamento para ${targetDBOnlyHabbo.habboName ?? onlyHabbo?.name} como ${selectedJob.name}`
+            `Solicitação de Rebaixamento para ${
+              targetDBOnlyHabbo.habboName ?? onlyHabbo?.name
+            } como ${selectedJob.name}`
           )
           .setColor(EmbedColors.Default)
           .setAuthor({
@@ -370,8 +380,8 @@ export class DowngradeInteractionHandler extends InteractionHandler {
           ])
           .setImage(
             onlyHabbo
-            ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo?.figureString}`
-            : null
+              ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo?.figureString}`
+              : null
           );
 
         await this.container.prisma.user.update({
@@ -395,14 +405,19 @@ export class DowngradeInteractionHandler extends InteractionHandler {
         // END USER WITHOUT DISCORD
       }
 
-      const { member: targetMember, habbo: targetHabbo } =
+      const { habbo: targetHabbo } =
         await this.container.utilities.habbo.inferTargetGuildMember(
           result.Target
         );
 
+      const targetMember = await cachedGuild.members.fetch(
+        targetDBOnlyHabbo.discordId
+      );
+
       if (!targetMember) {
         await modalInteraction.editReply({
-          content: "Não foi possível encontrar o usuário informado.",
+          content:
+            "Não foi possível encontrar o usuário informado presente no Servidor.",
         });
 
         return;
@@ -426,8 +441,8 @@ export class DowngradeInteractionHandler extends InteractionHandler {
         await modalInteraction.editReply({
           content:
             "Não consegui encontrar o perfil do colaborador, tem certeza que ele está registrado no servidor?",
-            components: [],
-            embeds: [],
+          components: [],
+          embeds: [],
         });
 
         return;
@@ -441,8 +456,8 @@ export class DowngradeInteractionHandler extends InteractionHandler {
         await modalInteraction.editReply({
           content:
             "Não consegui encontrar o perfil do colaborador, tem certeza que ele está registrado no servidor?",
-            components: [],
-            embeds: [],
+          components: [],
+          embeds: [],
         });
       }
 
@@ -509,8 +524,8 @@ export class DowngradeInteractionHandler extends InteractionHandler {
         await modalInteraction.editReply({
           content:
             "Não consegui encontrar o autor da requisição, contate o Desenvolvedor.",
-            components: [],
-            embeds: [],
+          components: [],
+          embeds: [],
         });
 
         return;
@@ -519,8 +534,8 @@ export class DowngradeInteractionHandler extends InteractionHandler {
       const confirmationEmbed = new EmbedBuilder()
         .setThumbnail(
           targetHabbo
-          ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}`
-          : null
+            ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}`
+            : null
         )
         .setFooter({
           text: `@${targetMember.user.tag} | ${
@@ -571,7 +586,9 @@ export class DowngradeInteractionHandler extends InteractionHandler {
 
       const approvalEmbed = new EmbedBuilder()
         .setTitle(
-          `Solicitação de Rebaixamento para ${targetUserDb.habboName ?? targetHabbo?.name} como ${selectedJob.name}`
+          `Solicitação de Rebaixamento para ${
+            targetUserDb.habboName ?? targetHabbo?.name
+          } como ${selectedJob.name}`
         )
         .setColor(EmbedColors.Default)
         .setAuthor({
@@ -604,8 +621,8 @@ export class DowngradeInteractionHandler extends InteractionHandler {
         ])
         .setImage(
           targetHabbo
-          ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}`
-          : null
+            ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}`
+            : null
         );
 
       await this.container.prisma.user.update({

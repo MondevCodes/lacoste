@@ -168,6 +168,14 @@ export class WarningsInteractionHandler extends InteractionHandler {
         },
       });
 
+      if (!targetDBOnlyHabbo) {
+        await modalInteraction.editReply({
+          content: `Não consegui encontrar o usuário **${result.Target}** como vinculado na nossa base de dados, verifique o nome e tente novamente.`,
+        });
+
+        return;
+      }
+
       // START USER WITHOUT DISCORD
       if (targetDBOnlyHabbo?.discordLink === false) {
         const guild =
@@ -250,7 +258,9 @@ export class WarningsInteractionHandler extends InteractionHandler {
         }
 
         const approvalEmbed = new EmbedBuilder()
-          .setTitle(`Solicitação de Advertência para ${targetDBOnlyHabbo.habboName}`)
+          .setTitle(
+            `Solicitação de Advertência para ${targetDBOnlyHabbo.habboName}`
+          )
           .setColor(EmbedColors.Default)
           .setAuthor({
             name: interaction.user.tag,
@@ -272,8 +282,8 @@ export class WarningsInteractionHandler extends InteractionHandler {
           ])
           .setThumbnail(
             onlyHabbo
-            ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo?.figureString}`
-            : null
+              ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo?.figureString}`
+              : null
           );
 
         await approvalChannel.send({
@@ -290,14 +300,19 @@ export class WarningsInteractionHandler extends InteractionHandler {
         // END WITHOUT DISCORD
       }
 
-      const { member: targetMember, habbo: targetHabbo } =
+      const { habbo: targetHabbo } =
         await this.container.utilities.habbo.inferTargetGuildMember(
           result.Target
         );
 
+      const targetMember = await cachedGuild.members.fetch(
+        targetDBOnlyHabbo.discordId
+      );
+
       if (!targetMember) {
         await modalInteraction.editReply({
-          content: "Não foi possível encontrar o usuário informado.",
+          content:
+            "Não foi possível encontrar o usuário informado presente no Servidor.",
         });
 
         return;
@@ -305,7 +320,7 @@ export class WarningsInteractionHandler extends InteractionHandler {
 
       const targetUserId = await this.container.prisma.user.findUnique({
         where: { discordId: targetMember.id },
-        select: { id: true, discordId: true, habboName: true, },
+        select: { id: true, discordId: true, habboName: true },
       });
 
       if (!targetUserId) {
@@ -380,9 +395,8 @@ export class WarningsInteractionHandler extends InteractionHandler {
           {
             name: "📗 Cargo do Colaborador",
             value: highestJobRoleId
-              ? (await targetMember.guild.roles.fetch(highestJobRoleId))
-                  ?.name ?? "N/A"
-              : "N/A",
+            ? `${(await targetMember.guild.roles.fetch(highestJobRoleId))}`
+            : "N/A"
           },
           {
             name: "🗒️ Advertência",
@@ -391,8 +405,8 @@ export class WarningsInteractionHandler extends InteractionHandler {
         ])
         .setThumbnail(
           targetHabbo
-          ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}`
-          : null
+            ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}`
+            : null
         );
 
       await approvalChannel.send({

@@ -162,8 +162,8 @@ export default class SendCommand extends Command {
                 .setColor(EmbedColors.LalaRed)
                 .setThumbnail(
                   onlyHabbo
-                  ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo?.figureString}`
-                  : null
+                    ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo?.figureString}`
+                    : null
                 ),
             ],
           });
@@ -203,8 +203,8 @@ export default class SendCommand extends Command {
                 .setColor(EmbedColors.LalaRed)
                 .setThumbnail(
                   onlyHabbo
-                  ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo?.figureString}`
-                  : null
+                    ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo?.figureString}`
+                    : null
                 ),
             ],
           });
@@ -217,10 +217,12 @@ export default class SendCommand extends Command {
       discordLinked = true;
     }
 
-    const { habbo, member } =
+    const { habbo } =
       await this.container.utilities.habbo.inferTargetGuildMember(
         targetResult.unwrap()
       );
+
+    const member = await message.guild.members.fetch(targetDB.discordId);
 
     if (!member) {
       await message.reply({
@@ -371,8 +373,8 @@ export default class SendCommand extends Command {
               .setColor(EmbedColors.LalaRed)
               .setThumbnail(
                 habbo
-                ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${habbo?.figureString}`
-                : null
+                  ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${habbo?.figureString}`
+                  : null
               ),
           ],
         });
@@ -412,8 +414,8 @@ export default class SendCommand extends Command {
               .setColor(EmbedColors.LalaRed)
               .setThumbnail(
                 habbo
-                ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${habbo?.figureString}`
-                : null
+                  ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${habbo?.figureString}`
+                  : null
               ),
           ],
         });
