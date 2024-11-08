@@ -108,6 +108,20 @@ export class OnGuildMemberRemoveListener extends Listener {
     }
 
     if (targetDB) {
+      const currentSectorEnvironment = Object.values(
+        ENVIRONMENT.SECTORS_ROLES
+      ).find((r) => r.id === targetDB.latestPromotionRoleId);
+
+      if (!currentSectorEnvironment) {
+        this.container.logger.error(`User ${targetDB?.habboName} left the Server, user without currentSector`);
+
+        return;
+      }
+
+      const currentSector = await cachedGuild.roles.fetch(
+        currentSectorEnvironment?.id
+      );
+
       await notificationFireChannel.send({
         embeds: [
           new EmbedBuilder()
@@ -117,6 +131,10 @@ export class OnGuildMemberRemoveListener extends Listener {
               {
                 name: "👤 Demissor",
                 value: "Automatizado por Lala 🤖",
+              },
+              {
+                name: "📗 Setor",
+                value: currentSector ? `${currentSector}` : "* Não consegui encontrar o setor do usuário",
               },
               {
                 name: "🗒️ Motivo",
