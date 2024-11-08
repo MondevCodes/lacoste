@@ -108,12 +108,18 @@ export class OnGuildMemberRemoveListener extends Listener {
     }
 
     if (targetDB) {
+      const onlyHabbo = (
+        await this.container.utilities.habbo.getProfile(targetDB?.habboName)
+      ).unwrapOr(undefined);
+
       const currentSectorEnvironment = Object.values(
         ENVIRONMENT.SECTORS_ROLES
       ).find((r) => r.id === targetDB.latestPromotionRoleId);
 
       if (!currentSectorEnvironment) {
-        this.container.logger.error(`User ${targetDB?.habboName} left the Server, user without currentSector`);
+        this.container.logger.error(
+          `User ${targetDB?.habboName} left the Server, user without currentSector`
+        );
 
         return;
       }
@@ -134,17 +140,20 @@ export class OnGuildMemberRemoveListener extends Listener {
               },
               {
                 name: "📗 Setor",
-                value: currentSector ? `${currentSector}` : "* Não consegui encontrar o setor do usuário",
+                value: currentSector
+                  ? `${currentSector}`
+                  : "* Não consegui encontrar o setor do usuário",
               },
               {
                 name: "🗒️ Motivo",
                 value: "Colaborador saiu do Servidor",
               },
-              {
-                name: "➕ Extra",
-                value: "O saldo do colaborador foi zerado",
-              },
-            ]),
+            ])
+            .setThumbnail(
+              onlyHabbo
+                ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo.figureString}&size=b`
+                : null
+            ),
         ],
       });
 
@@ -170,7 +179,12 @@ export class OnGuildMemberRemoveListener extends Listener {
                 name: "Saldo Atual",
                 value: MONETARY_INTL.format(0),
               },
-            ]),
+            ])
+            .setThumbnail(
+              onlyHabbo
+                ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo.figureString}&size=b`
+                : null
+            ),
         ],
       });
     }
