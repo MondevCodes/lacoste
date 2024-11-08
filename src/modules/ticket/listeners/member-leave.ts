@@ -108,6 +108,8 @@ export class OnGuildMemberRemoveListener extends Listener {
     }
 
     if (targetDB) {
+      const botMember = await cachedGuild.members.fetch("1223413995898404968");
+
       const onlyHabbo = (
         await this.container.utilities.habbo.getProfile(targetDB?.habboName)
       ).unwrapOr(undefined);
@@ -131,6 +133,10 @@ export class OnGuildMemberRemoveListener extends Listener {
       await notificationFireChannel.send({
         embeds: [
           new EmbedBuilder()
+            .setAuthor({
+              name: botMember.user.tag,
+              iconURL: botMember.user.displayAvatarURL(),
+            })
             .setTitle(`Demissão de ${targetDB?.habboName}`)
             .setColor(EmbedColors.LalaRed)
             .addFields([
