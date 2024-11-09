@@ -1,14 +1,14 @@
 import {
-	InteractionHandler,
-	InteractionHandlerTypes,
+  InteractionHandler,
+  InteractionHandlerTypes,
 } from "@sapphire/framework";
 
 import { ApplyOptions } from "@sapphire/decorators";
 import {
-	ButtonStyle,
-	EmbedBuilder,
-	TextInputBuilder,
-	TextInputStyle,
+  ButtonStyle,
+  EmbedBuilder,
+  TextInputBuilder,
+  TextInputStyle,
 } from "discord.js";
 
 import { ENVIRONMENT } from "$lib/env";
@@ -22,343 +22,347 @@ export const BASE_BUTTON_ID = "LCST::ModGroupInteractionHandler";
 export const BASE_BUTTON_ID_REGEX = new RegExp(`^${BASE_BUTTON_ID}/`);
 
 const MONETARY_INTL = new Intl.NumberFormat("pt-BR", {
-	style: "currency",
-	currency: "CAM",
-	minimumFractionDigits: 0,
+  style: "currency",
+  currency: "CAM",
+  minimumFractionDigits: 0,
 });
 
 /** @internal @see {@link decodeButtonId} */
 export function encodeButtonId(action: Action) {
-	return `${BASE_BUTTON_ID}/${action}`;
+  return `${BASE_BUTTON_ID}/${action}`;
 }
 
 /** @internal @see {@link encodeButtonId} */
 export function decodeButtonId(id: string): Action {
-	return id.replace(`${BASE_BUTTON_ID}/`, "") as Action;
+  return id.replace(`${BASE_BUTTON_ID}/`, "") as Action;
 }
 
 type ParsedData = { action: Action };
 
 @ApplyOptions<InteractionHandler.Options>({
-	interactionHandlerType: InteractionHandlerTypes.Button,
+  interactionHandlerType: InteractionHandlerTypes.Button,
 })
 export class ModGroupInteractionHandler extends InteractionHandler {
-	async #isAuthorized(interaction: ButtonInteraction) {
-		if (!interaction.inCachedGuild()) {
-			this.container.logger.warn(
-				`[ModGroupInteractionHandler#isAuthorized] ${interaction.user.tag} tried to perform an action in a DM.`,
-			);
+  async #isAuthorized(interaction: ButtonInteraction) {
+    if (!interaction.inCachedGuild()) {
+      this.container.logger.warn(
+        `[ModGroupInteractionHandler#isAuthorized] ${interaction.user.tag} tried to perform an action in a DM.`
+      );
 
-			return false;
-		}
+      return false;
+    }
 
-		const { roles } =
-			interaction.member ??
-			(await interaction.guild.members.fetch(interaction.user.id));
+    const { roles } =
+      interaction.member ??
+      (await interaction.guild.members.fetch(interaction.user.id));
 
-		return this.container.utilities.discord.hasPermissionByRole({
-			checkFor: "FUNDAÇÃO",
-			category: "SECTOR",
-			roles,
-		});
-	}
+    return this.container.utilities.discord.hasPermissionByRole({
+      checkFor: "FUNDAÇÃO",
+      category: "SECTOR",
+      roles,
+    });
+  }
 
-	public override async parse(interaction: ButtonInteraction) {
-		if (!interaction.customId.match(BASE_BUTTON_ID_REGEX)) return this.none();
-		if (!(await this.#isAuthorized(interaction))) return this.none();
+  public override async parse(interaction: ButtonInteraction) {
+    if (!interaction.customId.match(BASE_BUTTON_ID_REGEX)) return this.none();
+    if (!(await this.#isAuthorized(interaction))) return this.none();
 
-		return this.some({ action: decodeButtonId(interaction.customId) });
-	}
+    return this.some({ action: decodeButtonId(interaction.customId) });
+  }
 
-	public override async run(interaction: ButtonInteraction, data: ParsedData) {
-		if (!interaction.inGuild()) {
-			this.container.logger.warn(
-				`[ModGroupInteractionHandler#run] ${interaction.user.tag} tried to perform an action in a DM.`,
-			);
+  public override async run(interaction: ButtonInteraction, data: ParsedData) {
+    if (!interaction.inGuild()) {
+      this.container.logger.warn(
+        `[ModGroupInteractionHandler#run] ${interaction.user.tag} tried to perform an action in a DM.`
+      );
 
-			return;
-		}
+      return;
+    }
 
-		const { result, interaction: i } =
-			await this.container.utilities.inquirer.awaitModal<"Targets" | "Amount">(
-				interaction,
-				{
-					inputs: [
-						new TextInputBuilder()
-							.setLabel("Usuários")
-							.setCustomId("Targets")
-							.setPlaceholder("Ex. Usuário (Habbo)")
-							.setStyle(TextInputStyle.Short)
-							.setRequired(true),
+    const { result, interaction: i } =
+      await this.container.utilities.inquirer.awaitModal<"Targets" | "Amount">(
+        interaction,
+        {
+          inputs: [
+            new TextInputBuilder()
+              .setLabel("Usuários")
+              .setCustomId("Targets")
+              .setPlaceholder("Ex. Usuário (Habbo)")
+              .setStyle(TextInputStyle.Short)
+              .setRequired(true),
 
-						new TextInputBuilder()
-							.setCustomId("Amount")
-							.setLabel("Quantidade de Câmbios")
-							.setPlaceholder("A quantia de câmbios a ser adicionada")
-							.setStyle(TextInputStyle.Short)
-							.setRequired(false),
-					],
-					title:
-						data.action === "Add"
-							? "Adicionar Saldo Grupo"
-							: "Remover Saldo Grupo",
-					listenInteraction: true,
-				},
-			);
+            new TextInputBuilder()
+              .setCustomId("Amount")
+              .setLabel("Quantidade de Câmbios")
+              .setPlaceholder("A quantia de câmbios a ser adicionada")
+              .setStyle(TextInputStyle.Short)
+              .setRequired(false),
+          ],
+          title:
+            data.action === "Add"
+              ? "Adicionar Saldo Grupo"
+              : "Remover Saldo Grupo",
+          listenInteraction: true,
+        }
+      );
 
-		const guild =
-			interaction.guild ??
-			(await interaction.client.guilds.fetch(interaction.guildId));
+    const guild =
+      interaction.guild ??
+      (await interaction.client.guilds.fetch(interaction.guildId));
 
-		// const [targetRoleId] =
-		// 	await this.container.utilities.inquirer.awaitSelectMenu(i, {
-		// 		choices: await Promise.all(
-		// 			Object.values(ENVIRONMENT.JOBS_ROLES).map(async (x) => ({
-		// 				id: x.id,
-		// 				label:
-		// 					guild.roles.cache.get(x.id)?.name ??
-		// 					(await guild.roles.fetch(x.id))?.name ??
-		// 					"Unknown",
-		// 			})),
-		// 		),
-		// 		placeholder: "Selecionar",
-		// 		question: "Escolha o cargo no qual deseja.",
-		// 	});
+    // const [targetRoleId] =
+    // 	await this.container.utilities.inquirer.awaitSelectMenu(i, {
+    // 		choices: await Promise.all(
+    // 			Object.values(ENVIRONMENT.JOBS_ROLES).map(async (x) => ({
+    // 				id: x.id,
+    // 				label:
+    // 					guild.roles.cache.get(x.id)?.name ??
+    // 					(await guild.roles.fetch(x.id))?.name ??
+    // 					"Unknown",
+    // 			})),
+    // 		),
+    // 		placeholder: "Selecionar",
+    // 		question: "Escolha o cargo no qual deseja.",
+    // 	});
 
-		// if (!targetRoleId) {
-		// 	this.container.logger.warn(
-		// 		`[HireInteractionHandler#run] ${interaction.user.tag} tried to perform an action in a DM.`,
-		// 	);
+    // if (!targetRoleId) {
+    // 	this.container.logger.warn(
+    // 		`[HireInteractionHandler#run] ${interaction.user.tag} tried to perform an action in a DM.`,
+    // 	);
 
-		// 	await i.editReply({
-		// 		content: "Nenhum cargo selecionado.",
-		// 	});
+    // 	await i.editReply({
+    // 		content: "Nenhum cargo selecionado.",
+    // 	});
 
-		// 	return;
-		// }
+    // 	return;
+    // }
 
-		const rawAmount = Number(result.Amount);
-		const amount = rawAmount > 0 ? rawAmount : 0;
+    const rawAmount = Number(result.Amount);
+    const amount = rawAmount > 0 ? rawAmount : 0;
 
-		const targets = result.Targets.split(",")
-			.filter((x) => x.length > 0)
-			.map((x) => x.trim());
+    const targets = result.Targets.split(",")
+      .filter((x) => x.length > 0)
+      .map((x) => x.trim());
 
-		if (targets.length < 1) {
-			await i.editReply({
-				content: "Nenhum usuário informado ou todos estão inválidos.",
-			});
+    if (targets.length < 1) {
+      await i.editReply({
+        content: "Nenhum usuário informado ou todos estão inválidos.",
+      });
 
-			return;
-		}
+      return;
+    }
 
-		if (Number.isNaN(amount) || amount < 0) {
-			this.container.logger.warn(
-				`[HireInteractionHandler#run] ${interaction.user.tag} tried to perform an action in a DM.`,
-			);
+    if (Number.isNaN(amount) || amount < 0) {
+      this.container.logger.warn(
+        `[HireInteractionHandler#run] ${interaction.user.tag} tried to perform an action in a DM.`
+      );
 
-			await i.editReply({
-				content: `O salário deste cargo (${amount}) é inválido, contate o desenvolvedor.`,
-			});
+      await i.editReply({
+        content: `O salário deste cargo (${amount}) é inválido, contate o desenvolvedor.`,
+      });
 
-			return;
-		}
+      return;
+    }
 
-		const members: string[] = [];
+    const members: string[] = [];
 
-		for await (const target of targets) {
+    for await (const target of targets) {
       // const targetMember = (
       //   await this.container.utilities.habbo.getProfile(target)
       // ).unwrapOr(undefined);
 
-			// if (!targetMember) {
-			// 	// await i.editReply({
-			// 	// 	content: "Não foi possível encontrar o usuário informado.",
-			// 	// 	components: [],
-			// 	// 	embeds: [],
-			// 	// });
+      // if (!targetMember) {
+      // 	// await i.editReply({
+      // 	// 	content: "Não foi possível encontrar o usuário informado.",
+      // 	// 	components: [],
+      // 	// 	embeds: [],
+      // 	// });
 
-			// 	continue;
-			// }
+      // 	continue;
+      // }
 
-			const targetUser = await this.container.prisma.user.findUnique({
-				where: {
-					habboName: target,
-				},
-				select: {
-					id: true,
-					latestPromotionDate: true,
-					latestPromotionRoleId: true,
-				},
-			});
+      const targetUser = await this.container.prisma.user.findFirst({
+        where: {
+          habboName: {
+            contains: target,
+            mode: "insensitive",
+          },
+        },
+        select: {
+          id: true,
+          latestPromotionDate: true,
+          latestPromotionRoleId: true,
+        },
+      });
 
-			if (!targetUser) {
-				this.container.logger.warn(
-					"[HireInteractionHandler#run] Author or target user was not found in database.",
-				);
+      if (!targetUser) {
+        this.container.logger.warn(
+          "[HireInteractionHandler#run] Author or target user was not found in database."
+        );
 
-				continue;
-			}
+        continue;
+      }
 
-			this.container.logger.info(
-				`[ModGroupInteractionHandler#run] Adding ${amount} to ${target} in group.`,
-			);
+      this.container.logger.info(
+        `[ModGroupInteractionHandler#run] Adding ${amount} to ${target} in group.`
+      );
 
-			members.push(target);
-		}
+      members.push(target);
+    }
 
-		// const disqualifiedMembers = members.filter(
-		// 	(x) => !x.roles.cache.has(targetRoleId),
-		// );
+    // const disqualifiedMembers = members.filter(
+    // 	(x) => !x.roles.cache.has(targetRoleId),
+    // );
 
-		// members = members.filter((x) => x.roles.cache.has(targetRoleId));
+    // members = members.filter((x) => x.roles.cache.has(targetRoleId));
 
-		if (members.length < 1) {
-			await i.editReply({
-				content: "Nenhum usuário encontrado no cargo informado.",
-			});
+    if (members.length < 1) {
+      await i.editReply({
+        content: "Nenhum usuário encontrado no cargo informado.",
+      });
 
-			return;
-		}
+      return;
+    }
 
-		const confirmationEmbed = new EmbedBuilder()
-			.setTitle("Confirmação")
-			.setDescription(
-				`Tem certeza que deseja executar a ação de ${data.action} para ${
-					members.length
-				} ${members.length === 1 ? "usuário" : "usuários"}?`,
-			)
-			.addFields([
-				{
-					name: "Usuários",
-					value: `- ${members.map((x) => x.toString()).join("\n- ")}`,
-				},
-			])
-			.setFooter({
-				text: MONETARY_INTL.format(amount),
-			})
-			.setColor(EmbedColors.Default);
+    const confirmationEmbed = new EmbedBuilder()
+      .setTitle("Confirmação")
+      .setDescription(
+        `Tem certeza que deseja executar a ação de ${data.action} para ${
+          members.length
+        } ${members.length === 1 ? "usuário" : "usuários"}?`
+      )
+      .addFields([
+        {
+          name: "Usuários",
+          value: `- ${members.map((x) => x.toString()).join("\n- ")}`,
+        },
+      ])
+      .setFooter({
+        text: MONETARY_INTL.format(amount),
+      })
+      .setColor(EmbedColors.Default);
 
-		// if (disqualifiedMembers.length > 0) {
-		// 	confirmationEmbed.addFields([
-		// 		{
-		// 			name: "Usuários Desqualificados",
-		// 			value: `- ${disqualifiedMembers
-		// 				.map((x) => `~~${x.user.toString()}~~`)
-		// 				.join("\n- ")}`,
-		// 		},
-		// 	]);
-		// }
+    // if (disqualifiedMembers.length > 0) {
+    // 	confirmationEmbed.addFields([
+    // 		{
+    // 			name: "Usuários Desqualificados",
+    // 			value: `- ${disqualifiedMembers
+    // 				.map((x) => `~~${x.user.toString()}~~`)
+    // 				.join("\n- ")}`,
+    // 		},
+    // 	]);
+    // }
 
-		const { result: isConfirmed } =
-			await this.container.utilities.inquirer.awaitButtons(i, {
-				question: { embeds: [confirmationEmbed] },
-				choices: [
-					{
-						id: "True" as const,
-						style: ButtonStyle.Success,
-						label: "Sim",
-					},
-					{
-						id: "False" as const,
-						style: ButtonStyle.Danger,
-						label: "Não",
-					},
-				],
-			});
+    const { result: isConfirmed } =
+      await this.container.utilities.inquirer.awaitButtons(i, {
+        question: { embeds: [confirmationEmbed] },
+        choices: [
+          {
+            id: "True" as const,
+            style: ButtonStyle.Success,
+            label: "Sim",
+          },
+          {
+            id: "False" as const,
+            style: ButtonStyle.Danger,
+            label: "Não",
+          },
+        ],
+      });
 
-		if (!isConfirmed) {
-			await i.editReply({
-				content: "Operação cancelada pelo usuário.",
-				components: [],
-				embeds: [],
-			});
+    if (!isConfirmed) {
+      await i.editReply({
+        content: "Operação cancelada pelo usuário.",
+        components: [],
+        embeds: [],
+      });
 
-			return;
-		}
+      return;
+    }
 
-		const fields: string[] = [];
+    const fields: string[] = [];
 
-		for (const member of members) {
-			const {
-				_sum: { amount: totalAmount },
-			} = await this.container.prisma.transaction.aggregate({
-				where: { user: { habboName: member } },
-				_sum: { amount: true },
-			});
+    for (const member of members) {
+      const {
+        _sum: { amount: totalAmount },
+      } = await this.container.prisma.transaction.aggregate({
+        where: { user: { habboName: member } },
+        _sum: { amount: true },
+      });
 
-			fields.push(
-				`- ${member.toString()}: \`\`${MONETARY_INTL.format(
-					totalAmount ?? 0,
-				)}\`\` -> \`\`${MONETARY_INTL.format(
-					data.action === "Add"
-						? (totalAmount ?? 0) + amount
-						: (totalAmount ?? 0) - amount,
-				)}\`\``,
-			);
+      fields.push(
+        `- ${member.toString()}: \`\`${MONETARY_INTL.format(
+          totalAmount ?? 0
+        )}\`\` -> \`\`${MONETARY_INTL.format(
+          data.action === "Add"
+            ? (totalAmount ?? 0) + amount
+            : (totalAmount ?? 0) - amount
+        )}\`\``
+      );
 
-			await this.container.prisma.user.update({
-				where: {
-					habboName: member,
-				},
-				data: {
-					ReceivedTransactions: {
-						create: {
-							amount: data.action === "Add" ? amount : -Math.abs(amount),
-							author: { connect: { discordId: interaction.user.id } },
-							reason: "Adicionado em grupo",
-						},
-					},
-				},
-			});
-		}
+      await this.container.prisma.user.update({
+        where: {
+          habboName: member,
+        },
+        data: {
+          ReceivedTransactions: {
+            create: {
+              amount: data.action === "Add" ? amount : -Math.abs(amount),
+              author: { connect: { discordId: interaction.user.id } },
+              reason: "Adicionado em grupo",
+            },
+          },
+        },
+      });
+    }
 
-		await i.editReply({
-			content: `Operação concluída com sucesso, todos os ${targets.length} ${
-				targets.length === 1 ? "usuário" : "usuários"
-			} ${
-				data.action === "Add" ? "receberão" : "perderão"
-			} o valor de ${amount}.`,
-			components: [],
-			embeds: [],
-		});
+    await i.editReply({
+      content: `Operação concluída com sucesso, todos os ${targets.length} ${
+        targets.length === 1 ? "usuário" : "usuários"
+      } ${
+        data.action === "Add" ? "receberão" : "perderão"
+      } o valor de ${amount}.`,
+      components: [],
+      embeds: [],
+    });
 
-		const notificationChannel = await guild.channels.fetch(
-			ENVIRONMENT.NOTIFICATION_CHANNELS.CMB_LOGS,
-		);
+    const notificationChannel = await guild.channels.fetch(
+      ENVIRONMENT.NOTIFICATION_CHANNELS.CMB_LOGS
+    );
 
-		if (!notificationChannel?.isTextBased()) {
-			throw new Error("Can't send message to non-text channel.");
-		}
+    if (!notificationChannel?.isTextBased()) {
+      throw new Error("Can't send message to non-text channel.");
+    }
 
-		await notificationChannel.send({
-			embeds: [
-				new EmbedBuilder()
-					.setAuthor({
-						name: interaction.user.tag,
-						iconURL: interaction.user.displayAvatarURL(),
-					})
-					.setTitle("Alteração de Saldo (Grupo)")
-					.setDescription(
-						data.action === "Add"
-							? `Adicionado ${amount} Câmbios em ${targets.length} ${
-									targets.length === 1 ? "usuário" : "usuários"
-							  }`
-							: `Removido ${amount} Câmbios em ${targets.length} ${
-									targets.length === 1 ? "usuário" : "usuários"
-							  }`,
-					)
-					.setFields([
-						{
-							name: "Usuários",
-							value: fields.join("\n"),
-						},
-					])
-					.setColor(
+    await notificationChannel.send({
+      embeds: [
+        new EmbedBuilder()
+          .setAuthor({
+            name: interaction.user.tag,
+            iconURL: interaction.user.displayAvatarURL(),
+          })
+          .setTitle("Alteração de Saldo (Grupo)")
+          .setDescription(
             data.action === "Add"
-            ? EmbedColors.AddAmount
-            : EmbedColors.RemoveAmount),
-			],
-		});
-	}
+              ? `Adicionado ${amount} Câmbios em ${targets.length} ${
+                  targets.length === 1 ? "usuário" : "usuários"
+                }`
+              : `Removido ${amount} Câmbios em ${targets.length} ${
+                  targets.length === 1 ? "usuário" : "usuários"
+                }`
+          )
+          .setFields([
+            {
+              name: "Usuários",
+              value: fields.join("\n"),
+            },
+          ])
+          .setColor(
+            data.action === "Add"
+              ? EmbedColors.AddAmount
+              : EmbedColors.RemoveAmount
+          ),
+      ],
+    });
+  }
 }

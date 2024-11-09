@@ -126,8 +126,13 @@ export class ModIndividualInteractionHandler extends InteractionHandler {
     //   return;
     // }
 
-    const targetUser = await this.container.prisma.user.findUnique({
-      where: { habboName: result.Target },
+    const targetUser = await this.container.prisma.user.findFirst({
+      where: {
+        habboName: {
+          contains: result.Target,
+          mode: "insensitive",
+        },
+      },
       select: {
         id: true,
         latestPromotionDate: true,
@@ -211,8 +216,8 @@ export class ModIndividualInteractionHandler extends InteractionHandler {
           .setTitle("Alteração de Saldo (Individual)")
           .setThumbnail(
             targetHabbo
-            ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}`
-            : null
+              ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}`
+              : null
           )
           .setDescription(
             `**${amount} Câmbios** ${
@@ -233,8 +238,9 @@ export class ModIndividualInteractionHandler extends InteractionHandler {
           ])
           .setColor(
             data.action === "Add"
-            ? EmbedColors.AddAmount
-            : EmbedColors.RemoveAmount),
+              ? EmbedColors.AddAmount
+              : EmbedColors.RemoveAmount
+          ),
       ],
     });
   }

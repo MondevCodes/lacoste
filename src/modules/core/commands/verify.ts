@@ -30,8 +30,13 @@ export default class SendCommand extends Command {
     //   return;
     // }
 
-    const targetDB = await this.container.prisma.user.findUnique({
-      where: { habboName: targetResult.unwrap() },
+    const targetDB = await this.container.prisma.user.findFirst({
+      where: {
+        habboName: {
+          contains: targetResult.unwrap(),
+          mode: "insensitive",
+        },
+      },
       select: {
         id: true,
         discordId: true,

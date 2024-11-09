@@ -155,8 +155,13 @@ export class WarningsInteractionHandler extends InteractionHandler {
       //   return;
       // }
 
-      const targetDBOnlyHabbo = await this.container.prisma.user.findUnique({
-        where: { habboName: result.Target },
+      const targetDBOnlyHabbo = await this.container.prisma.user.findFirst({
+        where: {
+          habboName: {
+            contains: result.Target,
+            mode: "insensitive",
+          },
+        },
         select: {
           id: true,
           discordId: true,
@@ -395,8 +400,8 @@ export class WarningsInteractionHandler extends InteractionHandler {
           {
             name: "📗 Cargo do Colaborador",
             value: highestJobRoleId
-            ? `${(await targetMember.guild.roles.fetch(highestJobRoleId))}`
-            : "N/A"
+              ? `${await targetMember.guild.roles.fetch(highestJobRoleId)}`
+              : "N/A",
           },
           {
             name: "🗒️ Advertência",
