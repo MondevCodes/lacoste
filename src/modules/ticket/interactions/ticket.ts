@@ -92,7 +92,12 @@ export class OmbudsmanInteractionHandler extends InteractionHandler {
     this.container.logger.info(
       `Ticket Channel: ${ENVIRONMENT.TICKETS_CATEGORY}`,
     );
-		if (action === "OpenDefault" || action === "OpenPraise") {
+    if (action === "OpenDefault" || action === "OpenPraise") {
+      await interaction.reply({
+        content: "Carregando...",
+        ephemeral: true
+      });
+
 			this.#ticketsCategory ??= (await this.container.client.channels.fetch(
 				ENVIRONMENT.TICKETS_CATEGORY,
 			)) as CategoryChannel;
@@ -135,7 +140,7 @@ export class OmbudsmanInteractionHandler extends InteractionHandler {
 						allow: READ_PERMISSIONS,
 					},
 				],
-			});
+      });
 
 			const ticketMessage = await ticketChannel.send({
 				content: "\u200B",
@@ -182,23 +187,35 @@ export class OmbudsmanInteractionHandler extends InteractionHandler {
 				},
 			});
 
-      const dmChannel = interaction.user.dmChannel || (await interaction.user.createDM());
+      // const dmChannel = interaction.user.dmChannel || (await interaction.user.createDM());
 
-      const dmMessage = await dmChannel.send({
-				embeds: [
+      // const dmMessage = await dmChannel.send({
+			// 	embeds: [
+			// 		new EmbedBuilder()
+			// 			.setColor(EmbedColors.Default)
+			// 			.setTitle("Criação de Ticket")
+			// 			.setDescription(
+			// 				`Seu ticket foi criado com Sucesso! Clique aqui: ${ticketChannel}`
+			// 			)
+      //       .setFooter({ text: "Essa mensagem será apagada automaticamente em 1 minuto" })
+			// 	],
+			// });
+
+      // setTimeout(() => {
+      //   dmMessage.delete();
+      // }, 60000);
+
+      await interaction.editReply({
+        content: "",
+        embeds: [
 					new EmbedBuilder()
 						.setColor(EmbedColors.Default)
 						.setTitle("Criação de Ticket")
 						.setDescription(
-							`Seu ticket foi criado com Sucesso! Clique aqui: ${ticketChannel}`
+							`Seu ticket foi gerado com Sucesso! Clique aqui para acessá-lo: ${ticketChannel}`
 						)
-            .setFooter({ text: "Essa mensagem será apagada automaticamente em 1 minuto" })
 				],
-			});
-
-      setTimeout(() => {
-        dmMessage.delete();
-      }, 60000);
+      });
 
 			return;
 		}
