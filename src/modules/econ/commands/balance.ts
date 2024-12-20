@@ -68,7 +68,8 @@ export class BalanceCommand extends Command {
       _sum: { amount: true },
     });
 
-    if (targetDB?.habboName) {
+    console.log(await args.pickResult("string"));
+    if (await args.pickResult("string")) {
       if (!message.inGuild()) {
         await message.reply({
           content:
