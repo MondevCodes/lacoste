@@ -79,7 +79,7 @@ export default class SendCommand extends Command {
               '**Controle Financeiro**\n Para adicionar ou remover de membro específico ou de um grupo (ex. setor estagiário), basta clicar no botão correspondente. Em adição ou remoção em grupo, use vírgula (",") para separar os nicks (ex: Brendo, Fortissima).\n\n **Medalhas**\n Siga a função correspondente.'
             )
             .setImage(
-              "https://cdn.discordapp.com/attachments/1294794325598933103/1294794427231109151/LacFundacao_4.gif?ex=670cf787&is=670ba607&hm=0d4d3c5f4410572bcb1edd7f0582cfcbe3cb83e9afbb76f23adafe4dec2dddbd&"
+              "https://cdn.discordapp.com/attachments/1319339476396544142/1319344228177940490/Lac._6.gif?ex=67659e90&is=67644d10&hm=b52904d512022d43d725ee4f02565c8ba535e84917b5fcb9caad65c8e7c92786&"
             ),
         ],
         components: [
@@ -156,7 +156,7 @@ export default class SendCommand extends Command {
               "Selecione o tipo de formulário que deseja e responda o questionário que será aberto. Ao finalizar, seu formulário será enviado para a equipe de avaliação."
             )
             .setImage(
-              "https://cdn.discordapp.com/attachments/1294794325598933103/1294797992876052510/LacAV.gif?ex=670cfad9&is=670ba959&hm=3226d067f404eb71a282fd078ce7db1a119437691290c423cd7a92ec16d63c64&"
+              "https://cdn.discordapp.com/attachments/1319339476396544142/1319341765286953000/Lac..gif?ex=67659c45&is=67644ac5&hm=791f4b4f551abd3bd39d5e24ba48bcd439acee743a98e1c8e84bfa720757cef0&"
             ),
         ],
         components: [
@@ -185,7 +185,7 @@ export default class SendCommand extends Command {
               "Clique no botão abaixo para abrir o questionário que, ao finalizar, será enviado para o canal de sugestões ou reclamações."
             )
             .setImage(
-              "https://cdn.discordapp.com/attachments/1294794325598933103/1294794522731217028/LacDir.gif?ex=670cf79e&is=670ba61e&hm=863287f386e44ea07dbc4bea2712f326da5bde40556f57365ef4d505b460f805&"
+              "https://cdn.discordapp.com/attachments/1319339476396544142/1319343804477870163/Lac._5.gif?ex=67659e2b&is=67644cab&hm=849ef1894bb0a99a072fbaa7fe40d49b0b633bcc13d52680d92a53d585255e0e&"
             ),
         ],
         components: [
@@ -214,7 +214,7 @@ export default class SendCommand extends Command {
               "Selecione o tipo de formulário que deseja e responda o questionário que será aberto. Ao finalizar, seu formulário será enviado para o canal de relatórios."
             )
             .setImage(
-              "https://cdn.discordapp.com/attachments/1294794325598933103/1294796987853574255/LacORG.gif?ex=670cf9ea&is=670ba86a&hm=215638161d82a0589dd2b75e6c1291c527d630980a2b75660351e4b6452ef1e1&"
+              "https://cdn.discordapp.com/attachments/1319339476396544142/1319342114156449965/Lac._1.gif?ex=67659c98&is=67644b18&hm=1ad57ef9c54311d507f6d4c0ac849a16516e09b3b288e0d1deaf9e1af25e6d08&"
             ),
         ],
         components: [
@@ -243,7 +243,7 @@ export default class SendCommand extends Command {
               "Considere nossas normas atuais antes de aplicar uma função.\nFique atento ao canal que será gerado e as perguntas feitas pelo BOT, em seguida o registro da mesma será publicado. \n\nClique no botão que corresponda à ação desejada."
             )
             .setImage(
-              "https://cdn.discordapp.com/attachments/1294794325598933103/1294795359503122442/LacADM.gif?ex=670cf865&is=670ba6e5&hm=3e0824aafa7444f7492d161f0e0927599573d6d9cfda783a7c493f84914bad45&"
+              "https://cdn.discordapp.com/attachments/1319339476396544142/1319343339732205608/Lac._4.gif?ex=67659dbc&is=67644c3c&hm=9765bfdda0643080f387a36541d9616c6d61f00bf6b827aef7e31fb958c01dab&"
             ),
         ],
         components: [
@@ -306,7 +306,7 @@ export default class SendCommand extends Command {
               "Para enviar sugestões, reclamações, dúvidas ou solicitar medalhas aperte no Ticket! Um administrador irá responder o mais rápido possível. Fique a vontade para enviar um elogio também."
             )
             .setImage(
-              "https://cdn.discordapp.com/attachments/1294794325598933103/1294799812083978310/LacOUV.gif?ex=670cfc8b&is=670bab0b&hm=06d4f379b45be6584ef9996703243e666fab321cb5bc0bb063376cfae86bfc09&"
+              "https://cdn.discordapp.com/attachments/1319339476396544142/1319341196686000260/LacOUV_8.gif?ex=67659bbd&is=67644a3d&hm=45df3f1b5c6f4bb5a456f2b3e4dc5d1cac3e0170bf24f420438cc7a990e760f5&"
             ),
         ],
         components: [
@@ -335,7 +335,7 @@ export default class SendCommand extends Command {
               "Escolha o tipo de ação que deseja fazer o clique no botão abaixo, preencha os formulários corretamente e aguarde a aprovação do seu pedido."
             )
             .setImage(
-              "https://cdn.discordapp.com/attachments/1294794325598933103/1294796116965199922/LacPRO.gif?ex=670cf91a&is=670ba79a&hm=be26a0beb0606810bb06659e771773e4ad14c53432b995e6cd2aa5affbe27c40&"
+              "https://cdn.discordapp.com/attachments/1319339476396544142/1319342913485799576/Lac._3.gif?ex=67659d56&is=67644bd6&hm=0d6b178590d4f8b3620726291448249d27b5444010a521f800a9842783604540&"
             ),
         ],
         components: [
@@ -364,7 +364,7 @@ export default class SendCommand extends Command {
               "**Alteração de Nickname**\nMudou seu apelido no Habbo? Clique no botão 'Renomear' para automaticamente atualizar o seu perfil.\n\n**Alteração de Conta do Habbo**\nMudou de conta no Habbo? Clique no botão 'Trocar conta do Habbo' para seus dados serem atualizados.\nAguarde a aprovação.\n\n**Alteração de Conta do Discord**\nMudou de conta no discord? Clique no botão 'Trocar conta do discord' para seus dados serem atualizados.\nAguarde a aprovação."
             )
             .setImage(
-              "https://cdn.discordapp.com/attachments/1289380909824348221/1295969977613942835/LacOUV_2.gif?ex=6711e718&is=67109598&hm=c453201da7f83d238095b143064a47f674add3a2694acd8ecf0de49c9b62db30&"
+              "https://cdn.discordapp.com/attachments/1319339476396544142/1319340531310133299/LacOUV_7.gif?ex=67659b1e&is=6764499e&hm=c8c838715e8eb604c928733a3d23be3c740de65a521de599815856e739e963d3&"
             ),
         ],
         components: [
