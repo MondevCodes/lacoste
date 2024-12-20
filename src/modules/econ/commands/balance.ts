@@ -70,7 +70,7 @@ export class BalanceCommand extends Command {
 
     if (targetDB?.habboName) {
       if (!message.inGuild()) {
-        await this.container.utilities.discord.sendEphemeralMessage(message, {
+        await message.reply({
           content:
             "É necessário estar no servidor para verificar saldos de outros usuários.",
         });
@@ -88,11 +88,10 @@ export class BalanceCommand extends Command {
         });
 
       if (!hasPermission) {
-        await this.container.utilities.discord.sendEphemeralMessage(message, {
+        await message.reply({
           content:
             "Não autorizado. Você precisa ter o cargo de <@&788612423363330085> para verificar saldos de outros usuários",
         });
-
         return;
       }
     }
