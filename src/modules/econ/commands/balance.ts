@@ -68,7 +68,7 @@ export class BalanceCommand extends Command {
       _sum: { amount: true },
     });
 
-    if ((await args.pickResult("string")).unwrapOr(undefined) == undefined) {
+    if ((await args.pickResult("string")).unwrapOr(undefined)) {
       if (!message.inGuild()) {
         await message.reply({
           content:
