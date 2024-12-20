@@ -68,6 +68,35 @@ export class BalanceCommand extends Command {
       _sum: { amount: true },
     });
 
+    if (targetDB) {
+      if (!message.inGuild()) {
+        await this.container.utilities.discord.sendEphemeralMessage(message, {
+          content:
+            "É necessário estar no servidor para verificar saldos de outros usuários.",
+        });
+
+        return;
+      }
+
+      const member = await message.guild.members.fetch(message.author.id);
+
+      const hasPermission =
+        this.container.utilities.discord.hasPermissionByRole({
+          category: "SECTOR",
+          checkFor: "FUNDAÇÃO",
+          roles: member.roles,
+        });
+
+      if (!hasPermission) {
+        await this.container.utilities.discord.sendEphemeralMessage(message, {
+          content:
+            "Não autorizado. Você precisa ter o cargo de <@&788612423363330085> para verificar saldos de outros usuários",
+        });
+
+        return;
+      }
+    }
+
     await this.container.utilities.discord.sendEphemeralMessage(message, {
       method: "reply",
       embeds: [
