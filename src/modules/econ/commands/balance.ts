@@ -40,16 +40,18 @@ export class BalanceCommand extends Command {
 
     if (!authorDB) return;
 
-    const user = (await args.pickResult("string")).unwrapOr(authorDB.habboName);
+    const user = (await args.pickResult("string")).unwrapOr(undefined);
 
     const onlyHabbo = (
-      await this.container.utilities.habbo.getProfile(user)
+      await this.container.utilities.habbo.getProfile(
+        user ?? authorDB.habboName
+      )
     ).unwrapOr(undefined);
 
     const targetDB = await this.container.prisma.user.findFirst({
       where: {
         habboName: {
-          contains: user,
+          contains: user ?? authorDB.habboName,
           mode: "insensitive",
         },
       },
@@ -68,9 +70,8 @@ export class BalanceCommand extends Command {
       _sum: { amount: true },
     });
 
-    const targetExist = (await args.pickResult("string")).unwrapOr(undefined);
-    console.log(targetExist);
-    if (targetExist) {
+    console.log(user);
+    if (user) {
       if (!message.inGuild()) {
         await message.reply({
           content:
