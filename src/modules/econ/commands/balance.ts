@@ -68,7 +68,7 @@ export class BalanceCommand extends Command {
       _sum: { amount: true },
     });
 
-    if (targetDB) {
+    if (targetDB?.habboName) {
       if (!message.inGuild()) {
         await this.container.utilities.discord.sendEphemeralMessage(message, {
           content:
