@@ -184,7 +184,7 @@ export class ModGroupInteractionHandler extends InteractionHandler {
       const targetUser = await this.container.prisma.user.findFirst({
         where: {
           habboName: {
-            contains: target,
+            equals: target,
             mode: "insensitive",
           },
         },

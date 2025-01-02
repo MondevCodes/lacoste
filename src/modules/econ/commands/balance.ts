@@ -51,7 +51,7 @@ export class BalanceCommand extends Command {
     const targetDB = await this.container.prisma.user.findFirst({
       where: {
         habboName: {
-          contains: user ?? authorDB.habboName,
+          equals: user ?? authorDB.habboName,
           mode: "insensitive",
         },
       },

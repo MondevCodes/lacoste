@@ -33,7 +33,7 @@ export default class SendCommand extends Command {
     const targetDB = await this.container.prisma.user.findFirst({
       where: {
         habboName: {
-          contains: targetResult.unwrap(),
+          equals: targetResult.unwrap(),
           mode: "insensitive",
         },
       },

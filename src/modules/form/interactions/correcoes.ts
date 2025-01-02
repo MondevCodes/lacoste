@@ -174,7 +174,7 @@ export class CorrecoesFormInteractionHandler extends InteractionHandler {
         take: 2,
         where: {
           habboName: {
-            contains: target,
+            equals: target,
             mode: "insensitive",
           },
         },

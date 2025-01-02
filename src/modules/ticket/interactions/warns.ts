@@ -158,7 +158,7 @@ export class WarningsInteractionHandler extends InteractionHandler {
       const targetDBOnlyHabbo = await this.container.prisma.user.findFirst({
         where: {
           habboName: {
-            contains: result.Target,
+            equals: result.Target,
             mode: "insensitive",
           },
         },

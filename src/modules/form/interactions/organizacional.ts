@@ -309,7 +309,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
           take: 2,
           where: {
             habboName: {
-              contains: target,
+              equals: target,
               mode: "insensitive",
             },
           },
