@@ -33,7 +33,7 @@ export class TopRankCommand extends Command {
                 (user) =>
                   `- **${user.habboName}** // **${user.reportsHistory.length}**`
               )
-              .join("\n")}\nPresenças no CG: ${topUsersCG
+              .join("\n")}\n\nPresenças no CG:\n${topUsersCG
               .map(
                 (user) =>
                   `- **${user.habboName}** // **${user.reportsHistoryCG.length}**`
