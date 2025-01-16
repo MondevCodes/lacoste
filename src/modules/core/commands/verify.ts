@@ -46,6 +46,7 @@ export default class SendCommand extends Command {
         discordLink: true,
         habboName: true,
         reportsHistory: true,
+        reportsHistoryCG: true,
       },
     });
 
@@ -163,6 +164,10 @@ export default class SendCommand extends Command {
                   {
                     name: "Presenças Totais",
                     value: targetDB.reportsHistory.length.toString(),
+                  },
+                  {
+                    name: "Presenças CG",
+                    value: targetDB.reportsHistoryCG.length.toString(),
                   },
                 ])
                 .setFooter({
@@ -288,6 +293,7 @@ export default class SendCommand extends Command {
         latestPromotionRoleId: true,
         habboName: true,
         reportsHistory: true,
+        reportsHistoryCG: true,
       },
     });
 
@@ -379,6 +385,10 @@ export default class SendCommand extends Command {
                 {
                   name: "Presenças Totais",
                   value: databaseUser.reportsHistory.length.toString(),
+                },
+                {
+                  name: "Presenças CG",
+                  value: databaseUser.reportsHistoryCG.length.toString(),
                 },
               ])
               .setFooter({
