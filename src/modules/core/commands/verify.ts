@@ -45,6 +45,7 @@ export default class SendCommand extends Command {
         latestPromotionJobId: true,
         discordLink: true,
         habboName: true,
+        reportsHistory: true,
       },
     });
 
@@ -157,7 +158,11 @@ export default class SendCommand extends Command {
                   },
                   {
                     name: "Discord Vinculado?",
-                    value: discordLinked ? "Vinculado ✅" : "Não Vinculado ❌",
+                    value: discordLinked ? "✅ Vinculado " : "❌ Não Vinculado",
+                  },
+                  {
+                    name: "Presenças Totais",
+                    value: targetDB.reportsHistory.length.toString(),
                   },
                 ])
                 .setFooter({
@@ -198,7 +203,7 @@ export default class SendCommand extends Command {
                   },
                   {
                     name: "Discord Vinculado?",
-                    value: discordLinked ? "Vinculado ✅" : "Não Vinculado ❌",
+                    value: discordLinked ? "✅ Vinculado " : "❌ Não Vinculado",
                   },
                 ])
                 .setFooter({
@@ -282,6 +287,7 @@ export default class SendCommand extends Command {
         latestPromotionDate: true,
         latestPromotionRoleId: true,
         habboName: true,
+        reportsHistory: true,
       },
     });
 
@@ -361,7 +367,7 @@ export default class SendCommand extends Command {
                 },
                 {
                   name: "Discord Vinculado?",
-                  value: discordLinked ? "Vinculado ✅" : "Não Vinculado ❌",
+                  value: discordLinked ? "✅ Vinculado " : "❌ Não Vinculado",
                 },
                 {
                   name: "Medalhas",
@@ -369,6 +375,10 @@ export default class SendCommand extends Command {
                     userMedalsList.length > 0
                       ? userMedalsList
                       : "O colaborador não possui medalhas acumuladas",
+                },
+                {
+                  name: "Presenças Totais",
+                  value: databaseUser.reportsHistory.length.toString(),
                 },
               ])
               .setFooter({
@@ -409,7 +419,7 @@ export default class SendCommand extends Command {
                 },
                 {
                   name: "Discord Vinculado?",
-                  value: discordLinked ? "Vinculado ✅" : "Não Vinculado ❌",
+                  value: discordLinked ? "✅ Vinculado " : "❌ Não Vinculado",
                 },
               ])
               .setFooter({
