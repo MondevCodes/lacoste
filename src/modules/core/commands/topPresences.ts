@@ -9,19 +9,24 @@ import { EmbedBuilder, type Message } from "discord.js";
 })
 export class TopRankCommand extends Command {
   public override async messageRun(message: Message) {
-    const topUsersAll = await this.container.prisma.user.findMany({
-      orderBy: {
-        reportsHistory: "desc",
+    const allUsers = await this.container.prisma.user.findMany({
+      where: {
+        habboName: { not: "" },
+        latestPromotionDate: { not: null },
+        AND: [
+          { latestPromotionRoleId: { not: null } },
+          { latestPromotionRoleId: { isSet: true } },
+        ],
       },
-      take: 10,
     });
 
-    const topUsersCG = await this.container.prisma.user.findMany({
-      orderBy: {
-        reportsHistoryCG: "desc",
-      },
-      take: 10,
-    });
+    const topUsersAll = allUsers
+      .sort((a, b) => b.reportsHistory.length - a.reportsHistory.length)
+      .slice(0, 10);
+
+    const topUsersCG = allUsers
+      .sort((a, b) => b.reportsHistoryCG.length - a.reportsHistoryCG.length)
+      .slice(0, 10);
 
     await message.reply({
       embeds: [
