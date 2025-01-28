@@ -9,6 +9,32 @@ import { EmbedBuilder, type Message } from "discord.js";
 })
 export class TopRankCommand extends Command {
   public override async messageRun(message: Message) {
+    if (!message.inGuild()) {
+      await message.reply({
+        content:
+          "É necessário estar no servidor para ver o ranking de presenças.",
+      });
+
+      return;
+    }
+
+    const member = await message.guild.members.fetch(message.author.id);
+
+    const hasPermission = this.container.utilities.discord.hasPermissionByRole({
+      category: "SECTOR",
+      checkFor: "FUNDAÇÃO",
+      roles: member.roles,
+    });
+
+    if (!hasPermission) {
+      await message.reply({
+        content:
+          "Não autorizado. Você precisa ter o cargo de <@&788612423363330085> para ver o ranking de presenças.",
+      });
+
+      return;
+    }
+
     const allUsers = await this.container.prisma.user.findMany({
       where: {
         habboName: { not: "" },
@@ -38,7 +64,7 @@ export class TopRankCommand extends Command {
                 (user) =>
                   `- **${user.habboName}** // **${user.reportsHistory.length}**`
               )
-              .join("\n")}\n\nPresenças no CG:\n${topUsersCG
+              .join("\n")}\n\nPresenças no C.G:\n${topUsersCG
               .map(
                 (user) =>
                   `- **${user.habboName}** // **${user.reportsHistoryCG.length}**`

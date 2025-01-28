@@ -93,8 +93,9 @@ export class BalanceCommand extends Command {
       if (!hasPermission) {
         await message.reply({
           content:
-            "Não autorizado. Você precisa ter o cargo de <@&788612423363330085> para verificar saldos de outros usuários",
+            "Não autorizado. Você precisa ter o cargo de <@&788612423363330085> para verificar saldos de outros usuários.",
         });
+
         return;
       }
     }

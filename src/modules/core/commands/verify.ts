@@ -166,7 +166,7 @@ export default class SendCommand extends Command {
                     value: targetDB.reportsHistory.length.toString(),
                   },
                   {
-                    name: "Presenças CG",
+                    name: "Presenças C.G",
                     value: targetDB.reportsHistoryCG.length.toString(),
                   },
                 ])
@@ -387,7 +387,7 @@ export default class SendCommand extends Command {
                   value: databaseUser.reportsHistory.length.toString(),
                 },
                 {
-                  name: "Presenças CG",
+                  name: "Presenças C.G",
                   value: databaseUser.reportsHistoryCG.length.toString(),
                 },
               ])
