@@ -60,7 +60,7 @@ export class MedalInteractionHandler extends InteractionHandler {
   }
 
   private async createMedalSelectMenu(
-    interaction: ButtonInteraction<InGuild>,
+    interaction: any,
     medals: Array<{ id: string; label: string }>,
     page: number = 0,
     pageSize: number = 24
@@ -216,7 +216,7 @@ export class MedalInteractionHandler extends InteractionHandler {
     while (!targetMedalId) {
       try {
         targetMedalId = await this.createMedalSelectMenu(
-          interaction,
+          interactionFromModal,
           medalChoices,
           currentPage
         );
