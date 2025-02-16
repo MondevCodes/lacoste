@@ -246,6 +246,18 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
         case "N/D":
           continue;
 
+        case "n/D":
+          continue;
+
+        case "N/d":
+          continue;
+
+        case "n/d":
+          continue;
+
+        case "nd":
+          continue;
+
         case "-":
           continue;
 

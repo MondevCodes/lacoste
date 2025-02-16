@@ -3,7 +3,12 @@ import {
   InteractionHandlerTypes,
 } from "@sapphire/framework";
 
-import { EmbedBuilder, ButtonInteraction, ButtonStyle } from "discord.js";
+import {
+  EmbedBuilder,
+  ButtonInteraction,
+  ButtonStyle,
+  ComponentType,
+} from "discord.js";
 
 import { ApplyOptions } from "@sapphire/decorators";
 
@@ -46,6 +51,45 @@ export class DeleteMedalInteractionHandler extends InteractionHandler {
     });
 
     return isAuthorized ? this.some() : this.none();
+  }
+
+  private async createMedalSelectMenu(
+    interaction: ButtonInteraction<InGuild>,
+    medals: Array<{ id: string; label: string }>,
+    page: number = 0,
+    pageSize: number = 24
+  ) {
+    const totalPages = Math.ceil(medals.length / pageSize);
+    const start = page * pageSize;
+    const end = start + pageSize;
+    const currentPageMedals = medals.slice(start, end);
+
+    const [selectedId] =
+      await this.container.utilities.inquirer.awaitSelectMenu(interaction, {
+        choices: currentPageMedals,
+        placeholder: `Página ${page + 1}/${totalPages}`,
+        question: "Selecione a medalha que deseja visualizar",
+        components: [
+          {
+            type: ComponentType.Button,
+            customId: "prev",
+            label: "← Anterior",
+            style: ButtonStyle.Secondary,
+            disabled: page === 0,
+          },
+          {
+            type: ComponentType.Button,
+            customId: "next",
+            label: "Próximo →",
+            style: ButtonStyle.Secondary,
+            disabled: page >= totalPages - 1,
+          },
+        ],
+        embeds: [],
+        content: "",
+      });
+
+    return selectedId;
   }
 
   public override async run(interaction: ButtonInteraction<InGuild>) {
@@ -169,29 +213,43 @@ export class DeleteMedalInteractionHandler extends InteractionHandler {
         components: [],
       });
 
-      const medalChoices = await Promise.all(
-        values(medalsDB).map(
-          async (value) =>
-            value.discordId &&
-            (guild.roles.cache.get(value.discordId) ??
-              (await guild.roles.fetch(value.discordId)))
+      const medalChoices = (
+        await Promise.all(
+          values(medalsDB).map(
+            async (value) =>
+              value.discordId &&
+              (guild.roles.cache.get(value.discordId) ??
+                (await guild.roles.fetch(value.discordId)))
+          )
         )
-      );
+      )
+        .filter(Boolean)
+        .map((medal) => ({
+          id: medal.id,
+          label: medal.name,
+        }));
 
-      const [targetMedalId] =
-        await this.container.utilities.inquirer.awaitSelectMenu(interaction, {
-          choices: [
-            ...medalChoices.filter(Boolean).map((medal) => ({
-              id: medal.id,
-              label: medal.name,
-            })),
-          ],
-          placeholder: "Selecionar",
-          question: "Selecione a medalha que deseja visualizar",
-          components: [],
-          embeds: [],
-          content: "",
-        });
+      let currentPage = 0;
+      let targetMedalId: string | null = null;
+
+      while (!targetMedalId) {
+        try {
+          targetMedalId = await this.createMedalSelectMenu(
+            interaction,
+            medalChoices,
+            currentPage
+          );
+        } catch (error: any) {
+          if (error?.customId === "next") {
+            currentPage++;
+            continue;
+          } else if (error?.customId === "prev") {
+            currentPage--;
+            continue;
+          }
+          throw error;
+        }
+      }
 
       const existingMedal = await this.container.prisma.medals.findUnique({
         where: {
