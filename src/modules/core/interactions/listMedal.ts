@@ -7,7 +7,9 @@ import {
   EmbedBuilder,
   ButtonInteraction,
   ButtonStyle,
-  ComponentType,
+  StringSelectMenuBuilder,
+  ActionRowBuilder,
+  ButtonBuilder,
 } from "discord.js";
 
 import { ApplyOptions } from "@sapphire/decorators";
@@ -62,34 +64,51 @@ export class DeleteMedalInteractionHandler extends InteractionHandler {
     const totalPages = Math.ceil(medals.length / pageSize);
     const start = page * pageSize;
     const end = start + pageSize;
-    const currentPageMedals = medals.slice(start, end);
+    const currentPageMedals = medals.slice(start, end).map((medal) => ({
+      label: medal.label,
+      value: medal.id,
+    }));
 
-    const [selectedId] =
-      await this.container.utilities.inquirer.awaitSelectMenu(interaction, {
-        choices: currentPageMedals,
-        placeholder: `Página ${page + 1}/${totalPages}`,
-        question: "Selecione a medalha que deseja visualizar",
-        components: [
-          {
-            type: ComponentType.Button,
-            customId: "prev",
-            label: "← Anterior",
-            style: ButtonStyle.Secondary,
-            disabled: page === 0,
-          },
-          {
-            type: ComponentType.Button,
-            customId: "next",
-            label: "Próximo →",
-            style: ButtonStyle.Secondary,
-            disabled: page >= totalPages - 1,
-          },
-        ],
-        embeds: [],
-        content: "",
-      });
+    const selectMenu =
+      new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+        new StringSelectMenuBuilder()
+          .setCustomId("medal-select")
+          .setPlaceholder(`Página ${page + 1}/${totalPages}`)
+          .addOptions(currentPageMedals)
+      );
 
-    return selectedId;
+    const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
+      new ButtonBuilder()
+        .setCustomId("prev")
+        .setLabel("← Anterior")
+        .setStyle(ButtonStyle.Secondary)
+        .setDisabled(page === 0),
+      new ButtonBuilder()
+        .setCustomId("next")
+        .setLabel("Próximo →")
+        .setStyle(ButtonStyle.Secondary)
+        .setDisabled(page >= totalPages - 1)
+    );
+
+    await interaction.editReply({
+      content: "Selecione a medalha que deseja visualizar",
+      components: [selectMenu, buttons],
+    });
+
+    const response = await interaction.channel?.awaitMessageComponent({
+      filter: (i) => i.user.id === interaction.user.id,
+      time: 60000,
+    });
+
+    if (!response) throw new Error("Tempo esgotado");
+
+    if (response.customId === "prev" || response.customId === "next") {
+      await response.deferUpdate();
+      throw { customId: response.customId };
+    }
+
+    await response.deferUpdate();
+    return response.isStringSelectMenu() ? response.values[0] : null;
   }
 
   public override async run(interaction: ButtonInteraction<InGuild>) {
