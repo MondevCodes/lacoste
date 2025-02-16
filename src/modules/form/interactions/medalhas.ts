@@ -11,6 +11,9 @@ import {
   TextInputBuilder,
   ButtonInteraction,
   GuildMemberRoleManager,
+  ActionRowBuilder,
+  ButtonBuilder,
+  StringSelectMenuBuilder,
 } from "discord.js";
 
 import { values } from "remeda";
@@ -54,6 +57,62 @@ export class MedalInteractionHandler extends InteractionHandler {
     });
 
     return isAuthorized ? this.some() : this.none();
+  }
+
+  private async createMedalSelectMenu(
+    interaction: ButtonInteraction<InGuild>,
+    medals: Array<{ id: string; label: string }>,
+    page: number = 0,
+    pageSize: number = 24
+  ) {
+    const totalPages = Math.ceil(medals.length / pageSize);
+    const start = page * pageSize;
+    const end = start + pageSize;
+    const currentPageMedals = medals.slice(start, end).map((medal) => ({
+      label: medal.label,
+      value: medal.id,
+    }));
+
+    const selectMenu =
+      new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+        new StringSelectMenuBuilder()
+          .setCustomId("medal-select")
+          .setPlaceholder(`Página ${page + 1}/${totalPages}`)
+          .addOptions(currentPageMedals)
+      );
+
+    const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
+      new ButtonBuilder()
+        .setCustomId("prev")
+        .setLabel("← Anterior")
+        .setStyle(ButtonStyle.Secondary)
+        .setDisabled(page === 0),
+      new ButtonBuilder()
+        .setCustomId("next")
+        .setLabel("Próximo →")
+        .setStyle(ButtonStyle.Secondary)
+        .setDisabled(page >= totalPages - 1)
+    );
+
+    await interaction.editReply({
+      content: "Selecione a medalha que deseja visualizar",
+      components: [selectMenu, buttons],
+    });
+
+    const response = await interaction.channel?.awaitMessageComponent({
+      filter: (i) => i.user.id === interaction.user.id,
+      time: 60000,
+    });
+
+    if (!response) throw new Error("Tempo esgotado");
+
+    if (response.customId === "prev" || response.customId === "next") {
+      await response.deferUpdate();
+      throw { customId: response.customId };
+    }
+
+    await response.deferUpdate();
+    return response.isStringSelectMenu() ? response.values[0] : null;
   }
 
   public override async run(interaction: ButtonInteraction<InGuild>) {
@@ -135,29 +194,43 @@ export class MedalInteractionHandler extends InteractionHandler {
 
     const allMedals = await this.container.prisma.medals.findMany();
 
-    const medalChoices = await Promise.all(
-      values(allMedals).map(
-        async (value) =>
-          value.discordId &&
-          (guild.roles.cache.get(value.discordId) ??
-            (await guild.roles.fetch(value.discordId)))
+    const medalChoices = (
+      await Promise.all(
+        values(allMedals).map(
+          async (value) =>
+            value.discordId &&
+            (guild.roles.cache.get(value.discordId) ??
+              (await guild.roles.fetch(value.discordId)))
+        )
       )
-    );
+    )
+      .filter(Boolean)
+      .map((medal) => ({
+        id: medal.id,
+        label: medal.name,
+      }));
 
-    const [targetMedalId] =
-      await this.container.utilities.inquirer.awaitSelectMenu(
-        interactionFromModal,
-        {
-          choices: [
-            ...medalChoices.filter(Boolean).map((medal) => ({
-              id: medal.id,
-              label: medal.name,
-            })),
-          ],
-          placeholder: "Selecionar",
-          question: "Selecione a medalha que deseja entregar.",
+    let currentPage = 0;
+    let targetMedalId: string | null = null;
+
+    while (!targetMedalId) {
+      try {
+        targetMedalId = await this.createMedalSelectMenu(
+          interaction,
+          medalChoices,
+          currentPage
+        );
+      } catch (error: any) {
+        if (error?.customId === "next") {
+          currentPage++;
+          continue;
+        } else if (error?.customId === "prev") {
+          currentPage--;
+          continue;
         }
-      );
+        throw error;
+      }
+    }
 
     const hasMedal = targetMember.roles.cache.has(targetMedalId);
 
