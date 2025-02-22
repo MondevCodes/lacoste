@@ -58,9 +58,15 @@ export class DevCommand extends Command {
 
     let count = 0;
     for await (const user of users) {
-      if (user.discordId.startsWith("hhbr")) continue;
-
-      const discordUser = await message.guild.members.fetch(user.discordId);
+      let discordUser;
+      try {
+        discordUser = await message.guild.members.fetch(user.discordId);
+      } catch (err) {
+        this.container.logger.info(
+          `Usuário ${user.habboName} não encontrado com o discordId: ${user.discordId}`
+        );
+        continue;
+      }
 
       if (!discordUser) continue;
 
