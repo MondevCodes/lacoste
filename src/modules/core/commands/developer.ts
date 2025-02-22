@@ -52,6 +52,7 @@ export class DevCommand extends Command {
             ],
           },
           { discordLink: { not: false } },
+          { latestPromotionJobId: null },
         ],
       },
     });
