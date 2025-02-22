@@ -58,7 +58,11 @@ export class DevCommand extends Command {
 
     let count = 0;
     for await (const user of users) {
+      if (user.discordId.startsWith("hhbr")) continue;
+
       const discordUser = await message.guild.members.fetch(user.discordId);
+
+      if (!discordUser) continue;
 
       const jobRoles = discordUser.roles.cache.filter((role) =>
         Object.values(ENVIRONMENT.JOBS_ROLES).some((r) => r.id === role.id)
