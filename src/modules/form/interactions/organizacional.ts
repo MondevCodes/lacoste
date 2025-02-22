@@ -580,6 +580,14 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
                 ],
               },
               { habboName: { not: "" } },
+              {
+                latestPromotionJobId: {
+                  notIn: [
+                    ENVIRONMENT.JOBS_ROLES.ADMINISTRADOR.id,
+                    ENVIRONMENT.JOBS_ROLES.ADMINISTRADOR_EM_OBS.id,
+                  ],
+                },
+              },
             ],
             OR: [
               {
