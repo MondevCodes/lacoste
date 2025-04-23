@@ -61,7 +61,6 @@ export class OnGuildMemberAddListener extends Listener {
             .setDescription(
               `⛔ Erro: <@${member.id}> não está cadastrado em nosso banco de dados.`
             ),
-          // .setThumbnail("⛔"),
         ],
       });
 
