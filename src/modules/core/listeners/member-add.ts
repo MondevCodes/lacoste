@@ -46,6 +46,7 @@ export class OnGuildMemberAddListener extends Listener {
       },
       select: {
         latestPromotionJobId: true,
+        latestPromotionRoleId: true,
         habboName: true,
         discordId: true,
       },
@@ -68,15 +69,19 @@ export class OnGuildMemberAddListener extends Listener {
     }
 
     if (!targetDB?.latestPromotionJobId) return;
+    if (!targetDB?.latestPromotionRoleId) return;
 
     let roleCargo: string | null = null;
 
-    for (const roleId of [targetDB?.latestPromotionJobId]) {
+    for (const roleId of [
+      targetDB?.latestPromotionJobId,
+      targetDB?.latestPromotionRoleId,
+    ]) {
       const rolesMainServer =
         mainServerGuildId.roles.cache.get(roleId) ??
         (await mainServerGuildId.roles.fetch(roleId).catch(() => null));
       if (!rolesMainServer) {
-        this.container.logger.warn(`Role ${roleId} not found on main server.`);
+        this.container.logger.warn(`Role ${roleId} not found on log server.`);
         continue;
       }
 
