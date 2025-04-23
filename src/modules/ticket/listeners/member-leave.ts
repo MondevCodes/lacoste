@@ -18,12 +18,13 @@ export class OnGuildMemberRemoveListener extends Listener {
   ) {
     super(context, {
       ...options,
-      emitter: container.client.ws,
-      event: "GUILD_MEMBER_REMOVE",
+      emitter: container.client,
+      event: "guildMemberRemove",
     });
   }
 
   public override async run(member: GuildMember) {
+    if (member.guild.id === ENVIRONMENT.LOG_GUILD_ID) return;
     this.container.logger.info(
       `Listener guildMemberRemove, a member left the server USER.ID: ${member.user.id}`
     );
