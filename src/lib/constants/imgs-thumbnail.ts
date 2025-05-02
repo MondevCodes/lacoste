@@ -1,0 +1,10 @@
+export enum ImgThumbnail {
+  MudarConta = "https://cdn.discordapp.com/attachments/1365034354585108690/1365038819782692975/Lac._21.gif?ex=68151577&is=6813c3f7&hm=d7ae70e28b09f8d2f356842bc776b2d738bfe173695180b5cf79cf2ff2e08d01&",
+  Ouvidoria = "https://cdn.discordapp.com/attachments/1365034354585108690/1365039256732434593/Lac._22.gif?ex=681515e0&is=6813c460&hm=405b50cf216cb342bf8fe37e73af0b20caf994785db473877f8b10bcf82c2e6e&",
+  Avaliativo = "https://cdn.discordapp.com/attachments/1365034354585108690/1365039610337562655/Lac._23.gif?ex=68151634&is=6813c4b4&hm=fc981dd284bed9370ac9b8e74dffd12c91e800604dc259c673bf00956817f1cd&",
+  Organizacional = "https://cdn.discordapp.com/attachments/1365034354585108690/1365039991868231730/Lac._24.gif?ex=6815168f&is=6813c50f&hm=5a8ab2e2e406874eae2c98ffca1758d92394fbe61b526756c47b30c5b3db32a0&",
+  Promocional = "https://cdn.discordapp.com/attachments/1365034354585108690/1365040360933298227/Lac._25.gif?ex=681516e7&is=6813c567&hm=345462b85b7d3250c165eacbbd8ee8c258ced19b1094bbdb3b57a66b7bcad6f2&",
+  Administrativo = "https://cdn.discordapp.com/attachments/1365034354585108690/1365040820540932096/Lac._26.gif?ex=68151754&is=6813c5d4&hm=137b0224be6808e17e53c55323f6b6393675e3280fac88976d11445fbc2dfcbc&",
+  Diretoria = "https://cdn.discordapp.com/attachments/1365034354585108690/1365041155951038474/Lac._27.gif?ex=681517a4&is=6813c624&hm=94c1a8466ac93b272aa375b1044a876aeb774739e33db54d6e48c0cfb6cd9c36&",
+  Fundacao = "https://cdn.discordapp.com/attachments/1365034354585108690/1365041494020587550/Lac._28.gif?ex=681517f5&is=6813c675&hm=e29c4a36bf9790b9f137b024ecfb2a2550c759daf8b573b755ae10ca52e4719d&",
+}
