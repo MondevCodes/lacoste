@@ -57,7 +57,13 @@ export class OnGuildMemberAddListener extends Listener {
         embeds: [
           new EmbedBuilder()
             .setAuthor({ name: "Automatizado por Lala 🤖" })
-            .setTitle(`${member.user.globalName} chegou... adiantado. ⏰`)
+            .setTitle(
+              `${
+                member.user.globalName
+                  ? member.user.globalName
+                  : member.user.username
+              } chegou... adiantado. ⏰`
+            )
             .setColor(EmbedColors.Error)
             .setDescription(
               `⛔ Erro: <@${member.id}> não está cadastrado em nosso banco de dados.`

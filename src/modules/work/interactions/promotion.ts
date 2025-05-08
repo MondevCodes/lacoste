@@ -1098,7 +1098,7 @@ export class PromotionInteractionHandler extends InteractionHandler {
                 },
                 {
                   name: "💼 Cargo Atual",
-                  value: `${roleCargo}`,
+                  value: `${roleCargo ? roleCargo : "Sem cargo vinculado"}`,
                   inline: true,
                 },
                 {
@@ -1154,7 +1154,9 @@ export class PromotionInteractionHandler extends InteractionHandler {
                 },
                 {
                   name: "💼 Cargo Anterior",
-                  value: `${oldRoleCargo}`,
+                  value: `${
+                    oldRoleCargo ? oldRoleCargo : "Sem cargo vinculado"
+                  }`,
                   inline: true,
                 },
                 {
