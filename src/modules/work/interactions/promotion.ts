@@ -1050,7 +1050,9 @@ export class PromotionInteractionHandler extends InteractionHandler {
               ])
               .setColor(EmbedColors.Success)
               .setThumbnail(
-                `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo?.figureString}&size=b`
+                onlyHabbo
+                  ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo?.figureString}&size=b`
+                  : null
               ),
           ],
         });
@@ -1083,7 +1085,9 @@ export class PromotionInteractionHandler extends InteractionHandler {
               ])
               .setColor(EmbedColors.LalaRed)
               .setThumbnail(
-                `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo?.figureString}&size=b`
+                onlyHabbo
+                  ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo?.figureString}&size=b`
+                  : null
               ),
           ],
         });
@@ -1111,7 +1115,9 @@ export class PromotionInteractionHandler extends InteractionHandler {
               ])
               .setColor(EmbedColors.Hire)
               .setThumbnail(
-                `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo?.figureString}&size=b`
+                onlyHabbo
+                  ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo?.figureString}&size=b`
+                  : null
               ),
           ],
         });
@@ -1139,7 +1145,9 @@ export class PromotionInteractionHandler extends InteractionHandler {
               ])
               .setColor(EmbedColors.LalaRed)
               .setThumbnail(
-                `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo?.figureString}&size=b`
+                onlyHabbo
+                  ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo?.figureString}&size=b`
+                  : null
               ),
           ],
         });
@@ -1169,7 +1177,9 @@ export class PromotionInteractionHandler extends InteractionHandler {
               ])
               .setColor(EmbedColors.LalaRed)
               .setThumbnail(
-                `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo?.figureString}&size=b`
+                onlyHabbo
+                  ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo?.figureString}&size=b`
+                  : null
               ),
           ],
         });
