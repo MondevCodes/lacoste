@@ -18,6 +18,7 @@ import {
 import { EmbedColors } from "$lib/constants/discord";
 import { ENVIRONMENT } from "$lib/env";
 import { getJobSectorsById } from "$lib/constants/jobs";
+import { PromotionInteractionHandler } from "../../work/interactions/promotion";
 
 export type Action = "Request" | "Approve" | "Reject";
 
@@ -66,6 +67,15 @@ let habboInteractionAcceptName: string | undefined = undefined;
   interactionHandlerType: InteractionHandlerTypes.Button,
 })
 export class FireInteractionHandler extends InteractionHandler {
+  private promotionHandler: PromotionInteractionHandler;
+  constructor(
+    context: InteractionHandler.LoaderContext,
+    options: InteractionHandler.Options
+  ) {
+    super(context, options);
+    this.promotionHandler = new PromotionInteractionHandler(context, options);
+  }
+
   async #isAuthorized(interaction: ButtonInteraction) {
     if (!interaction.inCachedGuild()) {
       this.container.logger.warn(
@@ -749,6 +759,12 @@ export class FireInteractionHandler extends InteractionHandler {
     } else {
       this.container.logger.error(`Member don't have any amount in database`);
     }
+
+    if (targetUser.latestPromotionJobId && targetUser.latestPromotionRoleId)
+      await this.promotionHandler.updateDiscordLogRole("FIRE", targetUser, [
+        targetUser.latestPromotionJobId,
+        targetUser.latestPromotionRoleId,
+      ]);
 
     await this.container.prisma.user.delete({
       where: {

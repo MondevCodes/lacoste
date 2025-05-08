@@ -20,6 +20,7 @@ import { EmbedColors } from "$lib/constants/discord";
 import { getJobSectorsById } from "$lib/constants/jobs";
 import { ENVIRONMENT } from "$lib/env";
 import { FormIds } from "$lib/constants/forms";
+import { PromotionInteractionHandler } from "../../work/interactions/promotion";
 
 export type Action = "Request" | "Approve" | "Reject";
 
@@ -63,6 +64,16 @@ type ModalInput = keyof typeof MODAL_INPUTS_OBJ;
   interactionHandlerType: InteractionHandlerTypes.Button,
 })
 export class DowngradeInteractionHandler extends InteractionHandler {
+  private promotionHandler: PromotionInteractionHandler;
+
+  constructor(
+    context: InteractionHandler.LoaderContext,
+    options: InteractionHandler.Options
+  ) {
+    super(context, options);
+    this.promotionHandler = new PromotionInteractionHandler(context, options);
+  }
+
   async #isAuthorized(interaction: ButtonInteraction) {
     if (!interaction.inCachedGuild()) {
       this.container.logger.warn(
@@ -147,14 +158,12 @@ export class DowngradeInteractionHandler extends InteractionHandler {
         await this.container.utilities.habbo.getProfile(result.Target)
       ).unwrapOr(undefined);
 
-      // if (!onlyHabbo?.name) {
-      //   await modalInteraction.editReply({
-      //     content:
-      //       "Não consegui encontrar o perfil do usuário no Habbo, talvez sua conta esteja deletada ou renomeada? Veja se o perfil do usuário no jogo está como público.",
-      //   });
-
-      //   return;
-      // }
+      if (!onlyHabbo?.name) {
+        await modalInteraction.editReply({
+          content:
+            "Não consegui encontrar o perfil do usuário no Habbo, talvez sua conta esteja deletada ou renomeada? Veja se o perfil do usuário no jogo está como público.",
+        });
+      }
 
       const targetDBOnlyHabbo = await this.container.prisma.user.findFirst({
         where: {
@@ -771,25 +780,16 @@ export class DowngradeInteractionHandler extends InteractionHandler {
           return;
         }
 
-        await guild.members.removeRole({
-          user: targetUser.discordId,
-          role: previousJobRole.id,
-        });
+        await targetDiscordMember.roles.remove(previousJobRole);
 
-        await guild.members.removeRole({
-          user: targetUser.discordId,
-          role: previousSectorRole?.id,
-        });
+        await targetDiscordMember.roles.remove(previousSectorRole);
 
         const latestPromotionRole =
           targetUser.latestPromotionRoleId &&
           (await guild.roles.fetch(targetUser.latestPromotionRoleId));
 
         if (latestPromotionRole) {
-          await guild.members.removeRole({
-            user: targetUser.discordId,
-            role: latestPromotionRole,
-          });
+          await targetDiscordMember.roles.remove(latestPromotionRole);
         }
 
         if (sectorRole)
@@ -802,16 +802,22 @@ export class DowngradeInteractionHandler extends InteractionHandler {
           role: pendingPromotionRole,
           user: targetUser.discordId,
         });
-      }
 
-      await this.container.prisma.user.update({
-        where: { id: targetUserId },
-        data: {
-          latestPromotionRoleId: sectorRole?.id,
-          latestPromotionJobId: pendingPromotionRole.id,
-          pendingPromotionRoleId: null,
-        },
-      });
+        const targetUserUpdated = await this.container.prisma.user.update({
+          where: { id: targetUserId },
+          data: {
+            latestPromotionRoleId: sectorRole?.id,
+            latestPromotionJobId: pendingPromotionRole.id,
+            pendingPromotionRoleId: null,
+          },
+        });
+
+        await this.promotionHandler.updateDiscordLogRole(
+          "DOWNGRADE",
+          targetUserUpdated,
+          [previousSectorRole.id, previousJobRole.id]
+        );
+      }
 
       const authorApprovedDB = await this.container.prisma.user.findUnique({
         where: {
@@ -848,8 +854,6 @@ export class DowngradeInteractionHandler extends InteractionHandler {
       });
 
       await interaction.message.delete();
-
-      return;
     }
   }
 
