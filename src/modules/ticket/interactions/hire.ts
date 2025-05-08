@@ -20,6 +20,7 @@ import { ApplyOptions } from "@sapphire/decorators";
 import { EmbedColors } from "$lib/constants/discord";
 import { getJobSectorsById } from "$lib/constants/jobs";
 import { ENVIRONMENT } from "$lib/env";
+import { PromotionInteractionHandler } from "../../work/interactions/promotion";
 
 export type Action = "Request" | "Approve" | "Reject";
 
@@ -63,6 +64,15 @@ let habboInteractionName: string | undefined = undefined;
   interactionHandlerType: InteractionHandlerTypes.Button,
 })
 export class HireInteractionHandler extends InteractionHandler {
+  private promotionHandler: PromotionInteractionHandler;
+  constructor(
+    context: InteractionHandler.LoaderContext,
+    options: InteractionHandler.Options
+  ) {
+    super(context, options);
+    this.promotionHandler = new PromotionInteractionHandler(context, options);
+  }
+
   async #isAuthorized(interaction: ButtonInteraction) {
     if (!interaction.inCachedGuild()) {
       this.container.logger.warn(
@@ -792,7 +802,7 @@ export class HireInteractionHandler extends InteractionHandler {
       });
     }
 
-    await this.container.prisma.user.update({
+    const userUpdated = await this.container.prisma.user.update({
       where: { id: targetUserId },
       data: {
         latestPromotionDate: new Date(),
@@ -805,6 +815,12 @@ export class HireInteractionHandler extends InteractionHandler {
     const habboTargetProfile = (
       await this.container.utilities.habbo.getProfile(targetUser.habboId)
     ).unwrapOr(null);
+
+    if (targetUser.latestPromotionJobId && targetUser.latestPromotionRoleId)
+      await this.promotionHandler.updateDiscordLogRole("HIRE", userUpdated, [
+        targetUser.latestPromotionJobId,
+        targetUser.latestPromotionRoleId,
+      ]);
 
     const authorResult = await Result.fromAsync(
       this.container.utilities.habbo.inferTargetGuildMember(

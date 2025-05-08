@@ -2,6 +2,7 @@ import { Listener, container } from "@sapphire/framework";
 
 import { GuildMember, EmbedBuilder } from "discord.js";
 import { EmbedColors } from "$lib/constants/discord";
+import { PromotionInteractionHandler } from "../../work/interactions/promotion";
 
 import { ENVIRONMENT } from "$lib/env";
 
@@ -24,7 +25,7 @@ export class OnGuildMemberRemoveListener extends Listener {
   }
 
   public override async run(member: GuildMember) {
-    if (member.guild.id === ENVIRONMENT.LOG_GUILD_ID) return;
+    if (member.guild.id !== ENVIRONMENT.GUILD_ID) return;
     this.container.logger.info(
       `Listener guildMemberRemove, a member left the server USER.ID: ${member.user.id}`
     );
@@ -54,17 +55,20 @@ export class OnGuildMemberRemoveListener extends Listener {
       this.container.logger.error(`Member don't have any amount in database`);
     }
 
-    const targetDB = await this.container.prisma.user.findUnique({
+    const promotionIntHandler = container.stores
+      .get("interaction-handlers")
+      .get("promotion") as PromotionInteractionHandler | undefined;
+
+    if (!promotionIntHandler) {
+      this.container.logger.warn(
+        "PromotionInteractionHandler não encontrado no store"
+      );
+      return;
+    }
+
+    const targetDB = await this.container.prisma.user.findUniqueOrThrow({
       where: {
         discordId: member.user.id,
-      },
-      select: {
-        id: true,
-        habboName: true,
-        discordId: true,
-        habboId: true,
-        latestPromotionDate: true,
-        latestPromotionRoleId: true,
       },
     });
 
@@ -84,7 +88,7 @@ export class OnGuildMemberRemoveListener extends Listener {
           },
           data: {
             users: {
-              set: medal.users.filter((id) => id !== member.user.id),
+              set: medal.users.filter((id: string) => id !== member.user.id),
             },
           },
         });
@@ -195,6 +199,12 @@ export class OnGuildMemberRemoveListener extends Listener {
         ],
       });
     }
+
+    if (targetDB.latestPromotionRoleId && targetDB.latestPromotionJobId)
+      await promotionIntHandler.updateDiscordLogRole("LEAVE", targetDB, [
+        targetDB.latestPromotionRoleId,
+        targetDB.latestPromotionJobId,
+      ]);
 
     await this.container.prisma.user.delete({
       where: {
