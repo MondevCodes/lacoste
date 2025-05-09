@@ -70,7 +70,6 @@ export class BalanceCommand extends Command {
       _sum: { amount: true },
     });
 
-    console.log(user);
     if (user) {
       if (!message.inGuild()) {
         await message.reply({
@@ -90,10 +89,12 @@ export class BalanceCommand extends Command {
           roles: member.roles,
         });
 
-      if (!hasPermission) {
+      const ROLE_FILIADO_PLUS_ID = "1362577893527523571";
+      // Caso não tenha permissão ou não tenha cargo de "Filiado Plus"
+      if (!hasPermission && !member.roles.cache.has(ROLE_FILIADO_PLUS_ID)) {
         await message.reply({
           content:
-            "Não autorizado. Você precisa ter o cargo de <@&788612423363330085> para verificar saldos de outros usuários.",
+            "Não autorizado. Você precisa ter o cargo de <@&788612423363330085> ou <@&1362577893527523571> para verificar saldos de outros usuários.",
         });
 
         return;
