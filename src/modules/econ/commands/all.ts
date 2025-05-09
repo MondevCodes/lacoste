@@ -1,4 +1,5 @@
 import { EmbedColors } from "$lib/constants/discord";
+import { DMChannel, NewsChannel, TextChannel, ThreadChannel } from "discord.js";
 import { ApplyOptions } from "@sapphire/decorators";
 import { Command } from "@sapphire/framework";
 import { EmbedBuilder, Message } from "discord.js";
@@ -19,6 +20,34 @@ export class AllBalancesCommand extends Command {
       },
     });
 
+    if (!message.inGuild()) {
+      await message.reply({
+        content:
+          "É necessário estar no servidor para verificar saldos de outros usuários.",
+      });
+
+      return;
+    }
+
+    const member = await message.guild.members.fetch(message.author.id);
+
+    const hasPermission = this.container.utilities.discord.hasPermissionByRole({
+      category: "SECTOR",
+      checkFor: "FUNDAÇÃO",
+      roles: member.roles,
+    });
+
+    const ROLE_FILIADO_PLUS_ID = "1362577893527523571";
+    // Caso não tenha permissão ou não tenha cargo de "Filiado Plus"
+    if (!hasPermission && !member.roles.cache.has(ROLE_FILIADO_PLUS_ID)) {
+      await message.reply({
+        content:
+          "Não autorizado. Você precisa ter o cargo de <@&788612423363330085> ou <@&1362577893527523571> para verificar saldos de todos usuários.",
+      });
+
+      return;
+    }
+
     const balances = Object.values(groupBy(allTransactions, (t) => t.userId))
       .map((transactions) => {
         const amount = transactions
@@ -31,7 +60,7 @@ export class AllBalancesCommand extends Command {
       .filter((b) => Number(b[1]) !== 0);
 
     const fields = [];
-    let fieldValue = '';
+    let fieldValue = "";
     let fieldCount = 0;
 
     for (const [userHabboId, amount] of balances) {
@@ -39,7 +68,7 @@ export class AllBalancesCommand extends Command {
 
       const targetDB = await this.container.prisma.user.findUnique({
         where: { habboId: userHabboId },
-        select: { habboName: true, },
+        select: { habboName: true },
       });
 
       const userMention = targetDB?.habboName;
@@ -50,7 +79,7 @@ export class AllBalancesCommand extends Command {
           name: `Página ${fieldCount + 1}`,
           value: fieldValue,
         });
-        fieldValue = '';
+        fieldValue = "";
         fieldCount++;
       }
 
@@ -64,7 +93,18 @@ export class AllBalancesCommand extends Command {
       });
     }
 
-    await message.channel.send({
+    const channel = message.channel;
+
+    if (
+      !(channel instanceof TextChannel) &&
+      !(channel instanceof DMChannel) &&
+      !(channel instanceof NewsChannel) &&
+      !(channel instanceof ThreadChannel)
+    ) {
+      throw new Error("Can’t send message to a non-text channel");
+    }
+
+    await channel.send({
       embeds: [
         new EmbedBuilder()
           .setColor(EmbedColors.Default)
