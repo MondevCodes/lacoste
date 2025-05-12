@@ -929,17 +929,18 @@ export class PromotionInteractionHandler extends InteractionHandler {
       throw new Error("Can't send message to non-text channel.");
     }
 
-    let member: GuildMember = await logGuild.members.fetch(
-      updatedUserDB.discordId
-    );
+    let member: GuildMember | null = await logGuild.members
+      .fetch(updatedUserDB.discordId)
+      .catch((error) => {
+        container.logger.warn(
+          `          User ${updatedUserDB.discordId} not found in log server: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`
+        );
+        return null;
+      });
 
-    if (!member) {
-      container.logger.warn(
-        `User ${updatedUserDB.discordId} not found in log server.`
-      );
-
-      return;
-    }
+    if (!member) return;
 
     if (!updatedUserDB?.latestPromotionJobId) return;
     if (!updatedUserDB?.latestPromotionRoleId) return;
