@@ -161,11 +161,15 @@ export default class SendCommand extends Command {
                   },
                   {
                     name: "Presenças Totais",
-                    value: targetDB.reportsHistory.length.toString(),
+                    value: targetDB.reportsHistory
+                      ? targetDB.reportsHistory.length.toString()
+                      : "0",
                   },
                   {
                     name: "Presenças C.G",
-                    value: targetDB.reportsHistoryCG.length.toString(),
+                    value: targetDB.reportsHistoryCG
+                      ? targetDB.reportsHistoryCG.length.toString()
+                      : "0",
                   },
                 ])
                 .setFooter({
@@ -382,11 +386,15 @@ export default class SendCommand extends Command {
                 },
                 {
                   name: "Presenças Totais",
-                  value: databaseUser.reportsHistory.length.toString(),
+                  value: databaseUser.reportsHistory
+                    ? databaseUser.reportsHistory.length.toString()
+                    : "0",
                 },
                 {
                   name: "Presenças C.G",
-                  value: databaseUser.reportsHistoryCG.length.toString(),
+                  value: databaseUser.reportsHistoryCG
+                    ? databaseUser.reportsHistoryCG.length.toString()
+                    : "0",
                 },
               ])
               .setFooter({
