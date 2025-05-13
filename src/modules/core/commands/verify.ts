@@ -30,27 +30,23 @@ export default class SendCommand extends Command {
     //   return;
     // }
 
-    const targetDB = await this.container.prisma.user.findFirst({
-      where: {
+    const rawName = targetResult
+      .unwrap()
+      .trim()
+      .replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+    const resultRaw = await this.container.prisma.$runCommandRaw({
+      find: "User",
+      filter: {
         habboName: {
-          equals: targetResult.unwrap(),
-          mode: "insensitive",
+          $regex: `^${rawName}$`,
+          $options: "i",
         },
       },
-      select: {
-        id: true,
-        discordId: true,
-        latestPromotionDate: true,
-        latestPromotionRoleId: true,
-        latestPromotionJobId: true,
-        discordLink: true,
-        habboName: true,
-        reportsHistory: true,
-        reportsHistoryCG: true,
-      },
+      limit: 1,
     });
 
-    if (!targetDB) {
+    if (!resultRaw.cursor?.firstBatch.length) {
       await message.reply({
         content:
           "O usuário **não está vinculado** na nossa base de dados, verifique o nome ou **vincule-o**.",
@@ -58,6 +54,8 @@ export default class SendCommand extends Command {
 
       return;
     }
+
+    const targetDB = resultRaw.cursor.firstBatch[0];
 
     let discordLinked: boolean | undefined;
 
