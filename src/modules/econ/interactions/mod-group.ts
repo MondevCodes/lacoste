@@ -181,21 +181,20 @@ export class ModGroupInteractionHandler extends InteractionHandler {
       // 	continue;
       // }
 
-      const targetUser = await this.container.prisma.user.findFirst({
-        where: {
+      const rawName = target.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+      const resultRaw: any = await this.container.prisma.$runCommandRaw({
+        find: "User",
+        filter: {
           habboName: {
-            equals: target,
-            mode: "insensitive",
+            $regex: `^${rawName}$`,
+            $options: "i",
           },
         },
-        select: {
-          id: true,
-          latestPromotionDate: true,
-          latestPromotionRoleId: true,
-        },
+        limit: 1,
       });
 
-      if (!targetUser) {
+      if (!resultRaw.cursor?.firstBatch.length) {
         this.container.logger.warn(
           "[HireInteractionHandler#run] Author or target user was not found in database."
         );

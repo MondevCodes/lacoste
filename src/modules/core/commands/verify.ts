@@ -35,7 +35,7 @@ export default class SendCommand extends Command {
       .trim()
       .replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-    const resultRaw = await this.container.prisma.$runCommandRaw({
+    const resultRaw: any = await this.container.prisma.$runCommandRaw({
       find: "User",
       filter: {
         habboName: {
@@ -55,7 +55,22 @@ export default class SendCommand extends Command {
       return;
     }
 
-    const targetDB = resultRaw.cursor.firstBatch[0];
+    const rawTargetDB = resultRaw.cursor.firstBatch[0];
+
+    const targetDB = {
+      ...rawTargetDB,
+      _id: rawTargetDB._id?.$oid || rawTargetDB._id,
+      id: rawTargetDB._id?.$oid || rawTargetDB._id,
+      createdAt: rawTargetDB.createdAt?.$date
+        ? new Date(rawTargetDB.createdAt.$date)
+        : null,
+      updatedAt: rawTargetDB.updatedAt?.$date
+        ? new Date(rawTargetDB.updatedAt.$date)
+        : null,
+      latestPromotionDate: rawTargetDB.latestPromotionDate?.$date
+        ? new Date(rawTargetDB.latestPromotionDate.$date)
+        : null,
+    };
 
     let discordLinked: boolean | undefined;
 

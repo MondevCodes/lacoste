@@ -169,23 +169,38 @@ export class FireInteractionHandler extends InteractionHandler {
       //   return;
       // }
 
-      const targetDBOnlyHabbo = await this.container.prisma.user.findFirst({
-        where: {
+      const rawName = result.Target.trim().replace(
+        /[.*+?^${}()|[\]\\]/g,
+        "\\$&"
+      );
+
+      const resultRaw: any = await this.container.prisma.$runCommandRaw({
+        find: "User",
+        filter: {
           habboName: {
-            equals: result.Target,
-            mode: "insensitive",
+            $regex: `^${rawName}$`,
+            $options: "i",
           },
         },
-        select: {
-          id: true,
-          discordId: true,
-          latestPromotionDate: true,
-          latestPromotionRoleId: true,
-          latestPromotionJobId: true,
-          habboName: true,
-          discordLink: true,
-        },
+        limit: 1,
       });
+
+      const rawTargetDB = resultRaw.cursor.firstBatch[0];
+
+      const targetDBOnlyHabbo = {
+        ...rawTargetDB,
+        _id: rawTargetDB._id?.$oid || rawTargetDB._id,
+        id: rawTargetDB._id?.$oid || rawTargetDB._id,
+        createdAt: rawTargetDB.createdAt?.$date
+          ? new Date(rawTargetDB.createdAt.$date)
+          : null,
+        updatedAt: rawTargetDB.updatedAt?.$date
+          ? new Date(rawTargetDB.updatedAt.$date)
+          : null,
+        latestPromotionDate: rawTargetDB.latestPromotionDate?.$date
+          ? new Date(rawTargetDB.latestPromotionDate.$date)
+          : null,
+      };
 
       interactionDisplayAvatar = interaction.user.displayAvatarURL();
       interactionTag = interaction.user.tag;

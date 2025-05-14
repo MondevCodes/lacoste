@@ -317,21 +317,20 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
         // 	continue;
         // }
 
-        const targetMember = await this.container.prisma.user.findMany({
-          take: 2,
-          where: {
+        const rawName = target.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+        const resultRaw: any = await this.container.prisma.$runCommandRaw({
+          find: "User",
+          filter: {
             habboName: {
-              equals: target,
-              mode: "insensitive",
+              $regex: `^${rawName}$`,
+              $options: "i",
             },
           },
-          select: {
-            habboName: true,
-            id: true,
-          },
+          limit: 2,
         });
 
-        if (targetMember.length > 1) {
+        if (resultRaw.cursor?.firstBatch.length > 1) {
           await i
             .deleteReply()
             .catch(() =>
@@ -362,7 +361,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
         // const { habbo: targetHabbo, member: targetMember } =
         // 	inferredTarget.unwrapOr({ habbo: undefined, member: undefined });
 
-        if (!targetMember || targetMember.length === 0) {
+        if (!resultRaw.cursor?.firstBatch.length) {
           this.container.logger.warn(
             `[OrganizationalFormInteractionHandler#run] Couldn't find target: ${target}.`
           );
@@ -373,8 +372,23 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
           continue;
         }
 
-        for await (const user of targetMember) {
-          if (user)
+        for await (let user of resultRaw.cursor?.firstBatch) {
+          if (user) {
+            user = {
+              ...user,
+              _id: user._id?.$oid || user._id,
+              id: user._id?.$oid || user._id,
+              createdAt: user.createdAt?.$date
+                ? new Date(user.createdAt.$date)
+                : null,
+              updatedAt: user.updatedAt?.$date
+                ? new Date(user.updatedAt.$date)
+                : null,
+              latestPromotionDate: user.latestPromotionDate?.$date
+                ? new Date(user.latestPromotionDate.$date)
+                : null,
+            };
+
             if (group === "GeneralCommand") {
               await this.container.prisma.user.update({
                 where: { id: user.id },
@@ -389,6 +403,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
                 data: { reportsHistory: { push: new Date() } },
               });
             }
+          }
 
           members[group].push(
             user.habboName.replaceAll(MARKDOWN_CHARS_RE, "\\$&")

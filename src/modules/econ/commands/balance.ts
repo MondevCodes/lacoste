@@ -48,20 +48,37 @@ export class BalanceCommand extends Command {
       )
     ).unwrapOr(undefined);
 
-    const targetDB = await this.container.prisma.user.findFirst({
-      where: {
+    const rawName = user
+      ? user.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+      : authorDB.habboName.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+    const resultRaw: any = await this.container.prisma.$runCommandRaw({
+      find: "User",
+      filter: {
         habboName: {
-          equals: user ?? authorDB.habboName,
-          mode: "insensitive",
+          $regex: `^${rawName}$`,
+          $options: "i",
         },
       },
-      select: {
-        id: true,
-        discordId: true,
-        habboName: true,
-        habboId: true,
-      },
+      limit: 1,
     });
+
+    const rawTargetDB = resultRaw.cursor.firstBatch[0];
+
+    const targetDB = {
+      ...rawTargetDB,
+      _id: rawTargetDB._id?.$oid || rawTargetDB._id,
+      id: rawTargetDB._id?.$oid || rawTargetDB._id,
+      createdAt: rawTargetDB.createdAt?.$date
+        ? new Date(rawTargetDB.createdAt.$date)
+        : null,
+      updatedAt: rawTargetDB.updatedAt?.$date
+        ? new Date(rawTargetDB.updatedAt.$date)
+        : null,
+      latestPromotionDate: rawTargetDB.latestPromotionDate?.$date
+        ? new Date(rawTargetDB.latestPromotionDate.$date)
+        : null,
+    };
 
     const {
       _sum: { amount },
