@@ -126,19 +126,17 @@ export class ModIndividualInteractionHandler extends InteractionHandler {
     //   return;
     // }
 
-    const targetUser = await this.container.prisma.user.findFirst({
-      where: {
+    const rawName = result.Target.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+    const resultRaw: any = await this.container.prisma.$runCommandRaw({
+      find: "User",
+      filter: {
         habboName: {
-          equals: result.Target,
-          mode: "insensitive",
+          $regex: `^${rawName}$`,
+          $options: "i",
         },
       },
-      select: {
-        id: true,
-        latestPromotionDate: true,
-        latestPromotionRoleId: true,
-        habboName: true,
-      },
+      limit: 1,
     });
 
     const authorUser = await this.container.prisma.user.findUnique({
@@ -150,7 +148,7 @@ export class ModIndividualInteractionHandler extends InteractionHandler {
       },
     });
 
-    if (!targetUser || !authorUser) {
+    if (!resultRaw.cursor?.firstBatch.length || !authorUser) {
       this.container.logger.warn(
         "[HireInteractionHandler#run] Author or target user was not found in database."
       );
@@ -162,6 +160,23 @@ export class ModIndividualInteractionHandler extends InteractionHandler {
 
       return;
     }
+
+    const rawTargetDB = resultRaw.cursor.firstBatch[0];
+
+    const targetUser = {
+      ...rawTargetDB,
+      _id: rawTargetDB._id?.$oid || rawTargetDB._id,
+      id: rawTargetDB._id?.$oid || rawTargetDB._id,
+      createdAt: rawTargetDB.createdAt?.$date
+        ? new Date(rawTargetDB.createdAt.$date)
+        : null,
+      updatedAt: rawTargetDB.updatedAt?.$date
+        ? new Date(rawTargetDB.updatedAt.$date)
+        : null,
+      latestPromotionDate: rawTargetDB.latestPromotionDate?.$date
+        ? new Date(rawTargetDB.latestPromotionDate.$date)
+        : null,
+    };
 
     const {
       _sum: { amount: totalAmount },

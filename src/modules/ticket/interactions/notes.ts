@@ -155,31 +155,46 @@ export class NotesInteractionHandler extends InteractionHandler {
       //   return;
       // }
 
-      const targetDBOnlyHabbo = await this.container.prisma.user.findFirst({
-        where: {
+      const rawName = result.Target.trim().replace(
+        /[.*+?^${}()|[\]\\]/g,
+        "\\$&"
+      );
+
+      const resultRaw: any = await this.container.prisma.$runCommandRaw({
+        find: "User",
+        filter: {
           habboName: {
-            equals: result.Target,
-            mode: "insensitive",
+            $regex: `^${rawName}$`,
+            $options: "i",
           },
         },
-        select: {
-          id: true,
-          discordId: true,
-          latestPromotionDate: true,
-          latestPromotionRoleId: true,
-          latestPromotionJobId: true,
-          habboName: true,
-          discordLink: true,
-        },
+        limit: 1,
       });
 
-      if (!targetDBOnlyHabbo) {
+      if (!resultRaw.cursor?.firstBatch.length) {
         await modalInteraction.editReply({
           content: `Não consegui encontrar o usuário **${result.Target}** como vinculado na nossa base de dados, verifique o nome e tente novamente.`,
         });
 
         return;
       }
+
+      const rawTargetDB = resultRaw.cursor.firstBatch[0];
+
+      const targetDBOnlyHabbo = {
+        ...rawTargetDB,
+        _id: rawTargetDB._id?.$oid || rawTargetDB._id,
+        id: rawTargetDB._id?.$oid || rawTargetDB._id,
+        createdAt: rawTargetDB.createdAt?.$date
+          ? new Date(rawTargetDB.createdAt.$date)
+          : null,
+        updatedAt: rawTargetDB.updatedAt?.$date
+          ? new Date(rawTargetDB.updatedAt.$date)
+          : null,
+        latestPromotionDate: rawTargetDB.latestPromotionDate?.$date
+          ? new Date(rawTargetDB.latestPromotionDate.$date)
+          : null,
+      };
 
       // START USER WITHOUT DISCORD
       if (targetDBOnlyHabbo?.discordLink === false) {
@@ -398,8 +413,8 @@ export class NotesInteractionHandler extends InteractionHandler {
           {
             name: "📗 Cargo do Colaborador",
             value: highestJobRoleId
-              ? `${(await targetMember.guild.roles.fetch(highestJobRoleId))}`
-              : "N/A"
+              ? `${await targetMember.guild.roles.fetch(highestJobRoleId)}`
+              : "N/A",
           },
           {
             name: "🗒️ Anotação",
