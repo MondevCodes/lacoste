@@ -594,7 +594,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
                   { activeRenewal: { isSet: false } },
                 ],
               },
-              { habboName: { not: "" } },
+              { habboName: { not: "" }, discordLink: { not: false } },
               {
                 latestPromotionJobId: {
                   notIn: [
@@ -629,12 +629,14 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
         );
 
         const filteredUsers = users.filter((user) => {
-          return user.reportsHistory.every((report) => {
+          const reportsInLast15Days = user.reportsHistory.filter((report) => {
             const reportDate = new Date(report).getTime();
             const fifteenDaysAgo = Date.now() - 15 * 24 * 60 * 60 * 1000;
 
-            return reportDate < fifteenDaysAgo;
+            return reportDate >= fifteenDaysAgo;
           });
+
+          return reportsInLast15Days.length < 5;
         });
 
         this.container.logger.info(
