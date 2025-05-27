@@ -525,8 +525,7 @@ export class ChangeDiscordAccountInteractionHandler extends InteractionHandler {
         return null;
       });
 
-    if (!oldMember) return;
-    if (!member) return;
+    if (!oldMember || !member) return;
 
     const onlyHabbo = (
       await this.container.utilities.habbo.getProfile(habboName)
@@ -593,12 +592,7 @@ export class ChangeDiscordAccountInteractionHandler extends InteractionHandler {
             },
           ])
           .setColor(EmbedColors.LalaRed)
-          .setThumbnail(
-            member.user.displayAvatarURL()
-            // onlyHabbo
-            //   ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo?.figureString}&size=b`
-            //   : null
-          ),
+          .setThumbnail(member.user.displayAvatarURL()),
       ],
     });
   }
