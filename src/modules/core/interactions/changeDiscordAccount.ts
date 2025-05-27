@@ -11,6 +11,7 @@ import {
   ButtonStyle,
   EmbedBuilder,
   GuildMember,
+  Role,
   TextInputBuilder,
   TextInputStyle,
 } from "discord.js";
@@ -384,7 +385,7 @@ export class ChangeDiscordAccountInteractionHandler extends InteractionHandler {
               },
               data: {
                 users: {
-                  push: newDiscord.user.id
+                  push: newDiscord.user.id,
                 },
               },
             });
@@ -474,7 +475,131 @@ export class ChangeDiscordAccountInteractionHandler extends InteractionHandler {
         });
 
         await interaction.message.delete();
+
+        this.switchAccountDiscordLogRole(
+          existingUser.discordId,
+          newDiscord.user.id,
+          existingUser.habboName
+        );
       }
     }
+  }
+
+  // Swaps the user's discord account loads to the current account
+  async switchAccountDiscordLogRole(
+    oldDiscord: string,
+    updatedDiscord: string,
+    habboName: string
+  ) {
+    const logGuild = await this.container.client.guilds.fetch(
+      ENVIRONMENT.LOG_GUILD_ID
+    );
+
+    const notificationChannel = await logGuild.channels.fetch(
+      ENVIRONMENT.NOTIFICATION_CHANNELS.WELCOME_LOG
+    );
+
+    if (!notificationChannel?.isTextBased()) {
+      throw new Error("Can't send message to non-text channel.");
+    }
+
+    let oldMember: GuildMember | null = await logGuild.members
+      .fetch(oldDiscord)
+      .catch((error) => {
+        this.container.logger.warn(
+          `User ${oldDiscord} (older discord) not found in log server: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`
+        );
+        return null;
+      });
+
+    let member: GuildMember | null = await logGuild.members
+      .fetch(updatedDiscord)
+      .catch((error) => {
+        this.container.logger.warn(
+          `User ${updatedDiscord} (newer discord) not found in log server: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`
+        );
+        return null;
+      });
+
+    if (!oldMember) return;
+    if (!member) return;
+
+    const onlyHabbo = (
+      await this.container.utilities.habbo.getProfile(habboName)
+    ).unwrapOr(undefined);
+
+    if (!onlyHabbo?.name) {
+      console.warn(
+        "Não consegui encontrar o perfil do usuário no Habbo, talvez sua conta esteja deletada ou renomeada? Veja se o perfil do usuário no jogo está como público."
+      );
+    }
+
+    let userRole: Role | null = null;
+
+    for await (const role of oldMember.roles.cache) {
+      await logGuild.members
+        .addRole({
+          user: updatedDiscord,
+          role: role[1],
+        })
+        .catch(() =>
+          this.container.logger.error(
+            "[ChangeDiscordAccount#switchAccountDiscordLogRole] Error to add role to newest Discord account."
+          )
+        );
+    }
+
+    for await (const role of member.roles.cache) {
+      await logGuild.members
+        .removeRole({
+          user: oldDiscord,
+          role: role[1],
+        })
+        .catch(() =>
+          this.container.logger.error(
+            "[ChangeDiscordAccount#switchAccountDiscordLogRole] Error to remove role of oldDiscord"
+          )
+        );
+
+      if (!role[1].name.match("everyone")) userRole = role[1];
+    }
+
+    await notificationChannel.send({
+      embeds: [
+        new EmbedBuilder()
+          .setTitle(`Troca de Conta Discord de ***${habboName}*** 📝`)
+          .addFields([
+            {
+              name: "Ação:",
+              value: `Atualização de conta do Discord 🪪`,
+            },
+            {
+              name: "💼 Cargo:",
+              value: `<@&${userRole?.id}>`,
+            },
+            {
+              name: "📤 Discord Anterior:",
+              value: `<@${oldDiscord}>`,
+              inline: true,
+            },
+            {
+              name: "📥 Discord Atual:",
+              value: `<@${updatedDiscord}>`,
+              inline: true,
+            },
+          ])
+          .setColor(EmbedColors.LalaRed)
+          .setThumbnail(
+            member.user.displayAvatarURL()
+            // onlyHabbo
+            //   ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo?.figureString}&size=b`
+            //   : null
+          ),
+      ],
+    });
   }
 }
