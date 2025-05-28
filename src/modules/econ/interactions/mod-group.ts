@@ -164,7 +164,7 @@ export class ModGroupInteractionHandler extends InteractionHandler {
       return;
     }
 
-    const members: string[] = [];
+    const members: { id: string; habboName: string }[] = [];
 
     for await (const target of targets) {
       // const targetMember = (
@@ -206,7 +206,10 @@ export class ModGroupInteractionHandler extends InteractionHandler {
         `[ModGroupInteractionHandler#run] Adding ${amount} to ${target} in group.`
       );
 
-      members.push(target);
+      members.push({
+        id: resultRaw.cursor?.firstBatch[0]._id?.$oid,
+        habboName: resultRaw.cursor?.firstBatch[0].habboName,
+      });
     }
 
     // const disqualifiedMembers = members.filter(
@@ -233,7 +236,7 @@ export class ModGroupInteractionHandler extends InteractionHandler {
       .addFields([
         {
           name: "Usuários",
-          value: `- ${members.map((x) => x.toString()).join("\n- ")}`,
+          value: `- ${members.map((x) => x.habboName.toString()).join("\n- ")}`,
         },
       ])
       .setFooter({
@@ -285,12 +288,12 @@ export class ModGroupInteractionHandler extends InteractionHandler {
       const {
         _sum: { amount: totalAmount },
       } = await this.container.prisma.transaction.aggregate({
-        where: { user: { habboName: member } },
+        where: { user: { id: member.id } },
         _sum: { amount: true },
       });
 
       fields.push(
-        `- ${member.toString()}: \`\`${MONETARY_INTL.format(
+        `- ${member.habboName.toString()}: \`\`${MONETARY_INTL.format(
           totalAmount ?? 0
         )}\`\` -> \`\`${MONETARY_INTL.format(
           data.action === "Add"
@@ -301,7 +304,7 @@ export class ModGroupInteractionHandler extends InteractionHandler {
 
       await this.container.prisma.user.update({
         where: {
-          habboName: member,
+          id: member.id,
         },
         data: {
           ReceivedTransactions: {
