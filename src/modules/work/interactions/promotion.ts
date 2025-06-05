@@ -291,7 +291,9 @@ export class PromotionInteractionHandler extends InteractionHandler {
                   `Promover ${onlyHabbo.name} para ${targetJobRole}?`
                 )
                 .setThumbnail(
-                  `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo?.figureString}&size=b`
+                  onlyHabbo
+                    ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo?.figureString}&size=b`
+                    : null
                 )
                 .setColor(EmbedColors.Default),
             ],
@@ -421,7 +423,9 @@ export class PromotionInteractionHandler extends InteractionHandler {
               ])
               .setColor(EmbedColors.Success)
               .setThumbnail(
-                `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo?.figureString}&size=b`
+                onlyHabbo
+                  ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo?.figureString}&size=b`
+                  : null
               ),
           ],
         });
@@ -583,10 +587,10 @@ export class PromotionInteractionHandler extends InteractionHandler {
       return;
     }
 
-    const [isPromotionPossible, registrationType] =
+    const [isPromotionPossible, registrationType, denyMotive] =
       await this.#isPromotionPossible(
         interactionFromModal,
-        targetMember.id,
+        targetMember,
         nextTargetJob.id,
         currentTargetJob.id
       );
@@ -606,15 +610,35 @@ export class PromotionInteractionHandler extends InteractionHandler {
       const authorJobRole =
         authorJobRoleId && (await author.guild.roles.fetch(authorJobRoleId));
 
-      await interactionFromModal.editReply({
-        content:
-          // "Você não pode promover este usuário, pois ele já possui um cargo de maior autoridade permitido para realizar promoções.",
-          `Seu cargo de ${authorJobRole} não tem permissão para promover alguém para o cargo de ${targetJobRole}`,
-      });
+      switch (denyMotive) {
+        case "HIERARCHY":
+          await interactionFromModal.editReply({
+            content: `❌ Seu cargo de ${authorJobRole} não tem permissão para promover alguém para o cargo de ${targetJobRole}`,
+          });
 
-      this.container.logger.info(
-        `[PromotionInteractionHandler#run/${interaction.id}] ${interaction.user.tag} tried to promote ${result.target} but failed because they are not authorized to promote.`
-      );
+          this.container.logger.info(
+            `[PromotionInteractionHandler#run/${interaction.id}] ${interaction.user.tag} tried to promote ${result.target} but failed because they are not authorized to promote.`
+          );
+          break;
+        case "COURSE_EP":
+          await interactionFromModal.editReply({
+            content: `❌ Não foi possível promover devido a falta do cargo <@&1337982664489308160>, é necessário que ***${result.target}*** se especialize primeiro.`,
+          });
+
+          this.container.logger.info(
+            `[PromotionInteractionHandler#run/${interaction.id}] ${interaction.user.tag} tried to promote ${result.target} but failed because ${result.target} did not have the Specialization Course (EP).`
+          );
+          break;
+        case "COURSE_ED":
+          await interactionFromModal.editReply({
+            content: `❌ Não foi possível promover devido a falta do cargo <@&1337982502723129375>, é necessário que ***${result.target}*** se especialize primeiro.`,
+          });
+
+          this.container.logger.info(
+            `[PromotionInteractionHandler#run/${interaction.id}] ${interaction.user.tag} tried to promote ${result.target} but failed because ${result.target} did not have the Specialization Course (ED).`
+          );
+          break;
+      }
 
       return;
     }
@@ -719,7 +743,9 @@ export class PromotionInteractionHandler extends InteractionHandler {
                 `Promover <@${targetMember.user.id}> para ${targetJobRole}?`
               )
               .setThumbnail(
-                `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`
+                targetHabbo
+                  ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`
+                  : null
               )
               .setColor(EmbedColors.Default),
           ],
@@ -895,7 +921,9 @@ export class PromotionInteractionHandler extends InteractionHandler {
             ])
             .setColor(EmbedColors.Success)
             .setThumbnail(
-              `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`
+              targetHabbo
+                ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`
+                : null
             ),
         ],
       });
@@ -1195,10 +1223,16 @@ export class PromotionInteractionHandler extends InteractionHandler {
 
   async #isPromotionPossible(
     interaction: RepliableInteraction,
-    user: Snowflake,
+    user: GuildMember,
     selectedJob: Snowflake,
     currentTargetJob: Snowflake
-  ): Promise<[boolean, "REGISTERED" | "UNREGISTERED"]> {
+  ): Promise<
+    [
+      boolean,
+      "REGISTERED" | "UNREGISTERED",
+      "HIERARCHY" | "COURSE_EP" | "COURSE_ED"
+    ]
+  > {
     const guild =
       interaction.guild ??
       (await interaction.client.guilds.fetch(ENVIRONMENT.GUILD_ID));
@@ -1207,7 +1241,7 @@ export class PromotionInteractionHandler extends InteractionHandler {
 
     const updatedUserDB = await this.container.prisma.user.findUnique({
       where: {
-        discordId: user,
+        discordId: user.id,
       },
       select: {
         latestPromotionDate: true,
@@ -1215,12 +1249,15 @@ export class PromotionInteractionHandler extends InteractionHandler {
       },
     });
 
+    let denyMotive: "HIERARCHY" | "COURSE_EP" | "COURSE_ED" = null;
+    let hasCourse: boolean = true;
+
     if (!updatedUserDB) {
       this.container.logger.warn(
         `Promotion for ${user} is possible because the user is not registered.`
       );
 
-      return [true, "REGISTERED"];
+      return [true, "REGISTERED", denyMotive];
     }
 
     // const targetJobRole =
@@ -1251,14 +1288,35 @@ export class PromotionInteractionHandler extends InteractionHandler {
 
     const hasEnoughHierarchy =
       (targetJob?.index ?? 0) <= (authorJob?.promoteIndex ?? -1) &&
-      interaction.user.id !== user;
+      interaction.user.id !== user.id;
 
-    const isNotSelfPromotion = interaction.user.id !== user;
+    if (!hasEnoughHierarchy) denyMotive = "HIERARCHY";
+
+    const isNotSelfPromotion = interaction.user.id !== user.id;
+
+    // Verify if member has course for sector roles "DIRETORIA" and "PRESIDÊNCIA"
+    if (
+      updatedUserDB.latestPromotionRoleId ===
+        ENVIRONMENT.SECTORS_ROLES.DIRETORIA.id &&
+      !user.roles.cache.has("1337982502723129375")
+    ) {
+      hasCourse = false;
+      denyMotive = "COURSE_ED";
+    }
+    if (
+      updatedUserDB.latestPromotionRoleId ===
+        ENVIRONMENT.SECTORS_ROLES.PRESIDÊNCIA.id &&
+      !user.roles.cache.has("1337982664489308160")
+    ) {
+      hasCourse = false;
+      denyMotive = "COURSE_EP";
+    }
 
     this.container.logger.info(
       `[PromotionInteractionHandler#isPromotionPossible] \n
         hasEnoughHierarchy: ${hasEnoughHierarchy} \n
-        isNotSelfPromotion: ${isNotSelfPromotion}
+        isNotSelfPromotion: ${isNotSelfPromotion} \n
+        hasCourse: ${hasCourse}
         `
     );
 
@@ -1266,10 +1324,14 @@ export class PromotionInteractionHandler extends InteractionHandler {
     // 	targetJob?.index ?? 0 <= MAX_PROMOTABLE_UNREGISTERED_ROLES;
 
     if (!targetJob?.index) {
-      return [true, "UNREGISTERED"];
+      return [true, "UNREGISTERED", denyMotive];
     }
 
-    return [isNotSelfPromotion && hasEnoughHierarchy, "REGISTERED"];
+    return [
+      isNotSelfPromotion && hasEnoughHierarchy && hasCourse,
+      "REGISTERED",
+      denyMotive,
+    ];
   }
 
   #inferHighestJobRole(roles: GuildMemberRoleManager) {
