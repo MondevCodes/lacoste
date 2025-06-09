@@ -323,12 +323,6 @@ export class DiscordUtility extends Utility {
       `
     );
 
-    const hasEnoughHierarchy =
-      (targetJob?.index ?? 0) <= (authorJob?.promoteIndex ?? -1) &&
-      author.id !== user.id;
-
-    if (!hasEnoughHierarchy) denyMotive = "HIERARCHY";
-
     const isNotSelfPromotion = author.id !== user.id;
 
     // Verify if member has course for sector roles "DIRETORIA" and "PRESIDÊNCIA"
@@ -351,7 +345,6 @@ export class DiscordUtility extends Utility {
 
     this.container.logger.info(
       `[Utilities/Discord.ts#isPromotionPossible] \n
-        hasEnoughHierarchy: ${hasEnoughHierarchy} \n
         isNotSelfPromotion: ${isNotSelfPromotion} \n
         hasCourse: ${hasCourse}
         `
@@ -364,11 +357,7 @@ export class DiscordUtility extends Utility {
       return [true, "UNREGISTERED", denyMotive];
     }
 
-    return [
-      isNotSelfPromotion && hasEnoughHierarchy && hasCourse,
-      "REGISTERED",
-      denyMotive,
-    ];
+    return [isNotSelfPromotion && hasCourse, "REGISTERED", denyMotive];
   }
 
   /**
