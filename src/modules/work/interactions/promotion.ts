@@ -1260,11 +1260,6 @@ export class PromotionInteractionHandler extends InteractionHandler {
       return [true, "REGISTERED", denyMotive];
     }
 
-    // const targetJobRole =
-    // 	this.container.utilities.discord.inferHighestJobRole(
-    // 		target.roles.cache.map((r) => r.id),
-    // 	);
-
     const authorJobRole = this.container.utilities.discord.inferHighestJobRole(
       author.roles.cache.map((r) => r.id)
     );
@@ -1319,9 +1314,6 @@ export class PromotionInteractionHandler extends InteractionHandler {
         hasCourse: ${hasCourse}
         `
     );
-
-    // const isAuthorizedUnregistered =
-    // 	targetJob?.index ?? 0 <= MAX_PROMOTABLE_UNREGISTERED_ROLES;
 
     if (!targetJob?.index) {
       return [true, "UNREGISTERED", denyMotive];
