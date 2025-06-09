@@ -347,7 +347,6 @@ export default class SendCommand extends Command {
         targetDB.latestPromotionJobId
       );
 
-    console.log(isPromotionPossible);
     if (!shouldPromote) {
       const latestPromotionDate =
         databaseUser?.latestPromotionDate &&
