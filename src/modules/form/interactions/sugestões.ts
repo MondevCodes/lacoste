@@ -94,21 +94,17 @@ export class SuggestionFormInteractionHandler extends InteractionHandler {
       ? await guild.roles.fetch(targetHighestSectorId)
       : null;
 
-    const authorDB = await this.container.prisma.user.findUnique({
-      where: { discordId: interaction.user.id },
-      select: { habboName: true },
-    });
-
     const embed = new EmbedBuilder()
       .setTitle("Sugestão")
       .setThumbnail(
-        `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`
+        targetHabbo
+          ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`
+          : null
       )
       .addFields([
         {
           name: "Autor(a)",
           value: `${
-            authorDB.habboName ??
             targetHabbo?.name.replaceAll(MarkdownCharactersRegex, "\\$&") ??
             result.Target
           } // ${targetMember.toString()}`,
