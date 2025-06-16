@@ -148,14 +148,14 @@ export default class SendCommand extends Command {
           await message.reply({
             embeds: [
               new EmbedBuilder()
-                .setTitle(`Verificação de ${targetDB.habboName}`)
+                .setTitle(`Verificação de ***${targetDB.habboName}*** 📇`)
                 .setFields([
                   {
-                    name: "Setor // Cargo",
+                    name: "💼 Setor // Cargo",
                     value: `**${currentSector?.name}** // **${currentJob?.name}**`,
                   },
                   {
-                    name: "Ultima Promoção",
+                    name: "📊 Última Promoção",
                     value: targetDB?.latestPromotionDate
                       ? new Date(
                           targetDB?.latestPromotionDate
@@ -163,25 +163,27 @@ export default class SendCommand extends Command {
                       : "N/D",
                   },
                   {
-                    name: "Promoção Disponível?",
-                    value: shouldPromote ? "Sim" : "Não",
+                    name: "📈 Promoção Disponível?",
+                    value: shouldPromote ? "Sim ✅" : "Não ❌",
                   },
                   {
-                    name: "Dias até a próxima Promoção",
+                    name: "🗓️ Dias até a próxima Promoção",
                     value: `${daysForPromote}`,
                   },
                   {
-                    name: "Discord Vinculado?",
-                    value: discordLinked ? "✅ Vinculado " : "❌ Não Vinculado",
+                    name: "🪪 Discord Vinculado?",
+                    value: discordLinked
+                      ? "Vinculado 🔗 ✅"
+                      : "Não Vinculado ⛓️‍💥 ❌",
                   },
                   {
-                    name: "Presenças Totais",
+                    name: "🗳️ Presenças Totais",
                     value: targetDB.reportsHistory
                       ? targetDB.reportsHistory.length.toString()
                       : "0",
                   },
                   {
-                    name: "Presenças C.G",
+                    name: "🗳️ Presenças C.G",
                     value: targetDB.reportsHistoryCG
                       ? targetDB.reportsHistoryCG.length.toString()
                       : "0",
@@ -209,14 +211,14 @@ export default class SendCommand extends Command {
           await message.reply({
             embeds: [
               new EmbedBuilder()
-                .setTitle(`Verificação de ${targetDB.habboName}`)
+                .setTitle(`Verificação de ***${targetDB.habboName}*** 📇`)
                 .setFields([
                   {
-                    name: "Setor // Cargo",
+                    name: "💼 Setor // Cargo",
                     value: `**${currentSector?.name}** // **${currentJob?.name}**`,
                   },
                   {
-                    name: "Ultima Promoção",
+                    name: "📊 Última Promoção",
                     value: targetDB?.latestPromotionDate
                       ? new Date(
                           targetDB?.latestPromotionDate
@@ -224,8 +226,10 @@ export default class SendCommand extends Command {
                       : "N/D",
                   },
                   {
-                    name: "Discord Vinculado?",
-                    value: discordLinked ? "✅ Vinculado " : "❌ Não Vinculado",
+                    name: "🪪 Discord Vinculado?",
+                    value: discordLinked
+                      ? "Vinculado 🔗 ✅"
+                      : "Não Vinculado ⛓️‍💥 ❌",
                   },
                 ])
                 .setFooter({
@@ -450,14 +454,14 @@ export default class SendCommand extends Command {
         await message.reply({
           embeds: [
             new EmbedBuilder()
-              .setTitle(`Verificação de ${databaseUser?.habboName}`)
+              .setTitle(`Verificação de ***${databaseUser.habboName}*** 📇`)
               .setFields([
                 {
-                  name: "Setor // Cargo",
+                  name: "💼 Setor // Cargo",
                   value: `**${currentSector?.name}** // **${currentJob?.name}**`,
                 },
                 {
-                  name: "Ultima Promoção",
+                  name: "📊 Última Promoção",
                   value: databaseUser?.latestPromotionDate
                     ? new Date(
                         databaseUser?.latestPromotionDate
@@ -465,8 +469,10 @@ export default class SendCommand extends Command {
                     : "N/D",
                 },
                 {
-                  name: "Discord Vinculado?",
-                  value: discordLinked ? "✅ Vinculado " : "❌ Não Vinculado",
+                  name: "🪪 Discord Vinculado?",
+                  value: discordLinked
+                    ? "Vinculado 🔗 ✅"
+                    : "Não Vinculado ⛓️‍💥 ❌",
                 },
               ])
               .setFooter({

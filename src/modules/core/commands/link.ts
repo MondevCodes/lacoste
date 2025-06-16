@@ -26,6 +26,11 @@ export class LinkCommand extends Command {
     const author =
       message.member ?? (await message.guild?.members.fetch(message.author.id));
 
+    const authorDB = await this.container.prisma.user.findUnique({
+      where: { discordId: message.author.id },
+      select: { habboName: true },
+    });
+
     const isAuthorized = this.container.utilities.discord.hasPermissionByRole({
       category: "SECTOR",
       checkFor: "PROMOCIONAL",
@@ -108,7 +113,7 @@ export class LinkCommand extends Command {
               latestPromotionDate: new Date(),
               latestPromotionRoleId: ENVIRONMENT.SECTORS_ROLES.INICIAL.id,
               latestPromotionJobId: ENVIRONMENT.JOBS_ROLES.VINCULADO.id,
-              discordLink: false
+              discordLink: false,
             },
           })
           .catch((error) => {
@@ -131,9 +136,9 @@ export class LinkCommand extends Command {
       const embed = new EmbedBuilder()
         .setColor(EmbedColors.LalaRed)
         .setAuthor({
-          name: `${existingUser ? "Revinculado" : "Vinculando"} por @${
-            message.author.tag
-          }`,
+          name: `${existingUser ? "Revinculado" : "Vinculando"} por **${
+            authorDB.habboName
+          }**`,
           iconURL: message.author.displayAvatarURL(),
         })
         .addFields([
@@ -322,7 +327,11 @@ export class LinkCommand extends Command {
       await this.container.prisma.user
         .update({
           where: { discordId: existingUser.discordId },
-          data: { habboId: profile.uniqueId, habboName: profile.name, discordLink: true },
+          data: {
+            habboId: profile.uniqueId,
+            habboName: profile.name,
+            discordLink: true,
+          },
         })
         .catch(() => undefined);
     } else {
@@ -352,9 +361,9 @@ export class LinkCommand extends Command {
     const embed = new EmbedBuilder()
       .setColor(EmbedColors.LalaRed)
       .setAuthor({
-        name: `${existingUser ? "Revinculado" : "Vinculando"} por @${
-          message.author.tag
-        }`,
+        name: `${existingUser ? "Revinculado" : "Vinculando"} por **${
+          authorDB.habboName
+        }**`,
         iconURL: message.author.displayAvatarURL(),
       })
       .addFields([

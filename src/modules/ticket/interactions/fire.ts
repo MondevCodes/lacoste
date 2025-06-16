@@ -56,6 +56,7 @@ const MODAL_INPUTS_OBJ = {
 const MODAL_INPUTS = Object.values(MODAL_INPUTS_OBJ);
 type ModalInput = keyof typeof MODAL_INPUTS_OBJ;
 
+let interactionId: string;
 let interactionDisplayAvatar: any;
 let interactionTag: any;
 
@@ -204,6 +205,7 @@ export class FireInteractionHandler extends InteractionHandler {
 
       interactionDisplayAvatar = interaction.user.displayAvatarURL();
       interactionTag = interaction.user.tag;
+      interactionId = interaction.user.id;
 
       // START USER WITHOUT DISCORD
       if (targetDBOnlyHabbo?.discordLink === false) {
@@ -325,6 +327,11 @@ export class FireInteractionHandler extends InteractionHandler {
           throw new Error("Can't send message to non-text channel.");
         }
 
+        const authorDB = await this.container.prisma.user.findUnique({
+          where: { discordId: interaction.user.id },
+          select: { habboName: true },
+        });
+
         const approvalEmbed = new EmbedBuilder()
           .setTitle(
             `Solicitação de Demissão de ${
@@ -342,7 +349,11 @@ export class FireInteractionHandler extends InteractionHandler {
           .addFields([
             {
               name: "👤 Demissor",
-              value: `${habboInteractionName ?? `@${interaction.user.tag}`}`,
+              value: `${
+                authorDB.habboName ??
+                habboInteractionName ??
+                `@${interaction.user.tag}`
+              }`,
             },
             {
               name: "📗 Cargo",
@@ -496,6 +507,11 @@ export class FireInteractionHandler extends InteractionHandler {
         throw new Error("Can't send message to non-text channel.");
       }
 
+      const authorDB = await this.container.prisma.user.findUnique({
+        where: { discordId: interaction.user.id },
+        select: { habboName: true },
+      });
+
       const approvalEmbed = new EmbedBuilder()
         .setTitle(
           `Solicitação de Demissão de ${
@@ -513,7 +529,11 @@ export class FireInteractionHandler extends InteractionHandler {
         .addFields([
           {
             name: "👤 Demissor",
-            value: `${habboInteractionName ?? `@${interaction.user.tag}`}`,
+            value: `${
+              authorDB.habboName ??
+              habboInteractionName ??
+              `@${interaction.user.tag}`
+            }`,
           },
           {
             name: "📗 Cargo",
@@ -697,6 +717,11 @@ export class FireInteractionHandler extends InteractionHandler {
       minimumFractionDigits: 0,
     });
 
+    const authorDB = await this.container.prisma.user.findUnique({
+      where: { discordId: interactionId },
+      select: { habboName: true },
+    });
+
     await notificationCMBChannel.send({
       embeds: [
         new EmbedBuilder()
@@ -706,7 +731,9 @@ export class FireInteractionHandler extends InteractionHandler {
             iconURL: interactionDisplayAvatar,
           })
           .setDescription(
-            `Seu saldo foi zerado pelo motivo que o Colaborador foi demitido por ${habboInteractionName}`
+            `Seu saldo foi zerado pelo motivo que o Colaborador foi demitido por ${
+              authorDB.habboName ?? habboInteractionName
+            }`
           )
           .setColor(EmbedColors.LalaRed)
           .addFields([

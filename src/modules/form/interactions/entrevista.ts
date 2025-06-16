@@ -169,6 +169,11 @@ export class InterviewFormInteractionHandler extends InteractionHandler {
       return;
     }
 
+    const authorDB = await this.container.prisma.user.findUnique({
+      where: { discordId: interaction.user.id },
+      select: { habboName: true },
+    });
+
     const embed = new EmbedBuilder()
       .setTitle("Entrevista")
       .setThumbnail(
@@ -183,16 +188,18 @@ export class InterviewFormInteractionHandler extends InteractionHandler {
           )}`,
         },
         {
-					name: "Posição (Sede)",
-					value:
-						resultPartial.Position.length > 0 ? resultPartial.Position : "Nenhuma informação",
-				},
+          name: "Posição (Sede)",
+          value:
+            resultPartial.Position.length > 0
+              ? resultPartial.Position
+              : "Nenhuma informação",
+        },
         {
           name: "Entrevistador",
-          value: `${authorHabbo.name.replaceAll(
-            MarkdownCharactersRegex,
-            "\\$&"
-          )}`,
+          value: `${
+            authorDB.habboName ??
+            authorHabbo.name.replaceAll(MarkdownCharactersRegex, "\\$&")
+          }`,
         },
         {
           name: "O que está achando da Lacoste?",
