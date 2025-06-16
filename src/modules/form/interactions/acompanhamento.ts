@@ -235,6 +235,11 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
       `[AcompanhamentoInteractionHandler#run] finalRate: ${finalRate}`
     );
 
+    const authorDB = await this.container.prisma.user.findUnique({
+      where: { discordId: interaction.user.id },
+      select: { habboName: true },
+    });
+
     const embed = new EmbedBuilder()
       .setTitle("Acompanhamento de Gerência")
       .setAuthor({
@@ -244,7 +249,7 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
       .addFields([
         {
           name: "👤 Autor",
-          value: `${habboInteractionName ?? `@${interaction.user.tag}`}`,
+          value: `${authorDB.habboName ?? habboInteractionName ?? `@${interaction.user.tag}`}`,
         },
         {
           name: "🧑‍🏫 Promotor",

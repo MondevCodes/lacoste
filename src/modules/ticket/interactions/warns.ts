@@ -277,6 +277,11 @@ export class WarningsInteractionHandler extends InteractionHandler {
           habboInteractionName = authorHabbo?.name ?? "N/A";
         }
 
+        const authorDB = await this.container.prisma.user.findUnique({
+          where: { discordId: interaction.user.id },
+          select: { habboName: true },
+        });
+
         const approvalEmbed = new EmbedBuilder()
           .setTitle(
             `Solicitação de Advertência para ${targetDBOnlyHabbo.habboName}`
@@ -289,7 +294,11 @@ export class WarningsInteractionHandler extends InteractionHandler {
           .addFields([
             {
               name: "👤 Autor",
-              value: `${habboInteractionName ?? `@${interaction.user.tag}`}`,
+              value: `${
+                authorDB.habboName ??
+                habboInteractionName ??
+                `@${interaction.user.tag}`
+              }`,
             },
             {
               name: "📗 Cargo do Colaborador",
@@ -396,6 +405,11 @@ export class WarningsInteractionHandler extends InteractionHandler {
         habboInteractionName = authorHabbo?.name ?? "N/A";
       }
 
+      const authorDB = await this.container.prisma.user.findUnique({
+        where: { discordId: interaction.user.id },
+        select: { habboName: true },
+      });
+
       const approvalEmbed = new EmbedBuilder()
         .setTitle(
           `Solicitação de Advertência para ${
@@ -410,7 +424,11 @@ export class WarningsInteractionHandler extends InteractionHandler {
         .addFields([
           {
             name: "👤 Autor",
-            value: `${habboInteractionName ?? `@${interaction.user.tag}`}`,
+            value: `${
+              authorDB.habboName ??
+              habboInteractionName ??
+              `@${interaction.user.tag}`
+            }`,
           },
           {
             name: "📗 Cargo do Colaborador",
@@ -476,6 +494,11 @@ export class WarningsInteractionHandler extends InteractionHandler {
       habboInteractionName = authorHabbo?.name ?? "N/A";
     }
 
+    const authorDB = await this.container.prisma.user.findUnique({
+      where: { discordId: interaction.user.id },
+      select: { habboName: true },
+    });
+
     await notificationChannel.send({
       embeds: [
         EmbedBuilder.from(interaction.message.embeds[0])
@@ -483,7 +506,11 @@ export class WarningsInteractionHandler extends InteractionHandler {
           .addFields([
             {
               name: "🛡️ Autorizado Por",
-              value: `${habboInteractionName ?? `@${interaction.user.tag}`}`,
+              value: `${
+                authorDB.habboName ??
+                habboInteractionName ??
+                `@${interaction.user.tag}`
+              }`,
             },
           ])
           .setColor(EmbedColors.LalaRed),

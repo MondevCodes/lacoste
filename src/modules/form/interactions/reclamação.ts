@@ -1,14 +1,14 @@
 import { ApplyOptions } from "@sapphire/decorators";
 import {
-	InteractionHandler,
-	InteractionHandlerTypes,
+  InteractionHandler,
+  InteractionHandlerTypes,
 } from "@sapphire/framework";
 
 import {
-	EmbedBuilder,
-	TextInputBuilder,
-	TextInputStyle,
-	type ButtonInteraction,
+  EmbedBuilder,
+  TextInputBuilder,
+  TextInputStyle,
+  type ButtonInteraction,
 } from "discord.js";
 
 import { EmbedColors } from "$lib/constants/discord";
@@ -17,116 +17,122 @@ import { ENVIRONMENT } from "$lib/env";
 import { MarkdownCharactersRegex } from "$lib/constants/regexes";
 
 enum FeedbackInputIds {
-	Target = "Target",
-	Description = "Description",
+  Target = "Target",
+  Description = "Description",
 }
 
 type FeedbackInput = keyof typeof FeedbackInputIds;
 
 @ApplyOptions<InteractionHandler.Options>({
-	interactionHandlerType: InteractionHandlerTypes.Button,
+  interactionHandlerType: InteractionHandlerTypes.Button,
 })
 export class ComplaintFormInteractionHandler extends InteractionHandler {
-	public override async parse(interaction: ButtonInteraction) {
-		if (!interaction.inGuild()) {
-			throw new Error("Cannot check permissions outside of a guild.");
-		}
+  public override async parse(interaction: ButtonInteraction) {
+    if (!interaction.inGuild()) {
+      throw new Error("Cannot check permissions outside of a guild.");
+    }
 
-		return interaction.customId === FormIds.Reclamação
-			? this.some()
-			: this.none();
-	}
+    return interaction.customId === FormIds.Reclamação
+      ? this.some()
+      : this.none();
+  }
 
-	public override async run(interaction: ButtonInteraction) {
-		const { result, interaction: interactionFromModal } =
-			await this.container.utilities.inquirer.awaitModal<FeedbackInput>(
-				interaction,
-				{
-					inputs: [
-						new TextInputBuilder()
-							.setLabel("Autor")
-							.setPlaceholder(
-								"Informe ID do Discord (@Nick) ou do Habbo (Nick).",
-							)
-							.setCustomId(FeedbackInputIds.Target)
-							.setStyle(TextInputStyle.Short)
-							.setRequired(true),
+  public override async run(interaction: ButtonInteraction) {
+    const { result, interaction: interactionFromModal } =
+      await this.container.utilities.inquirer.awaitModal<FeedbackInput>(
+        interaction,
+        {
+          inputs: [
+            new TextInputBuilder()
+              .setLabel("Autor")
+              .setPlaceholder(
+                "Informe ID do Discord (@Nick) ou do Habbo (Nick)."
+              )
+              .setCustomId(FeedbackInputIds.Target)
+              .setStyle(TextInputStyle.Short)
+              .setRequired(true),
 
-						new TextInputBuilder()
-							.setLabel("Descrição")
-							.setPlaceholder("Ex.: Novos recursos do servidor.")
-							.setCustomId(FeedbackInputIds.Description)
-							.setStyle(TextInputStyle.Paragraph)
-							.setRequired(true),
-					],
-					listenInteraction: true,
-					title: "Reclamação / Denúncia",
-				},
-			);
+            new TextInputBuilder()
+              .setLabel("Descrição")
+              .setPlaceholder("Ex.: Novos recursos do servidor.")
+              .setCustomId(FeedbackInputIds.Description)
+              .setStyle(TextInputStyle.Paragraph)
+              .setRequired(true),
+          ],
+          listenInteraction: true,
+          title: "Reclamação / Denúncia",
+        }
+      );
 
-		const { member: targetMember, habbo: targetHabbo } =
-			await this.container.utilities.habbo.inferTargetGuildMember(
-				result.Target,
-			);
+    const { member: targetMember, habbo: targetHabbo } =
+      await this.container.utilities.habbo.inferTargetGuildMember(
+        result.Target
+      );
 
-		if (!interactionFromModal.deferred) {
-			await interaction.deferReply({ ephemeral: true });
-		}
+    if (!interactionFromModal.deferred) {
+      await interaction.deferReply({ ephemeral: true });
+    }
 
-		if (!targetMember) {
-			await interactionFromModal.editReply({
-				content: "Não foi possível encontrar o usuário informado.",
-			});
+    if (!targetMember) {
+      await interactionFromModal.editReply({
+        content: "Não foi possível encontrar o usuário informado.",
+      });
 
-			return;
-		}
+      return;
+    }
 
-		const embed = new EmbedBuilder()
-			.setTitle("Reclamação / Denúncia")
-			.setThumbnail(
-				`https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`,
-			)
-			.addFields([
-				{
-					name: "Autor(a)",
-					value: `${
-						targetHabbo?.name.replaceAll(MarkdownCharactersRegex, "\\$&") ??
-						result.Target
-					} // ${targetMember.toString()} `,
-				},
-				{
-					name: "Diretor(a)",
-					value: interaction.user.toString(),
-				},
-				{
-					name: "Descrição",
-					value: result.Description,
-				},
-			])
-			.setAuthor({
-				name: interaction.user.tag,
-				iconURL: interaction.user.displayAvatarURL(),
-			})
-			.setColor(EmbedColors.Alert);
+    const authorDB = await this.container.prisma.user.findUnique({
+      where: { discordId: interaction.user.id },
+      select: { habboName: true },
+    });
 
-		const guild =
-			interaction.guild ??
-			(await interaction.client.guilds.fetch(ENVIRONMENT.GUILD_ID));
+    const embed = new EmbedBuilder()
+      .setTitle("Reclamação / Denúncia")
+      .setThumbnail(
+        `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`
+      )
+      .addFields([
+        {
+          name: "Autor(a)",
+          value: `${
+            authorDB.habboName ??
+            targetHabbo?.name.replaceAll(MarkdownCharactersRegex, "\\$&") ??
+            result.Target
+          } // ${targetMember.toString()} `,
+        },
+        {
+          name: "Diretor(a)",
+          value: interaction.user.toString(),
+        },
+        {
+          name: "Descrição",
+          value: result.Description,
+        },
+      ])
+      .setAuthor({
+        name: interaction.user.tag,
+        iconURL: interaction.user.displayAvatarURL(),
+      })
+      .setColor(EmbedColors.Alert);
 
-		const channel = await guild.channels.fetch(
-			ENVIRONMENT.NOTIFICATION_CHANNELS.FORM_COMPLAINT,
-		);
+    const guild =
+      interaction.guild ??
+      (await interaction.client.guilds.fetch(ENVIRONMENT.GUILD_ID));
 
-		if (channel === null || !channel.isTextBased()) {
-			throw new Error(
-				"Form evaluation channel not found or not a text channel.",
-			);
-		}
+    const channel = await guild.channels.fetch(
+      ENVIRONMENT.NOTIFICATION_CHANNELS.FORM_COMPLAINT
+    );
 
-		await channel.send({
-			embeds: [embed],
-		});
+    if (channel === null || !channel.isTextBased()) {
+      throw new Error(
+        "Form evaluation channel not found or not a text channel."
+      );
+    }
 
-		await interactionFromModal.deleteReply();
-	}
+    await channel.send({
+      embeds: [embed],
+    });
+
+    await interactionFromModal.deleteReply();
+  }
 }

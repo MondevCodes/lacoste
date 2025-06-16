@@ -237,6 +237,11 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
       `[AcompanhamentoAdmInteractionHandler#run] finalRate: ${finalRate}`
     );
 
+    const authorDB = await this.container.prisma.user.findUnique({
+      where: { discordId: interaction.user.id },
+      select: { habboName: true },
+    });
+
     const embed = new EmbedBuilder()
       .setTitle("Acompanhamento de Administração")
       .setAuthor({
@@ -246,7 +251,11 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
       .addFields([
         {
           name: "👤 Autor",
-          value: `${habboInteractionName ?? `@${interaction.user.tag}`}`,
+          value: `${
+            authorDB.habboName ??
+            habboInteractionName ??
+            `@${interaction.user.tag}`
+          }`,
         },
         {
           name: "🧑‍🏫 Promotor",
@@ -376,7 +385,11 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
               },
               {
                 name: "🔍 Supervisionado por",
-                value: `${habboInteractionName ?? `@${interaction.user.tag}`}`,
+                value: `${
+                  authorDB.habboName ??
+                  habboInteractionName ??
+                  `@${interaction.user.tag}`
+                }`,
               },
             ])
             .setColor(EmbedColors.Success)
