@@ -155,11 +155,12 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
               .setRequired(true),
 
             new TextInputBuilder()
-              .setLabel("Observação")
-              .setPlaceholder("Ex.: Muito bom")
+              .setLabel("Observação Detalhada")
+              .setPlaceholder("Ex.: Muito bom (mínimo de 50 caracteres)")
               .setCustomId(FeedbackInputIds.Performance)
               .setStyle(TextInputStyle.Paragraph)
-              .setRequired(true),
+              .setRequired(true)
+              .setMinLength(50),
 
             new TextInputBuilder()
               .setLabel("O promotor realizou uma simulação?")
@@ -249,7 +250,11 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
       .addFields([
         {
           name: "👤 Autor",
-          value: `${authorDB.habboName ?? habboInteractionName ?? `@${interaction.user.tag}`}`,
+          value: `${
+            authorDB.habboName ??
+            habboInteractionName ??
+            `@${interaction.user.tag}`
+          }`,
         },
         {
           name: "🧑‍🏫 Promotor",
@@ -319,14 +324,16 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
           inline: true,
         },
         {
-          name: "🗒️ Observação",
+          name: "🗒️ Observação Detalhada",
           value: result.Performance,
           inline: true,
         },
       ])
       .setColor(EmbedColors.LalaRed)
       .setThumbnail(
-        `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`
+        targetHabbo
+          ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`
+          : null
       );
 
     const guild =
@@ -369,12 +376,12 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
                 value: `${targetHabbo.name ?? `@${targetMember.user.tag}`}`,
               },
               {
-                name: "📝 Cargo Anterior",
+                name: "💼 Cargo Anterior",
                 value: `<@&${ENVIRONMENT.JOBS_ROLES.VINCULADO.id}>`,
                 inline: false,
               },
               {
-                name: "📗 Cargo Promovido",
+                name: "📈 Cargo Promovido",
                 value: `<@&${ENVIRONMENT.JOBS_ROLES.ESTAGIÁRIO.id}>`,
               },
               {
@@ -384,7 +391,9 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
             ])
             .setColor(EmbedColors.Success)
             .setThumbnail(
-              `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`
+              targetHabbo
+                ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`
+                : null
             ),
         ],
       });
