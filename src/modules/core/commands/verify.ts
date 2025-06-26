@@ -163,7 +163,7 @@ export default class SendCommand extends Command {
                       : "N/D",
                   },
                   {
-                    name: "📈 Promoção Disponível?",
+                    name: "📈 Promoção Disponível",
                     value: shouldPromote ? "Sim ✅" : "Não ❌",
                   },
                   {
@@ -171,7 +171,7 @@ export default class SendCommand extends Command {
                     value: `${daysForPromote}`,
                   },
                   {
-                    name: "🪪 Discord Vinculado?",
+                    name: "🪪 Discord Vinculado",
                     value: discordLinked
                       ? "Vinculado 🔗 ✅"
                       : "Não Vinculado ⛓️‍💥 ❌",
@@ -226,7 +226,7 @@ export default class SendCommand extends Command {
                       : "N/D",
                   },
                   {
-                    name: "🪪 Discord Vinculado?",
+                    name: "🪪 Discord Vinculado",
                     value: discordLinked
                       ? "Vinculado 🔗 ✅"
                       : "Não Vinculado ⛓️‍💥 ❌",
@@ -392,7 +392,7 @@ export default class SendCommand extends Command {
                     : "N/D",
                 },
                 {
-                  name: "📈 Promoção Disponível?",
+                  name: "📈 Promoção Disponível",
                   value:
                     shouldPromote && isPromotionPossible
                       ? "Sim ✅"
@@ -407,7 +407,7 @@ export default class SendCommand extends Command {
                   value: `${daysForPromote}`,
                 },
                 {
-                  name: "🪪 Discord Vinculado?",
+                  name: "🪪 Discord Vinculado",
                   value: discordLinked
                     ? "Vinculado 🔗 ✅"
                     : "Não Vinculado ⛓️‍💥 ❌",
@@ -469,7 +469,7 @@ export default class SendCommand extends Command {
                     : "N/D",
                 },
                 {
-                  name: "🪪 Discord Vinculado?",
+                  name: "🪪 Discord Vinculado",
                   value: discordLinked
                     ? "Vinculado 🔗 ✅"
                     : "Não Vinculado ⛓️‍💥 ❌",
