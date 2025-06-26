@@ -136,9 +136,9 @@ export class LinkCommand extends Command {
       const embed = new EmbedBuilder()
         .setColor(EmbedColors.LalaRed)
         .setAuthor({
-          name: `${existingUser ? "Revinculado" : "Vinculando"} por **${
+          name: `${existingUser ? "Revinculado" : "Vinculando"} por ${
             authorDB.habboName
-          }**`,
+          }`,
           iconURL: message.author.displayAvatarURL(),
         })
         .addFields([
@@ -146,7 +146,9 @@ export class LinkCommand extends Command {
           { name: "Discord", value: "Ainda não vinculado", inline: true },
         ])
         .setThumbnail(
-          `https://www.habbo.com/habbo-imaging/avatarimage?figure=${profile.figureString}&size=b&gesture=std`
+          profile
+            ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${profile.figureString}&size=b&gesture=std`
+            : null
         );
 
       await this.container.utilities.discord.sendEphemeralMessage(message, {
@@ -361,9 +363,9 @@ export class LinkCommand extends Command {
     const embed = new EmbedBuilder()
       .setColor(EmbedColors.LalaRed)
       .setAuthor({
-        name: `${existingUser ? "Revinculado" : "Vinculando"} por **${
+        name: `${existingUser ? "Revinculado" : "Vinculando"} por ${
           authorDB.habboName
-        }**`,
+        }`,
         iconURL: message.author.displayAvatarURL(),
       })
       .addFields([
@@ -371,7 +373,9 @@ export class LinkCommand extends Command {
         { name: "Discord", value: `<@${member.id}>`, inline: true },
       ])
       .setThumbnail(
-        `https://www.habbo.com/habbo-imaging/avatarimage?figure=${profile.figureString}&size=b&gesture=std`
+        profile
+          ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${profile.figureString}&size=b&gesture=std`
+          : null
       );
 
     await notificationChannel.send({
