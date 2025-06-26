@@ -31,9 +31,9 @@ enum FeedbackInputIds {
   QuestionTwo = "QuestionTwo",
   QuestionThree = "QuestionThree",
   // QuestionFour = "QuestionFour",
-  QuestionFive = "QuestionFive",
-  QuestionSix = "QuestionSix",
-  QuestionSeven = "QuestionSeven",
+  // QuestionFive = "QuestionFive",
+  // QuestionSix = "QuestionSix",
+  // QuestionSeven = "QuestionSeven",
 }
 
 type FeedbackInput = keyof typeof FeedbackInputIds;
@@ -105,23 +105,16 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
               .setRequired(true),
 
             new TextInputBuilder()
-              .setLabel("Encaminhou o colaborador a criar a sua tag")
+              .setLabel("Explicou as funções do CG e do seu Auxílio")
               .setPlaceholder("Atribua uma nota de 0 a 1")
               .setCustomId(FeedbackInputIds.QuestionOne)
               .setStyle(TextInputStyle.Short)
               .setRequired(true),
 
             new TextInputBuilder()
-              .setLabel("Explicou os passos para preparar uma promoção")
+              .setLabel("Explicou como realizar relatórios presenciais")
               .setPlaceholder("Atribua uma nota de 0 a 1")
               .setCustomId(FeedbackInputIds.QuestionTwo)
-              .setStyle(TextInputStyle.Short)
-              .setRequired(true),
-
-            new TextInputBuilder()
-              .setLabel("Explicou sobre os convites aos servidores")
-              .setPlaceholder("Atribua uma nota de 0 a 1")
-              .setCustomId(FeedbackInputIds.QuestionThree)
               .setStyle(TextInputStyle.Short)
               .setRequired(true),
           ],
@@ -135,32 +128,19 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
         {
           inputs: [
             new TextInputBuilder()
-              .setLabel("Explicou as funções do CG e do seu Auxílio")
-              .setPlaceholder("Atribua uma nota de 0 a 1")
-              .setCustomId(FeedbackInputIds.QuestionFive)
-              .setStyle(TextInputStyle.Short)
-              .setRequired(true),
-
-            new TextInputBuilder()
-              .setLabel("Explicou como realizar relatórios presenciais")
-              .setPlaceholder("Atribua uma nota de 0 a 1")
-              .setCustomId(FeedbackInputIds.QuestionSix)
-              .setStyle(TextInputStyle.Short)
-              .setRequired(true),
-
-            new TextInputBuilder()
               .setLabel("Apresentou as regras para a abertura da sede")
               .setPlaceholder("Atribua uma nota de 0 a 1")
-              .setCustomId(FeedbackInputIds.QuestionSeven)
+              .setCustomId(FeedbackInputIds.QuestionThree)
               .setStyle(TextInputStyle.Short)
               .setRequired(true),
 
             new TextInputBuilder()
-              .setLabel("Observação")
-              .setPlaceholder("Ex.: Muito bom")
+              .setLabel("Observação Detalhada")
+              .setPlaceholder("Ex.: Muito bom (mínimo de 50 caracteres)")
               .setCustomId(FeedbackInputIds.Performance)
               .setStyle(TextInputStyle.Paragraph)
-              .setRequired(true),
+              .setRequired(true)
+              .setMinLength(50),
 
             new TextInputBuilder()
               .setLabel("O promotor realizou uma simulação?")
@@ -227,11 +207,7 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
     const finalRate =
       Number.parseInt(result.QuestionOne) +
       Number.parseInt(result.QuestionTwo) +
-      Number.parseInt(result.QuestionThree) +
-      // Number.parseInt(result.QuestionFour) +
-      Number.parseInt(result.QuestionFive) +
-      Number.parseInt(result.QuestionSix) +
-      Number.parseInt(result.QuestionSeven);
+      Number.parseInt(result.QuestionThree);
 
     this.container.logger.info(
       `[AcompanhamentoAdmInteractionHandler#run] finalRate: ${finalRate}`
@@ -256,6 +232,7 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
             habboInteractionName ??
             `@${interaction.user.tag}`
           }`,
+          inline: true,
         },
         {
           name: "🧑‍🏫 Promotor",
@@ -265,8 +242,14 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
           )} // ${targetJobRole.toString()}`,
           inline: true,
         },
+        // Invisible Field for break the line
         {
-          name: "🖊️ Encaminhou o colaborador a criar a sua tag",
+          name: "\u200B",
+          value: "\u200B",
+          inline: true,
+        },
+        {
+          name: "🖊️ Explicou as funções do CG e do seu Auxílio",
           value:
             Number.parseInt(result.QuestionOne) < 2 &&
             Number.parseInt(result.QuestionOne) >= 0
@@ -275,7 +258,7 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
           inline: true,
         },
         {
-          name: "🖊️ Explicou os passos para preparar uma promoção",
+          name: "🖊️ Explicou como realizar relatórios presenciais",
           value:
             Number.parseInt(result.QuestionTwo) < 2 &&
             Number.parseInt(result.QuestionTwo) >= 0
@@ -284,7 +267,7 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
           inline: true,
         },
         {
-          name: "🖊️ Explicou sobre os convites aos servidores",
+          name: "🖊️ Apresentou as regras para a abertura da sede",
           value:
             Number.parseInt(result.QuestionThree) < 2 &&
             Number.parseInt(result.QuestionThree) >= 0
@@ -293,46 +276,21 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
           inline: true,
         },
         {
-          name: "🖊️ Explicou as funções do CG e do seu Auxílio",
-          value:
-            Number.parseInt(result.QuestionFive) < 2 &&
-            Number.parseInt(result.QuestionFive) >= 0
-              ? `${result.QuestionFive}/1`
-              : "N/A",
-          inline: true,
-        },
-        {
-          name: "🖊️ Explicou como realizar relatórios presenciais",
-          value:
-            Number.parseInt(result.QuestionSix) < 2 &&
-            Number.parseInt(result.QuestionSix) >= 0
-              ? `${result.QuestionSix}/1`
-              : "N/A",
-          inline: true,
-        },
-        {
-          name: "🖊️ Apresentou as regras para a abertura da sede",
-          value:
-            Number.parseInt(result.QuestionSeven) < 2 &&
-            Number.parseInt(result.QuestionSeven) >= 0
-              ? `${result.QuestionSeven}/1`
-              : "N/A",
-          inline: true,
-        },
-        {
           name: "🏆 Nota de Desempenho",
-          value: finalRate < 7 && finalRate >= 0 ? `${finalRate}/6` : "N/A",
-          inline: true,
+          value: finalRate < 4 && finalRate >= 0 ? `${finalRate}/3` : "N/A",
+          inline: false,
         },
         {
-          name: "🗒️ Observação",
+          name: "🗒️ Observação Detalhada",
           value: result.Performance,
           inline: true,
         },
       ])
       .setColor(EmbedColors.LalaRed)
       .setThumbnail(
-        `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`
+        targetHabbo
+          ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`
+          : null
       );
 
     const guild =
@@ -375,12 +333,12 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
                 value: `${targetHabbo.name ?? `@${targetMember.user.tag}`}`,
               },
               {
-                name: "📝 Cargo Anterior",
+                name: "💼 Cargo Anterior",
                 value: `<@&${ENVIRONMENT.JOBS_ROLES.COORDENADOR.id}>`,
                 inline: false,
               },
               {
-                name: "📗 Cargo Promovido",
+                name: "📈 Cargo Promovido",
                 value: `<@&${ENVIRONMENT.JOBS_ROLES.SUB_GERENTE.id}>`,
               },
               {
@@ -394,7 +352,9 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
             ])
             .setColor(EmbedColors.Success)
             .setThumbnail(
-              `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`
+              targetHabbo
+                ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`
+                : null
             ),
         ],
       });
