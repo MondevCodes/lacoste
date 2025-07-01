@@ -206,7 +206,7 @@ export default class SendCommand extends Command {
             .setColor(EmbedColors.Default)
             .setTitle("Formulários de Organizacional")
             .setDescription(
-              "Selecione o tipo de formulário que deseja e responda o questionário que será aberto. Ao finalizar, seu formulário será enviado para o canal de relatórios."
+              "Selecione o tipo de formulário que deseja e responda o questionário que será aberto. Ao finalizar, seu formulário será enviado para o canal de relatórios. \n\n **Alterar Presenças** \n Se deseja adicionar ou remover alguma presença clique no botão respectivo. *(Disponível apenas para Fundação)*"
             )
             .setImage(ImgThumbnail.Organizacional),
         ],
@@ -221,6 +221,17 @@ export default class SendCommand extends Command {
               .setLabel("Correções")
               .setStyle(ButtonStyle.Danger)
               .setCustomId(FormIds.OrganizacionalCorrecao)
+          ),
+          new ActionRowBuilder<ButtonBuilder>().addComponents(
+            new ButtonBuilder()
+              .setLabel("Adicionar Presenças")
+              .setStyle(ButtonStyle.Primary)
+              .setCustomId(FormIds.adicionarPresença),
+
+            new ButtonBuilder()
+              .setLabel("Remover Presenças")
+              .setStyle(ButtonStyle.Secondary)
+              .setCustomId(FormIds.removerPresença)
           ),
         ],
       });
