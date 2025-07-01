@@ -25,9 +25,11 @@ export class UpdatePresenceInteractionHandler extends InteractionHandler {
       return this.none();
     }
 
+    const userTag = interaction.user.tag;
+
     if (!interaction.inGuild()) {
       this.container.logger.warn(
-        `[UpdatePresenceInteractionHandler#parse] ${interaction.user.tag} tried to perform an action in a DM.`
+        `[UpdatePresenceInteractionHandler#parse] ${userTag} tried to perform an action in a DM.`
       );
 
       return this.none();
@@ -183,16 +185,15 @@ export class UpdatePresenceInteractionHandler extends InteractionHandler {
       let updateTotalDates: Date[] = null;
       let updateCGDates: Date[] = null;
 
-      if (totalCount != 0) {
-        updateTotalDates = Array.from(
-          { length: totalCount },
-          () => new Date(fixedDate)
-        );
-      }
-
       if (cgCount != 0) {
         updateCGDates = Array.from(
           { length: cgCount },
+          () => new Date(fixedDate)
+        );
+      }
+      if (totalCount != 0) {
+        updateTotalDates = Array.from(
+          { length: totalCount + cgCount },
           () => new Date(fixedDate)
         );
       }
@@ -231,24 +232,32 @@ export class UpdatePresenceInteractionHandler extends InteractionHandler {
           (date: { $date: string }) => new Date(date.$date)
         ) ?? [];
 
+      if (!oldCGPresences.length && !oldTotalPresences.length) {
+        return await interactionFromModal.editReply({
+          content: `❌ O usuário **${rawName}** não possui nenhuma presença para ser removida.`,
+        });
+      }
+
       let sortedTotalPresences: Date[] = null;
       let sortedCGPresences: Date[] = null;
       let updatedTotalPresences: Date[] = null;
       let updatedCGPresences: Date[] = null;
 
-      if (totalToRemove) {
-        sortedTotalPresences = oldTotalPresences
-          .map((date) => new Date(date))
-          .sort((a, b) => a.getTime() - b.getTime());
-
-        updatedTotalPresences = sortedTotalPresences.slice(totalToRemove);
-      }
       if (cgToRemove) {
         sortedCGPresences = oldCGPresences
           .map((date) => new Date(date))
           .sort((a, b) => a.getTime() - b.getTime());
 
         updatedCGPresences = sortedCGPresences.slice(cgToRemove);
+      }
+      if (totalToRemove) {
+        sortedTotalPresences = oldTotalPresences
+          .map((date) => new Date(date))
+          .sort((a, b) => a.getTime() - b.getTime());
+
+        updatedTotalPresences = sortedTotalPresences.slice(
+          totalToRemove + cgToRemove
+        );
       }
 
       const targetDB = await this.container.prisma.user.update({
