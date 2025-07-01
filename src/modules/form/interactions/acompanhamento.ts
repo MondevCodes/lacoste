@@ -11,6 +11,7 @@ import {
   TextInputBuilder,
   TextInputStyle,
   type ButtonInteraction,
+  TextChannel,
 } from "discord.js";
 
 import { EmbedColors } from "$lib/constants/discord";
@@ -368,7 +369,7 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
       result.Simulation.toLowerCase() === "sim" ||
       result.Simulation.toLowerCase() === "s"
     ) {
-      await promotionChannel.send({
+      await (promotionChannel as TextChannel).send({
         embeds: [
           new EmbedBuilder()
             .setDescription("### Simulação de Promoção\n\n")
