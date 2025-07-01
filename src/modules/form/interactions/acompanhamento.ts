@@ -11,6 +11,7 @@ import {
   TextInputBuilder,
   TextInputStyle,
   type ButtonInteraction,
+  TextChannel,
 } from "discord.js";
 
 import { EmbedColors } from "$lib/constants/discord";
@@ -255,6 +256,7 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
             habboInteractionName ??
             `@${interaction.user.tag}`
           }`,
+          inline: true,
         },
         {
           name: "🧑‍🏫 Promotor",
@@ -262,6 +264,11 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
             MarkdownCharactersRegex,
             "\\$&"
           )} // ${targetJobRole.toString()}`,
+          inline: true,
+        },
+        {
+          name: "\u200B",
+          value: "\u200B",
           inline: true,
         },
         {
@@ -321,12 +328,12 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
         {
           name: "🏆 Nota de Desempenho",
           value: finalRate < 7 && finalRate >= 0 ? `${finalRate}/6` : "N/A",
-          inline: true,
+          inline: false,
         },
         {
           name: "🗒️ Observação Detalhada",
           value: result.Performance,
-          inline: true,
+          inline: false,
         },
       ])
       .setColor(EmbedColors.LalaRed)
@@ -362,7 +369,7 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
       result.Simulation.toLowerCase() === "sim" ||
       result.Simulation.toLowerCase() === "s"
     ) {
-      await promotionChannel.send({
+      await (promotionChannel as TextChannel).send({
         embeds: [
           new EmbedBuilder()
             .setDescription("### Simulação de Promoção\n\n")

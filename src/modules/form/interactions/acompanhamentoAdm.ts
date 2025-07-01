@@ -11,6 +11,7 @@ import {
   TextInputBuilder,
   TextInputStyle,
   type ButtonInteraction,
+  TextChannel,
 } from "discord.js";
 
 import { EmbedColors } from "$lib/constants/discord";
@@ -26,14 +27,9 @@ enum FeedbackInputIds {
   Simulation = "Simulation",
   Performance = "Performance",
   PerformanceRate = "PerformanceRate",
-  // NeedsMoreFollowUp = "NeedsMoreFollowUp",
   QuestionOne = "QuestionOne",
   QuestionTwo = "QuestionTwo",
   QuestionThree = "QuestionThree",
-  // QuestionFour = "QuestionFour",
-  // QuestionFive = "QuestionFive",
-  // QuestionSix = "QuestionSix",
-  // QuestionSeven = "QuestionSeven",
 }
 
 type FeedbackInput = keyof typeof FeedbackInputIds;
@@ -242,7 +238,6 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
           )} // ${targetJobRole.toString()}`,
           inline: true,
         },
-        // Invisible Field for break the line
         {
           name: "\u200B",
           value: "\u200B",
@@ -319,7 +314,7 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
       result.Simulation.toLowerCase() === "sim" ||
       result.Simulation.toLowerCase() === "s"
     ) {
-      await promotionChannel.send({
+      await (promotionChannel as TextChannel).send({
         embeds: [
           new EmbedBuilder()
             .setDescription("### Simulação de Promoção\n\n")
