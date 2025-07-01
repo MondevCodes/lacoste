@@ -26,14 +26,9 @@ enum FeedbackInputIds {
   Simulation = "Simulation",
   Performance = "Performance",
   PerformanceRate = "PerformanceRate",
-  // NeedsMoreFollowUp = "NeedsMoreFollowUp",
   QuestionOne = "QuestionOne",
   QuestionTwo = "QuestionTwo",
   QuestionThree = "QuestionThree",
-  // QuestionFour = "QuestionFour",
-  // QuestionFive = "QuestionFive",
-  // QuestionSix = "QuestionSix",
-  // QuestionSeven = "QuestionSeven",
 }
 
 type FeedbackInput = keyof typeof FeedbackInputIds;
@@ -242,7 +237,6 @@ export class FollowUpFormInteractionHandler extends InteractionHandler {
           )} // ${targetJobRole.toString()}`,
           inline: true,
         },
-        // Invisible Field for break the line
         {
           name: "\u200B",
           value: "\u200B",
