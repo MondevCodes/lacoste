@@ -185,13 +185,13 @@ export class UpdatePresenceInteractionHandler extends InteractionHandler {
       let updateTotalDates: Date[] = null;
       let updateCGDates: Date[] = null;
 
-      if (cgCount != 0) {
+      if (cgCount) {
         updateCGDates = Array.from(
           { length: cgCount },
           () => new Date(fixedDate)
         );
       }
-      if (totalCount != 0) {
+      if (totalCount || cgCount) {
         updateTotalDates = Array.from(
           { length: totalCount + cgCount },
           () => new Date(fixedDate)
@@ -250,7 +250,7 @@ export class UpdatePresenceInteractionHandler extends InteractionHandler {
 
         updatedCGPresences = sortedCGPresences.slice(cgToRemove);
       }
-      if (totalToRemove) {
+      if (totalToRemove || cgToRemove) {
         sortedTotalPresences = oldTotalPresences
           .map((date) => new Date(date))
           .sort((a, b) => a.getTime() - b.getTime());
