@@ -206,7 +206,7 @@ export default class SendCommand extends Command {
             .setColor(EmbedColors.Default)
             .setTitle("Formulários de Organizacional")
             .setDescription(
-              "Selecione o tipo de formulário que deseja e responda o questionário que será aberto. Ao finalizar, seu formulário será enviado para o canal de relatórios. \n\n **Alterar Presenças** \n Se deseja adicionar ou remover alguma presença clique no botão respectivo. *(Disponível apenas para Fundação)*"
+              "**Relatório Presencial** \nUtilize para registrar as presenças dos colaboradores na sede. \n \n**Correções** \nUtilize para ajustar as presenças dos colaboradores em relação às metas. \nFunção restrita ao comitê organizacional. \n \n**Adicionar/Remover Presenças** \nRealize ajustes no perfil dos colaboradores com base no tema de presenças. \nFunção restrita ao líder organizacional."
             )
             .setImage(ImgThumbnail.Organizacional),
         ],

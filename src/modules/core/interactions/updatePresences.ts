@@ -44,20 +44,30 @@ export class UpdatePresenceInteractionHandler extends InteractionHandler {
         ? interaction.member
         : await members.fetch(interaction.user.id);
 
-    const isAuthorized = this.container.utilities.discord.hasPermissionByRole({
-      checkFor: "FUNDAÇÃO",
-      category: "SECTOR",
-      roles,
-    });
+    const isAuthorizedCommittee =
+      this.container.utilities.discord.hasPermissionByRole({
+        checkFor: "LÍDER_ORGANIZACIONAL",
+        category: "COMMITTEE",
+        roles,
+      });
 
-    if (!isAuthorized) {
+    const isAuthorizedSector =
+      this.container.utilities.discord.hasPermissionByRole({
+        checkFor: "FUNDAÇÃO",
+        category: "SECTOR",
+        roles,
+      });
+
+    if (!isAuthorizedSector && !isAuthorizedCommittee) {
       await interaction.reply({
-        content: `⛔ **Não autorizado**. Você precisa ter o cargo de <@&788612423363330085> para acessar as funções de Presenças.`,
+        content: `⛔ **Não autorizado**. Você precisa ter o cargo de <@&788612423363330085> ou <@&1008077046955651193> para acessar as funções de editar Presenças.`,
         ephemeral: true,
       });
     }
 
-    return isAuthorized ? this.some() : this.none();
+    return isAuthorizedSector || isAuthorizedCommittee
+      ? this.some()
+      : this.none();
   }
 
   public override async run(interaction: ButtonInteraction) {
