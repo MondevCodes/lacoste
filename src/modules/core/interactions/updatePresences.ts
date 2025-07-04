@@ -44,12 +44,9 @@ export class UpdatePresenceInteractionHandler extends InteractionHandler {
         ? interaction.member
         : await members.fetch(interaction.user.id);
 
-    const isAuthorizedCommittee =
-      this.container.utilities.discord.hasPermissionByRole({
-        checkFor: "LÍDER_ORGANIZACIONAL",
-        category: "COMMITTEE",
-        roles,
-      });
+    const isAuthorizedCommittee = roles.cache.has(
+      ENVIRONMENT.COMMITTEES_ROLES.LÍDER_ORGANIZACIONAL.id
+    );
 
     const isAuthorizedSector =
       this.container.utilities.discord.hasPermissionByRole({
