@@ -3,78 +3,84 @@ import { ENVIRONMENT } from "$lib/env";
 import { ApplyOptions } from "@sapphire/decorators";
 import { Command } from "@sapphire/framework";
 
-import { EmbedBuilder, type Message } from "discord.js";
-import type { Args } from "@sapphire/framework";
+import {
+  EmbedBuilder,
+  GuildMemberRoleManager,
+  type ChatInputCommandInteraction,
+} from "discord.js";
 
 @ApplyOptions<Command.Options>({
   name: "vincular",
+  description: "Vincula um usuário do Habbo a Lacoste",
 })
 export class LinkCommand extends Command {
-  public override async messageRun(message: Message, args: Args) {
-    if (!message.inGuild()) {
-      this.container.logger.warn(
-        `[LinkCommand#messageRun] ${message.member?.id} tried to perform an action in a DM.`
-      );
+  public override registerApplicationCommands(registry: Command.Registry) {
+    registry.registerChatInputCommand((builder) =>
+      builder
+        .setName(this.name)
+        .setDescription(this.description)
+        .addStringOption((option) =>
+          option
+            .setName("nick_habbo")
+            .setDescription("Nickname do usuário no Habbo")
+            .setRequired(true)
+        )
+        .addUserOption((option) =>
+          option
+            .setName("usuario_discord")
+            .setDescription("Usuário do Discord para vincular")
+            .setRequired(false)
+        )
+    );
+  }
 
+  public override async chatInputRun(interaction: ChatInputCommandInteraction) {
+    const interactionId = interaction.user.id;
+
+    if (!interaction.inGuild()) {
+      this.container.logger.warn(
+        `[LinkCommand#chatInputRun] ${interactionId} tried to perform an action in a DM.`
+      );
       return;
     }
 
     const cachedGuild =
-      message.guild ??
-      (await this.container.client.guilds.fetch(message.guildId));
+      interaction.guild ??
+      (await this.container.client.guilds.fetch(interaction.guildId));
 
     const author =
-      message.member ?? (await message.guild?.members.fetch(message.author.id));
+      interaction.member ??
+      (await interaction.guild?.members.fetch(interaction.user.id));
 
     const authorDB = await this.container.prisma.user.findUnique({
-      where: { discordId: message.author.id },
+      where: { discordId: interaction.user.id },
       select: { habboName: true },
     });
 
     const isAuthorized = this.container.utilities.discord.hasPermissionByRole({
       category: "SECTOR",
       checkFor: "PROMOCIONAL",
-      roles: author.roles,
+      roles: author.roles as GuildMemberRoleManager,
     });
 
     if (!isAuthorized) {
       this.container.logger.info(
-        `[LinkCommand#messageRun] ${message.member?.id} tried to perform an action in a DM.`
+        `[LinkCommand#chatInputRun] ${interaction.member?.user.id} tried to perform an action without permission.`
       );
-
       return;
     }
 
-    const memberResult = await args.pickResult("member");
-    const nickResult = await args.pickResult("string");
+    const habboNick = interaction.options.getString("nick_habbo", true);
+    const discordUser = interaction.options.getUser("usuario_discord", false);
 
     this.container.logger.info(
-      `[LinkCommand#messageRun] memberResult: ${memberResult}`
+      `[LinkCommand#chatInputRun] habboNick: ${habboNick}, discordUser: ${discordUser?.id}`
     );
 
-    // if (memberResult.isErrAnd(() => nickResult.isErr())) {
-    // 	await this.container.utilities.discord.sendEphemeralMessage(message, {
-    // 		content:
-    // 			"Comando inválido, use `vincular NickNoHabbo @NickNoDiscord` deve ser usado para vincular um usuário.",
-    // 		method: "reply",
-    // 	});
-
-    // 	return;
-    // }
-
     // START MEMBER WITHOUT DISCORD
-    if (memberResult.isErr()) {
-      if (nickResult.isErr()) {
-        await message.reply({
-          content:
-            "Comando inválido, use `–vincular NickNoHabbo` para vincular apenas o Habbo ou `–vincular @NickNoDiscord NickNoHabbo` para vincular também o Discord.",
-        });
-
-        return;
-      }
-
+    if (!discordUser) {
       const profileResult = await this.container.utilities.habbo.getProfile(
-        nickResult.unwrap()
+        habboNick
       );
 
       if (profileResult.isErr()) {
@@ -82,7 +88,7 @@ export class LinkCommand extends Command {
           err: profileResult.unwrapErr(),
         });
 
-        await message.reply({
+        await interaction.reply({
           content:
             "Não consegui encontrar o perfil do usuário no Habbo, verifique o nome e veja se o perfil do usuário no jogo está como público.",
         });
@@ -94,13 +100,34 @@ export class LinkCommand extends Command {
 
       const existingUser = await this.container.prisma.user.findUnique({
         where: { habboId: profile.uniqueId },
-        select: { habboId: true, discordId: true, latestPromotionRoleId: true },
+        select: {
+          habboId: true,
+          discordId: true,
+          latestPromotionRoleId: true,
+          discordLink: true,
+          habboName: true,
+        },
       });
 
       if (existingUser) {
-        await message.reply({
-          content: `Este usuário já está vinculado sem o Discord. Caso queira vincular o Discord utilize: –vincular @NickNoDiscord ${profile.name}`,
-        });
+        if (existingUser.discordLink) {
+          await interaction.reply({
+            content: `O usuário **${existingUser.habboName}** já está totalmente vinculado _(Habbo e Discord)_`,
+          });
+        } else {
+          await interaction.reply({
+            content: `Este usuário já está vinculado sem o Discord. Caso queira vincular o Discord utilize: `,
+            embeds: [
+              new EmbedBuilder()
+                .setDescription(
+                  `/vincular [nick_habbo]**${
+                    existingUser.habboName ?? profile.name
+                  }** [usuario_discord]**NickNoDiscord**`
+                )
+                .setColor(EmbedColors.LalaRed),
+            ],
+          });
+        }
 
         return;
       } else {
@@ -139,7 +166,7 @@ export class LinkCommand extends Command {
           name: `${existingUser ? "Revinculado" : "Vinculando"} por ${
             authorDB.habboName
           }`,
-          iconURL: message.author.displayAvatarURL(),
+          iconURL: interaction.user.displayAvatarURL(),
         })
         .addFields([
           { name: "Habbo", value: profile.name, inline: true },
@@ -151,34 +178,22 @@ export class LinkCommand extends Command {
             : null
         );
 
-      await this.container.utilities.discord.sendEphemeralMessage(message, {
+      await interaction.reply({
         content:
-          "Não consegui identificar o Discord do usuário, então foi vinculado apenas o Habbo.",
-        method: "reply",
+          "⚠️ Não consegui identificar o Discord do usuário, então foi vinculado apenas o Habbo.",
+        ephemeral: true,
       });
 
       await notificationChannel.send({
         embeds: [embed],
       });
 
-      await message.react("✅");
-
       return;
       // END USER WITHOUT DISCORD
     }
 
-    // if (memberResult.isErr()) {
-    //   await this.container.utilities.discord.sendEphemeralMessage(message, {
-    //     content:
-    //       "Comando inválido, usuário do Discord não encontrado, use `vincular NickNoHabbo` deve ser usado para vincular apenas o Habbo ou `vincular @NickNoDiscord NickNoHabbo` para vincular também o Discord.",
-    //     method: "reply",
-    //   });
-
-    //   return;
-    // }
-
     const profileResult = await this.container.utilities.habbo.getProfile(
-      nickResult.unwrap()
+      habboNick
     );
 
     if (profileResult.isErr()) {
@@ -186,7 +201,7 @@ export class LinkCommand extends Command {
         err: profileResult.unwrapErr(),
       });
 
-      await message.reply({
+      await interaction.reply({
         content:
           "Não consegui encontrar o perfil do usuário no Habbo, verifique o nome e veja se o perfil do usuário no jogo está como público.",
       });
@@ -194,11 +209,11 @@ export class LinkCommand extends Command {
       return;
     }
 
-    const member = memberResult.unwrap();
+    const member = discordUser;
     const profile = profileResult.unwrap();
 
     const roles = (
-      await message.guild.members.fetch(member.id)
+      await interaction.guild.members.fetch(member.id)
     ).roles.cache.map((role) => role.id);
 
     const existingUser = await this.container.prisma.user.findUnique({
@@ -223,8 +238,8 @@ export class LinkCommand extends Command {
     });
 
     if (existingUserDiscord) {
-      await message.reply({
-        content: `Este perfil do Discord já está vinculado com a conta do Habbo: ${existingUserDiscord.habboName}`,
+      await interaction.reply({
+        content: `Este perfil do Discord já está totalmente vinculado com a conta do Habbo **${existingUserDiscord.habboName}**`,
       });
 
       return;
@@ -242,7 +257,9 @@ export class LinkCommand extends Command {
           user: member,
           role,
         })
-        .catch(() => undefined);
+        .catch(() => {
+          this.container.logger.info(`Role ${role} already exists`);
+        });
     }
 
     this.container.logger.info(
@@ -255,7 +272,9 @@ export class LinkCommand extends Command {
           user: member,
           role: ENVIRONMENT.SECTORS_ROLES.INICIAL.id,
         })
-        .catch(() => undefined);
+        .catch(() => {
+          this.container.logger.info("Sector Inicial role already exists");
+        });
       this.container.logger.info("Sector Inicial role Added");
 
       await cachedGuild.members
@@ -263,7 +282,9 @@ export class LinkCommand extends Command {
           user: member,
           role: ENVIRONMENT.JOBS_ROLES.VINCULADO.id,
         })
-        .catch(() => undefined);
+        .catch(() => {
+          this.container.logger.info("Job Vinculado role already exists");
+        });
       this.container.logger.info("Job Vinculado role Added");
 
       if (existingUser) {
@@ -278,7 +299,7 @@ export class LinkCommand extends Command {
           },
         });
 
-        await message.reply({
+        await interaction.reply({
           content: `Algo aconteceu com os dados do usuário, ele foi resetado para o cargo VINCULADO no Banco de Dados e atribuido os respectivos cargos.`,
         });
       }
@@ -299,7 +320,7 @@ export class LinkCommand extends Command {
         !existingUser.latestPromotionJobId ||
         !existingUser.latestPromotionRoleId
       ) {
-        await message.reply({
+        await interaction.reply({
           content: `Ocorreu um erro inesperado, contate o Desenvolvedor.`,
         });
 
@@ -311,20 +332,26 @@ export class LinkCommand extends Command {
           where: { habboId: existingUser.habboId },
           data: { discordId: member.id, discordLink: true },
         })
-        .catch(() => undefined);
+        .catch(() => {
+          throw new Error("Failed to update user.");
+        });
 
       await cachedGuild.members
         .addRole({
           user: member,
           role: existingUser.latestPromotionJobId,
         })
-        .catch(() => undefined);
+        .catch(() => {
+          throw new Error("Failed to add user job.");
+        });
       await cachedGuild.members
         .addRole({
           user: member,
           role: existingUser.latestPromotionRoleId,
         })
-        .catch(() => undefined);
+        .catch(() => {
+          throw new Error("Failed to add user role.");
+        });
     } else if (existingUser) {
       await this.container.prisma.user
         .update({
@@ -335,7 +362,9 @@ export class LinkCommand extends Command {
             discordLink: true,
           },
         })
-        .catch(() => undefined);
+        .catch(() => {
+          throw new Error("Failed to update user.");
+        });
     } else {
       await this.container.prisma.user
         .create({
@@ -349,10 +378,12 @@ export class LinkCommand extends Command {
             discordLink: true,
           },
         })
-        .catch(() => undefined);
+        .catch(() => {
+          throw new Error("Failed to create user.");
+        });
     }
 
-    const notificationChannel = await member.guild.channels.fetch(
+    const notificationChannel = await interaction.guild.channels.fetch(
       ENVIRONMENT.NOTIFICATION_CHANNELS.HABBO_USERNAME_ADDED
     );
 
@@ -366,7 +397,7 @@ export class LinkCommand extends Command {
         name: `${existingUser ? "Revinculado" : "Vinculando"} por ${
           authorDB.habboName
         }`,
-        iconURL: message.author.displayAvatarURL(),
+        iconURL: interaction.user.displayAvatarURL(),
       })
       .addFields([
         { name: "Habbo", value: profile.name, inline: true },
@@ -382,6 +413,9 @@ export class LinkCommand extends Command {
       embeds: [embed],
     });
 
-    await message.react("✅");
+    await interaction.reply({
+      content: `✅ Vinculado com sucesso!`,
+      ephemeral: true,
+    });
   }
 }
