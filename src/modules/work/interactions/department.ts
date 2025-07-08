@@ -69,9 +69,10 @@ export class DepartmentInteractionHandler extends InteractionHandler {
     if (action === "SelfRequestReturn") {
       isAuthorized = true;
     } else {
+      const interactionTag = interaction.user.tag;
       if (!interaction.inGuild()) {
         this.container.logger.warn(
-          `[DepartmentInteractionHandler#isAuthorized] ${interaction.user.tag} tried to perform an action in a DM.`
+          `[DepartmentInteractionHandler#isAuthorized] ${interactionTag} tried to perform an action in a DM.`
         );
 
         return this.none();
@@ -319,6 +320,10 @@ export class DepartmentInteractionHandler extends InteractionHandler {
         discordId: targetMember.user.id,
       },
     });
+
+    this.container.logger.info(
+      `[DepartmentInteractionHandler#run] Usuário ${targetDB.habboName} afastado por ${targetDB.activeRenewal}.`
+    );
 
     if (!targetDB) {
       await interaction?.editReply({
@@ -574,6 +579,10 @@ export class DepartmentInteractionHandler extends InteractionHandler {
             );
             if (!targetMember || !user.activeRenewalMessageId) return;
 
+            this.container.logger.info(
+              `[DepartmentInteractionHandler#onLoad] Iniciando retorno de ${user.habboName} com #autoReturn.`
+            );
+
             await this.#autoReturn(user.discordId);
 
             await targetMember.send({
@@ -760,6 +769,10 @@ export class DepartmentInteractionHandler extends InteractionHandler {
 
         return;
       });
+
+    this.container.logger.info(
+      `[DepartmentInteractionHandler#autoReturn] Usuário ${user.habboName} afastado foi retornado automaticamente.`
+    );
 
     const notificationChannel = await this.container.client.channels.fetch(
       ENVIRONMENT.NOTIFICATION_CHANNELS.DEPARTMENT_RETURN
