@@ -163,7 +163,7 @@ export class LinkCommand extends Command {
       const embed = new EmbedBuilder()
         .setColor(EmbedColors.LalaRed)
         .setAuthor({
-          name: `${existingUser ? "Revinculado" : "Vinculando"} por ${
+          name: `${existingUser ? "Revinculado" : "Vinculado"} por ${
             authorDB.habboName
           }`,
           iconURL: interaction.user.displayAvatarURL(),
@@ -394,7 +394,7 @@ export class LinkCommand extends Command {
     const embed = new EmbedBuilder()
       .setColor(EmbedColors.LalaRed)
       .setAuthor({
-        name: `${existingUser ? "Revinculado" : "Vinculando"} por ${
+        name: `${existingUser ? "Revinculado" : "Vinculado"} por ${
           authorDB.habboName
         }`,
         iconURL: interaction.user.displayAvatarURL(),
