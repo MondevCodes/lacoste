@@ -12,6 +12,7 @@ import {
   TextInputBuilder,
   TextInputStyle,
   type ButtonInteraction,
+  TextChannel,
 } from "discord.js";
 
 import { schedule } from "node-cron";
@@ -535,7 +536,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
     }
 
     if (notFoundUsers.length > 0) {
-      await notificationChannelNoIdentify.send({
+      await (notificationChannelNoIdentify as TextChannel).send({
         embeds: [
           new EmbedBuilder()
             .setDescription(
@@ -653,7 +654,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
 
         if (notificationChannel?.isTextBased()) {
           try {
-            await notificationChannel.send({
+            await (notificationChannel as TextChannel).send({
               embeds: [
                 new EmbedBuilder()
                   .setColor(EmbedColors.LalaRed)
@@ -699,7 +700,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
       { recoverMissedExecutions: false }
     );
     schedule(
-      "59 23 * * *", // Executar às 23:59 todos os dias
+      "11 0 * * *", // Executar às 00:10 todos os dias
       // "*/1 * * * *", // A cada minuto para testes
       async () => {
         this.container.logger.info(
@@ -721,19 +722,15 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
         });
 
         const today = new Date();
-        const startOfDay = new Date(
-          today.getFullYear(),
-          today.getMonth(),
-          today.getDate()
-        );
         const endOfDay = new Date(
           today.getFullYear(),
           today.getMonth(),
           today.getDate(),
-          23,
-          59,
-          59
+          0,
+          10,
+          0
         );
+        const startOfDay = new Date(endOfDay.getTime() - 24 * 60 * 60 * 1000);
 
         const dailyUsers = users.filter((user) => {
           return user.reportsHistory.some((report) => {
@@ -786,7 +783,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
           channel?.isTextBased()
         ) {
           try {
-            await notificationChannel.send({
+            await (notificationChannel as TextChannel).send({
               embeds: [
                 new EmbedBuilder()
                   .setColor(EmbedColors.Default)
@@ -805,7 +802,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
               ],
             });
 
-            await notificationChannel.send({
+            await (notificationChannel as TextChannel).send({
               embeds: [
                 new EmbedBuilder().setColor(EmbedColors.Default).setDescription(
                   `**🏆 Destaque Diário (Todos):**\n
@@ -814,7 +811,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
               ],
             });
 
-            await notificationChannel.send({
+            await (notificationChannel as TextChannel).send({
               embeds: [
                 new EmbedBuilder()
                   .setColor(EmbedColors.Default)
@@ -828,7 +825,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
               ],
             });
 
-            await notificationChannel.send({
+            await (notificationChannel as TextChannel).send({
               embeds: [
                 new EmbedBuilder().setColor(EmbedColors.Default).setDescription(
                   `**🏆 Destaque Diário (CG):**\n
@@ -838,13 +835,13 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
               ],
             });
 
-            await notificationChannelNoIdentify.send({
+            await (notificationChannelNoIdentify as TextChannel).send({
               content: `**🕛 FIM DO DIA** [${today.toLocaleDateString(
                 "pt-BR"
               )}]`,
             });
 
-            await channel.send({
+            await (channel as TextChannel).send({
               content: `**🕛 FIM DO DIA** [${today.toLocaleDateString(
                 "pt-BR"
               )}]`,
