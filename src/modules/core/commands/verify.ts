@@ -70,6 +70,14 @@ export default class SendCommand extends Command {
       latestPromotionDate: rawTargetDB.latestPromotionDate?.$date
         ? new Date(rawTargetDB.latestPromotionDate.$date)
         : null,
+      reportsHistory:
+        (rawTargetDB.reportsHistory ?? []).map(
+          (date: { $date: string }) => new Date(date.$date)
+        ) ?? [],
+      reportsHistoryCG:
+        (rawTargetDB.reportsHistoryCG ?? []).map(
+          (date: { $date: string }) => new Date(date.$date)
+        ) ?? [],
     };
 
     let discordLinked: boolean | undefined;
@@ -124,6 +132,23 @@ export default class SendCommand extends Command {
       let shouldPromote =
         /** isFirstPromotion */
         !targetDB?.latestPromotionRoleId || !targetDB?.latestPromotionDate;
+
+      const allPresences: Date[] = [
+        ...(targetDB.reportsHistory ?? []),
+        ...(targetDB.reportsHistoryCG ?? []),
+      ];
+
+      let lastPresence = "Nenhuma presença registrada até o momento";
+
+      if (allPresences.length) {
+        const sortedPresences = allPresences
+          .map((date) => new Date(date))
+          .sort((a, b) => b.getTime() - a.getTime());
+
+        lastPresence = `<t:${Math.floor(
+          sortedPresences[0].getTime() / 1000
+        )}:f>`;
+      }
 
       if (!shouldPromote) {
         const latestPromotionDate =
@@ -187,6 +212,13 @@ export default class SendCommand extends Command {
                     value: targetDB.reportsHistoryCG
                       ? targetDB.reportsHistoryCG.length.toString()
                       : "0",
+                  },
+                  {
+                    name: "⌚ Última Presença",
+                    value:
+                      lastPresence === `<t:1355314332:f>`
+                        ? lastPresence + " *(adicionado manualmente)*"
+                        : lastPresence,
                   },
                 ])
                 .setFooter({
@@ -351,6 +383,21 @@ export default class SendCommand extends Command {
         targetDB.latestPromotionJobId
       );
 
+    const allPresences: Date[] = [
+      ...(databaseUser.reportsHistory ?? []),
+      ...(databaseUser.reportsHistoryCG ?? []),
+    ];
+
+    let lastPresence = "Nenhuma presença registrada até o momento";
+
+    if (allPresences.length) {
+      const sortedPresences = allPresences
+        .map((date) => new Date(date))
+        .sort((a, b) => b.getTime() - a.getTime());
+
+      lastPresence = `<t:${Math.floor(sortedPresences[0].getTime() / 1000)}:f>`;
+    }
+
     if (!shouldPromote) {
       const latestPromotionDate =
         databaseUser?.latestPromotionDate &&
@@ -430,6 +477,13 @@ export default class SendCommand extends Command {
                   value: databaseUser.reportsHistoryCG
                     ? databaseUser.reportsHistoryCG.length.toString()
                     : "0",
+                },
+                {
+                  name: "⌚ Última Presença",
+                  value:
+                    lastPresence === `<t:1355314332:f>`
+                      ? lastPresence + " *(adicionado manualmente)*"
+                      : lastPresence,
                 },
               ])
               .setFooter({
