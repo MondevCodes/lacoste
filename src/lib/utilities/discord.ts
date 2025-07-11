@@ -429,4 +429,8 @@ export class DiscordUtility extends Utility {
 
     return this.#guild;
   }
+
+  public verifyInjectSlashCommands(nodeEnv: string) {
+    return nodeEnv === "production" ? true : false;
+  }
 }
