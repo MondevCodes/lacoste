@@ -15,6 +15,13 @@ import {
 })
 export class LinkCommand extends Command {
   public override registerApplicationCommands(registry: Command.Registry) {
+    const isProduction =
+      this.container.utilities.discord.verifyInjectSlashCommands(
+        ENVIRONMENT.NODE_ENV
+      );
+
+    if (!isProduction) return;
+
     registry.registerChatInputCommand((builder) =>
       builder
         .setName(this.name)
