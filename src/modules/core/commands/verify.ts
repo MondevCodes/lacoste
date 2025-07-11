@@ -214,7 +214,7 @@ export default class SendCommand extends Command {
                       : "0",
                   },
                   {
-                    name: "⌚ Última Presença",
+                    name: "⌚ Última Presença em Sede",
                     value:
                       lastPresence === `<t:1355314332:f>`
                         ? lastPresence + " *(adicionado manualmente)*"
@@ -479,7 +479,7 @@ export default class SendCommand extends Command {
                     : "0",
                 },
                 {
-                  name: "⌚ Última Presença",
+                  name: "⌚ Última Presença em Sede",
                   value:
                     lastPresence === `<t:1355314332:f>`
                       ? lastPresence + " *(adicionado manualmente)*"
