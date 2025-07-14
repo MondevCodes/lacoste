@@ -323,7 +323,8 @@ export class DiscordUtility extends Utility {
       `
     );
 
-    const isNotSelfPromotion = author.id !== user.id;
+    const isNotSelfPromotion =
+      "author" in interaction ? true : author.id !== user.id;
 
     // Verify if member has course for sector roles "DIRETORIA" and "PRESIDÊNCIA"
     if (
