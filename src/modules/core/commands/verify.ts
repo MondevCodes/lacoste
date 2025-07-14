@@ -6,6 +6,7 @@ import { find, values } from "remeda";
 
 import { ENVIRONMENT } from "$lib/env";
 import { EmbedColors } from "$lib/constants/discord";
+import moment from "moment";
 
 @ApplyOptions<Command.Options>({ name: "verificar" })
 export default class SendCommand extends Command {
@@ -86,6 +87,10 @@ export default class SendCommand extends Command {
     if (targetDB?.discordLink === false) {
       discordLinked = false;
 
+      this.container.logger.info(
+        `[VerifyCommand#run] ${message.author.username} use Verify on user ${targetDB.habboName} without discord`
+      );
+
       if (!targetDB.latestPromotionRoleId) {
         await message.reply({
           content:
@@ -158,16 +163,27 @@ export default class SendCommand extends Command {
         const minDaysProm = currentJobEnvironment.minDaysProm;
 
         if (latestPromotionDate && minDaysProm) {
-          const daysSinceLastPromotion = Math.floor(
-            (new Date().getTime() - latestPromotionDate.getTime()) /
-              (1000 * 3600 * 24)
+          const now = moment();
+          const timeSinceLastPromotion = moment.duration(
+            now.diff(latestPromotionDate)
           );
+          const timeRemainingMs =
+            minDaysProm * 24 * 60 * 60 * 1000 -
+            timeSinceLastPromotion.asMilliseconds();
 
-          let daysForPromote = minDaysProm - daysSinceLastPromotion;
-          shouldPromote = daysSinceLastPromotion >= minDaysProm;
+          let timeForPromote: string = null;
 
-          if (daysForPromote < 0) {
-            daysForPromote = 0;
+          if (timeRemainingMs <= 0) {
+            timeForPromote = "Tempo mínimo atingido";
+          } else {
+            const timeRemaining = moment.duration(timeRemainingMs);
+            const days = Math.floor(timeRemaining.asDays());
+            const hours = timeRemaining.hours();
+            const minutes = timeRemaining.minutes();
+
+            timeForPromote = `${
+              days > 0 ? days + (days > 1 ? " dias " : " dia ") : ""
+            }${hours}h${minutes < 10 ? "0" : ""}${minutes}min`;
           }
 
           await message.reply({
@@ -182,9 +198,9 @@ export default class SendCommand extends Command {
                   {
                     name: "📊 Última Promoção",
                     value: targetDB?.latestPromotionDate
-                      ? new Date(
-                          targetDB?.latestPromotionDate
-                        ).toLocaleDateString("pt-BR")
+                      ? `<t:${Math.floor(
+                          targetDB?.latestPromotionDate / 1000
+                        )}:f>`
                       : "N/D",
                   },
                   {
@@ -192,8 +208,8 @@ export default class SendCommand extends Command {
                     value: shouldPromote ? "Sim ✅" : "Não ❌",
                   },
                   {
-                    name: "🗓️ Dias até a próxima Promoção",
-                    value: `${daysForPromote}`,
+                    name: "🗓️ Tempo até a próxima Promoção",
+                    value: `${timeForPromote}`,
                   },
                   {
                     name: "🪪 Discord Vinculado",
@@ -252,9 +268,9 @@ export default class SendCommand extends Command {
                   {
                     name: "📊 Última Promoção",
                     value: targetDB?.latestPromotionDate
-                      ? new Date(
-                          targetDB?.latestPromotionDate
-                        ).toLocaleDateString("pt-BR")
+                      ? `<t:${Math.floor(
+                          targetDB?.latestPromotionDate / 1000
+                        )}:f>`
                       : "N/D",
                   },
                   {
@@ -306,10 +322,6 @@ export default class SendCommand extends Command {
         member.roles.cache.map((r) => r.id)
       );
 
-    this.container.logger.info(
-      `[VerifyCommand#run] currentSectorId: ${currentSectorId}`
-    );
-
     if (!currentSectorId) {
       await message.reply({
         content:
@@ -350,6 +362,10 @@ export default class SendCommand extends Command {
       },
     });
 
+    this.container.logger.info(
+      `[VerifyCommand#run] ${message.author.username} use Verify on user ${databaseUser.habboName}, currentSectorId: ${currentSectorId}`
+    );
+
     let shouldPromote =
       /** isFirstPromotion */
       !databaseUser?.latestPromotionRoleId ||
@@ -376,7 +392,7 @@ export default class SendCommand extends Command {
 
     const userMedalsList = userMedals.map((medalName) => medalName).join("\n");
 
-    const [isPromotionPossible, registrationType, denyMotive] =
+    const [isPromotionPossible, _, denyMotive] =
       await this.container.utilities.discord.isPromotionPossible(
         message,
         member,
@@ -409,16 +425,27 @@ export default class SendCommand extends Command {
       )?.minDaysProm;
 
       if (latestPromotionDate && minDaysProm) {
-        const daysSinceLastPromotion = Math.floor(
-          (new Date().getTime() - latestPromotionDate.getTime()) /
-            (1000 * 3600 * 24)
+        const now = moment();
+        const timeSinceLastPromotion = moment.duration(
+          now.diff(latestPromotionDate)
         );
+        const timeRemainingMs =
+          minDaysProm * 24 * 60 * 60 * 1000 -
+          timeSinceLastPromotion.asMilliseconds();
 
-        let daysForPromote = minDaysProm - daysSinceLastPromotion;
-        shouldPromote = daysSinceLastPromotion >= minDaysProm;
+        let timeForPromote: string = null;
 
-        if (daysForPromote < 0) {
-          daysForPromote = 0;
+        if (timeRemainingMs <= 0) {
+          timeForPromote = "Tempo mínimo atingido";
+        } else {
+          const timeRemaining = moment.duration(timeRemainingMs);
+          const days = Math.floor(timeRemaining.asDays());
+          const hours = timeRemaining.hours();
+          const minutes = timeRemaining.minutes();
+
+          timeForPromote = `${
+            days > 0 ? days + (days > 1 ? " dias " : " dia ") : ""
+          }${hours}h${minutes < 10 ? "0" : ""}${minutes}min`;
         }
 
         await message.reply({
@@ -450,8 +477,8 @@ export default class SendCommand extends Command {
                       : "Não ❌",
                 },
                 {
-                  name: "🗓️ Dias até a próxima Promoção",
-                  value: `${daysForPromote}`,
+                  name: "🗓️ Tempo até a próxima Promoção",
+                  value: `${timeForPromote}`,
                 },
                 {
                   name: "🪪 Discord Vinculado",
