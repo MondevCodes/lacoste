@@ -30,7 +30,11 @@ export class pingDiscord extends Command {
           .setDescription(
             `A latência da API do Discord está **${latencyStatus}** com ping de **${discordPing}ms**`
           )
-          .setFooter({ text: "Mais informações:\n https://discordstatus.com/" })
+          .addFields({
+            name: "ℹ️ Mais informações",
+            value: `[Discord Status](https://discordstatus.com/)\n[Down Detector](https://downdetector.com/status/discord/)`,
+            inline: false,
+          })
           .setColor(embedColor),
       ],
     });
