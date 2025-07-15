@@ -788,7 +788,7 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
                 new EmbedBuilder()
                   .setColor(EmbedColors.Default)
                   .setTitle(
-                    `<:lacoste:984848944649625661> Controle Diário Organizacional [${today.toLocaleDateString(
+                    `<:lacoste:984848944649625661> Controle Diário Organizacional [${startOfDay.toLocaleDateString(
                       "pt-BR"
                     )}]`
                   )
@@ -836,13 +836,13 @@ export class OrganizationalFormInteractionHandler extends InteractionHandler {
             });
 
             await (notificationChannelNoIdentify as TextChannel).send({
-              content: `**🕛 FIM DO DIA** [${today.toLocaleDateString(
+              content: `**🕛 FIM DO DIA** [${startOfDay.toLocaleDateString(
                 "pt-BR"
               )}]`,
             });
 
             await (channel as TextChannel).send({
-              content: `**🕛 FIM DO DIA** [${today.toLocaleDateString(
+              content: `**🕛 FIM DO DIA** [${startOfDay.toLocaleDateString(
                 "pt-BR"
               )}]`,
             });
