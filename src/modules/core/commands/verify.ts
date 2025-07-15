@@ -174,7 +174,8 @@ export default class SendCommand extends Command {
           let timeForPromote: string = null;
 
           if (timeRemainingMs <= 0) {
-            timeForPromote = "Tempo mínimo atingido";
+            timeForPromote = "Tempo mínimo atingido ✅";
+            shouldPromote = true;
           } else {
             const timeRemaining = moment.duration(timeRemainingMs);
             const days = Math.floor(timeRemaining.asDays());
@@ -432,7 +433,8 @@ export default class SendCommand extends Command {
         let timeForPromote: string = null;
 
         if (timeRemainingMs <= 0) {
-          timeForPromote = "Tempo mínimo atingido";
+          timeForPromote = "Tempo mínimo atingido ✅";
+          shouldPromote = true;
         } else {
           const timeRemaining = moment.duration(timeRemainingMs);
           const days = Math.floor(timeRemaining.asDays());
