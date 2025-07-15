@@ -14,6 +14,7 @@ import type {
   RepliableInteraction,
   Role,
   Snowflake,
+  User,
 } from "discord.js";
 
 import type { Committee, Sector, System, Job } from "$lib/constants/schemas";
@@ -429,5 +430,19 @@ export class DiscordUtility extends Utility {
     }
 
     return this.#guild;
+  }
+
+  /**
+   * Verify if user is a bot or not
+   * @returns boolean
+   */
+  public async isBot(user: GuildMember | User) {
+    if ("roles" in user) {
+      return user.roles.cache.has("990784893107716176");
+    } else {
+      const guild = await user.client.utilities.discord.getGuild();
+      const member = await guild.members.fetch(user.id);
+      return member.roles.cache.has("990784893107716176");
+    }
   }
 }
