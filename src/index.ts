@@ -199,7 +199,7 @@ async function run(): Promise<void> {
 			IntentsBitField.Flags.Guilds,
 			IntentsBitField.Flags.GuildMembers,
 			IntentsBitField.Flags.GuildMessages,
-      
+
       IntentsBitField.Flags.GuildPresences,
 
 			IntentsBitField.Flags.MessageContent,
@@ -219,7 +219,7 @@ async function run(): Promise<void> {
 
 		loadDefaultErrorListeners: true,
 		loadMessageCommandListeners: true,
-		loadApplicationCommandRegistriesStatusListeners: true,
+    loadApplicationCommandRegistriesStatusListeners: ENVIRONMENT.NODE_ENV === "production",
 
 		hmr: { enabled: __DEV__ },
 		logger: { level: ENVIRONMENT.LOG_LEVEL, depth: Number.POSITIVE_INFINITY },

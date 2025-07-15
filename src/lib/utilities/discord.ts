@@ -432,6 +432,10 @@ export class DiscordUtility extends Utility {
     return this.#guild;
   }
 
+  public verifyInjectSlashCommands(nodeEnv: string) {
+    return nodeEnv === "production" ? true : false;
+  }
+
   /**
    * Verify if user is a bot or not
    * @returns boolean
