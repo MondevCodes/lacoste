@@ -77,6 +77,20 @@ export class LinkCommand extends Command {
       `[LinkCommand#chatInputRun] habboNick: ${habboNick}, discordUser: ${discordUser?.id}`
     );
 
+    const userIsBot = this.container.utilities.discord.isBot(discordUser);
+    console.log(userIsBot);
+    if (userIsBot) {
+      this.container.logger.info(
+        `[LinkCommand#chatInputRun] ${interaction.member?.user.username} tried to link a bot ${discordUser.globalName}.`
+      );
+
+      await interaction.reply({
+        content: "⛔ **NEGADO**. Não é possível vincular bots 🤖",
+        ephemeral: true,
+      });
+      return;
+    }
+
     // START MEMBER WITHOUT DISCORD
     if (!discordUser) {
       const profileResult = await this.container.utilities.habbo.getProfile(
