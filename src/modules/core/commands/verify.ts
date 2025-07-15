@@ -198,9 +198,7 @@ export default class SendCommand extends Command {
                   {
                     name: "📊 Última Promoção",
                     value: targetDB?.latestPromotionDate
-                      ? `<t:${Math.floor(
-                          targetDB?.latestPromotionDate / 1000
-                        )}:f>`
+                      ? `<t:${moment(targetDB?.latestPromotionDate).unix()}:f>`
                       : "N/D",
                   },
                   {
@@ -268,9 +266,7 @@ export default class SendCommand extends Command {
                   {
                     name: "📊 Última Promoção",
                     value: targetDB?.latestPromotionDate
-                      ? `<t:${Math.floor(
-                          targetDB?.latestPromotionDate / 1000
-                        )}:f>`
+                      ? `<t:${moment(targetDB?.latestPromotionDate).unix()}:f>`
                       : "N/D",
                   },
                   {
@@ -460,9 +456,9 @@ export default class SendCommand extends Command {
                 {
                   name: "📊 Última Promoção",
                   value: databaseUser?.latestPromotionDate
-                    ? new Date(
+                    ? `<t:${moment(
                         databaseUser?.latestPromotionDate
-                      ).toLocaleDateString("pt-BR")
+                      ).unix()}:f>`
                     : "N/D",
                 },
                 {
@@ -544,9 +540,9 @@ export default class SendCommand extends Command {
                 {
                   name: "📊 Última Promoção",
                   value: databaseUser?.latestPromotionDate
-                    ? new Date(
+                    ? `<t:${moment(
                         databaseUser?.latestPromotionDate
-                      ).toLocaleDateString("pt-BR")
+                      ).unix()}:f>`
                     : "N/D",
                 },
                 {
