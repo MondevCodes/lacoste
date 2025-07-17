@@ -84,20 +84,6 @@ export class LinkCommand extends Command {
       `[LinkCommand#chatInputRun] habboNick: ${habboNick}, discordUser: ${discordUser?.id}`
     );
 
-    const userIsBot = this.container.utilities.discord.isBot(discordUser);
-    console.log(userIsBot);
-    if (userIsBot) {
-      this.container.logger.info(
-        `[LinkCommand#chatInputRun] ${interaction.member?.user.username} tried to link a bot ${discordUser.globalName}.`
-      );
-
-      await interaction.reply({
-        content: "⛔ **NEGADO**. Não é possível vincular bots 🤖",
-        ephemeral: true,
-      });
-      return;
-    }
-
     // START MEMBER WITHOUT DISCORD
     if (!discordUser) {
       const profileResult = await this.container.utilities.habbo.getProfile(
@@ -213,6 +199,19 @@ export class LinkCommand extends Command {
       // END USER WITHOUT DISCORD
     }
 
+    const userIsBot = await this.container.utilities.discord.isBot(discordUser);
+    if (userIsBot) {
+      this.container.logger.info(
+        `[LinkCommand#chatInputRun] ${interaction.member?.user.username} tried to link a bot ${discordUser.globalName}.`
+      );
+
+      await interaction.reply({
+        content: "⛔ **NEGADO**. Não é possível vincular bots 🤖",
+        ephemeral: true,
+      });
+      return;
+    }
+
     const profileResult = await this.container.utilities.habbo.getProfile(
       habboNick
     );
@@ -224,7 +223,7 @@ export class LinkCommand extends Command {
 
       await interaction.reply({
         content:
-          "Não consegui encontrar o perfil do usuário no Habbo, verifique o nome e veja se o perfil do usuário no jogo está como público.",
+          "❌🔍 Não consegui encontrar o perfil do usuário no Habbo, verifique o nome e veja se o perfil do usuário no jogo está como público.",
       });
 
       return;
@@ -260,7 +259,7 @@ export class LinkCommand extends Command {
 
     if (existingUserDiscord) {
       await interaction.reply({
-        content: `Este perfil do Discord já está totalmente vinculado com a conta do Habbo **${existingUserDiscord.habboName}**`,
+        content: `⚠️ Este perfil do Discord já está totalmente vinculado com a conta do Habbo **${existingUserDiscord.habboName}**`,
       });
 
       return;
@@ -271,6 +270,8 @@ export class LinkCommand extends Command {
 
     const highestSector =
       this.container.utilities.discord.inferHighestSectorRole(roles);
+
+    await interaction.deferReply({ ephemeral: true });
 
     for await (const role of ENVIRONMENT.DEFAULT_ROLES) {
       await cachedGuild.members
@@ -320,8 +321,8 @@ export class LinkCommand extends Command {
           },
         });
 
-        await interaction.reply({
-          content: `Algo aconteceu com os dados do usuário, ele foi resetado para o cargo VINCULADO no Banco de Dados e atribuido os respectivos cargos.`,
+        await interaction.editReply({
+          content: `⚠️ Algo aconteceu com os dados do usuário, ele foi resetado para o cargo VINCULADO no Banco de Dados e atribuido os respectivos cargos.`,
         });
       }
     }
@@ -341,7 +342,7 @@ export class LinkCommand extends Command {
         !existingUser.latestPromotionJobId ||
         !existingUser.latestPromotionRoleId
       ) {
-        await interaction.reply({
+        await interaction.editReply({
           content: `Ocorreu um erro inesperado, contate o Desenvolvedor.`,
         });
 
@@ -434,9 +435,8 @@ export class LinkCommand extends Command {
       embeds: [embed],
     });
 
-    await interaction.reply({
+    await interaction.editReply({
       content: `✅ Vinculado com sucesso!`,
-      ephemeral: true,
     });
   }
 }
