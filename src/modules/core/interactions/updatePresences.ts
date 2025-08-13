@@ -100,7 +100,7 @@ export class UpdatePresenceInteractionHandler extends InteractionHandler {
               } (Ex.: 1)`
             )
             .setStyle(TextInputStyle.Short)
-            .setRequired(true),
+            .setRequired(false),
 
           new TextInputBuilder()
             .setCustomId("AmountCG")
@@ -119,7 +119,7 @@ export class UpdatePresenceInteractionHandler extends InteractionHandler {
               } (Ex.: 1)`
             )
             .setStyle(TextInputStyle.Short)
-            .setRequired(true),
+            .setRequired(false),
         ],
       });
 
@@ -198,9 +198,9 @@ export class UpdatePresenceInteractionHandler extends InteractionHandler {
           () => new Date(fixedDate)
         );
       }
-      if (totalCount || cgCount) {
+      if (totalCount) {
         updateTotalDates = Array.from(
-          { length: totalCount + cgCount },
+          { length: totalCount },
           () => new Date(fixedDate)
         );
       }
@@ -257,14 +257,12 @@ export class UpdatePresenceInteractionHandler extends InteractionHandler {
 
         updatedCGPresences = sortedCGPresences.slice(cgToRemove);
       }
-      if (totalToRemove || cgToRemove) {
+      if (totalToRemove) {
         sortedTotalPresences = oldTotalPresences
           .map((date) => new Date(date))
           .sort((a, b) => a.getTime() - b.getTime());
 
-        updatedTotalPresences = sortedTotalPresences.slice(
-          totalToRemove + cgToRemove
-        );
+        updatedTotalPresences = sortedTotalPresences.slice(totalToRemove);
       }
 
       const targetDB = await this.container.prisma.user.update({
