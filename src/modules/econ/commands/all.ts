@@ -5,7 +5,6 @@ import { Command } from "@sapphire/framework";
 import { EmbedBuilder, Message } from "discord.js";
 import { groupBy } from "remeda";
 import { MONETARY_INTL } from "./balance";
-
 @ApplyOptions<Command.Options>({
   name: "saldos-todos",
   aliases: ["all-balances"],
@@ -13,7 +12,13 @@ import { MONETARY_INTL } from "./balance";
   generateUnderscoreLessAliases: true,
 })
 export class AllBalancesCommand extends Command {
+  // COMANDO DESABILITADO
   public override async messageRun(message: Message) {
+    return await message.reply({
+      content:
+        "⚠️🛠️ O comando *'saldos-todos'* foi **desabilitado temporariamente**.",
+    });
+
     const allTransactions = await this.container.prisma.transaction.findMany({
       include: {
         user: true,
