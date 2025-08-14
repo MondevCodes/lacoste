@@ -373,7 +373,7 @@ export class DiscordUtility extends Utility {
       /** Member's roles object manager to check. */
       roles: GuildMemberRoleManager;
     }
-  ) {
+  ): boolean {
     const exactRole: { id: string; index: number } =
       // @ts-ignore
       ROLES_ORDER[options.category]?.[options.checkFor];
@@ -440,12 +440,13 @@ export class DiscordUtility extends Utility {
    * Verify if user is a bot or not
    * @returns boolean
    */
-  public async isBot(user: GuildMember | User) {
+  public async isBot(user: GuildMember | User): Promise<boolean> {
     if ("roles" in user) {
       return user.roles.cache.has("990784893107716176");
     } else {
       const guild = await user.client.utilities.discord.getGuild();
       const member = await guild.members.fetch(user.id);
+
       return member.roles.cache.has("990784893107716176");
     }
   }
