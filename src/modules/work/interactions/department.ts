@@ -506,6 +506,7 @@ export class DepartmentInteractionHandler extends InteractionHandler {
      * @summary Checks for users who are away, notifying if necessary and returning if the renew period is over.
      */
     schedule("*/15 * * * *", async () => {
+      // schedule("*/30 * * * * *", async () => {
       const users = await this.container.prisma.user.findMany({
         where: { activeRenewal: { not: null } },
       });
@@ -537,7 +538,7 @@ export class DepartmentInteractionHandler extends InteractionHandler {
               user.discordId
             );
 
-            if (!targetMember) return;
+            if (!targetMember) continue;
 
             const dmChannel =
               targetMember.dmChannel || (await targetMember.createDM());
@@ -567,8 +568,6 @@ export class DepartmentInteractionHandler extends InteractionHandler {
                 this.container.logger.warn(
                   `Não foi possível adicionar os dados de mensagem do afastamento do usuário no banco de dados, tente novamente ou contate o Desenvolvedor. Erro: ||${error}||`
                 );
-
-                return;
               });
           }
 
@@ -577,7 +576,7 @@ export class DepartmentInteractionHandler extends InteractionHandler {
             const targetMember = await this.container.client.users.fetch(
               user.discordId
             );
-            if (!targetMember || !user.activeRenewalMessageId) return;
+            if (!targetMember || !user.activeRenewalMessageId) continue;
 
             this.container.logger.info(
               `[DepartmentInteractionHandler#onLoad] Iniciando retorno de ${user.habboName} com #autoReturn.`
