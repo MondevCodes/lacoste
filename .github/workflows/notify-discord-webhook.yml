@@ -51,19 +51,14 @@ jobs:
             DISCORD_MENTION=" / <@${{ steps.discord-mapping.outputs.discord_id }}>"
           fi
           
-          # Limpar quebras de linha e aspas para JSON válido
-          PR_BODY=$(echo "${{ github.event.pull_request.body }}" | tr '\n' ' ' | tr '\r' ' ' | sed 's/"/\\"/g')
-          COMMENTS=$(echo "${{ steps.get-comments.outputs.result }}" | tr '\n' ' ' | tr '\r' ' ' | sed 's/"/\\"/g')
-          
+          # Usar jq para criar JSON válido e escapar tudo automaticamente
           MESSAGE="📜🤖 **Bot Lala Atualizado @everyone!**
           **Autor da Atualização:** ${{ steps.discord-mapping.outputs.github_user }}${DISCORD_MENTION}
           **Notas da Atualização:**
-          $PR_BODY $COMMENTS"
+          ${{ github.event.pull_request.body }} ${{ steps.get-comments.outputs.result }}"
           
-          # Escapar aspas na mensagem final
-          ESCAPED_MESSAGE=$(echo "$MESSAGE" | sed 's/"/\\"/g')
-          
-          curl -H "Content-Type: application/json" \
+          # jq vai escapar automaticamente todas as aspas e caracteres especiais
+          echo "$MESSAGE" | jq -Rs '{"content": .}' | curl -H "Content-Type: application/json" \
                -X POST \
-               -d "{\"content\": \"$ESCAPED_MESSAGE\"}" \
+               -d @- \
                "${{ secrets.DISCORD_WEBHOOK }}"
