@@ -3,6 +3,7 @@ name: Discord Bot Lala Update Notification
 on:
   pull_request:
     types: [closed]
+    branches: [main]
 
 jobs:
   notify-discord:
@@ -14,53 +15,42 @@ jobs:
         id: discord-mapping
         run: |
           GITHUB_USER="${{ github.event.pull_request.user.login }}"
-
           case "$GITHUB_USER" in
             "pedromondek") DISCORD_ID="223554902209724417" ;;
             "cauemondek") DISCORD_ID="320583308646023189" ;;
             *) DISCORD_ID="" ;;
           esac
-
           echo "discord_id=$DISCORD_ID" >> $GITHUB_OUTPUT
           echo "github_user=$GITHUB_USER" >> $GITHUB_OUTPUT
-
       - name: Get PR comments
         id: get-comments
         run: |
           COMMENTS_RESPONSE=$(curl -s -H "Authorization: token ${{ github.token }}" \
             "https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments")
-
           REVIEW_COMMENTS_RESPONSE=$(curl -s -H "Authorization: token ${{ github.token }}" \
             "https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments")
-
           ALL_COMMENTS=""
-
           if [ "$COMMENTS_RESPONSE" != "[]" ]; then
             GENERAL_COMMENTS=$(echo "$COMMENTS_RESPONSE" | jq -r '.[] | .body' | head -c 500)
             ALL_COMMENTS="$ALL_COMMENTS $GENERAL_COMMENTS"
           fi
-
           if [ "$REVIEW_COMMENTS_RESPONSE" != "[]" ]; then
             REVIEW_COMMENTS=$(echo "$REVIEW_COMMENTS_RESPONSE" | jq -r '.[] | .body' | head -c 500)
             ALL_COMMENTS="$ALL_COMMENTS $REVIEW_COMMENTS"
           fi
-
           echo "result<<EOF" >> $GITHUB_OUTPUT
           echo "$ALL_COMMENTS" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-
       - name: Send Discord notification
         run: |
           DISCORD_MENTION=""
           if [ -n "${{ steps.discord-mapping.outputs.discord_id }}" ]; then
             DISCORD_MENTION=" / <@${{ steps.discord-mapping.outputs.discord_id }}>"
           fi
-
           MESSAGE="📜🤖 **Bot Lala Atualizado @everyone!**
           **Autor da Atualização:** ${{ steps.discord-mapping.outputs.github_user }}${DISCORD_MENTION}
           **Notas da Atualização:**
           ${{ github.event.pull_request.body }} ${{ steps.get-comments.outputs.result }}"
-
           curl -H "Content-Type: application/json" \
                -X POST \
                -d "{\"content\": \"$MESSAGE\"}" \
