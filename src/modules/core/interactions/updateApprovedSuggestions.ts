@@ -148,7 +148,6 @@ export class UpdateApprovedSuggestionsInteractionHandler extends InteractionHand
         _id: 1,
         discordId: 1,
         habboName: 1,
-        suggestions: 1,
       },
       limit: 1,
     });
