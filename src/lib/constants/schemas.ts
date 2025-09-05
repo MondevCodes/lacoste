@@ -100,7 +100,8 @@ export const NotificationChannels = z.enum([
   "HABBO_WITHOUT_DISCORD",
   "GERAL",
   "WELCOME_LOG",
-  "UPDATED_PRESENCE_LOGS",
+  "LOGS",
+  "FEEDBACKS",
 ]);
 
 export type NotificationChannel = z.infer<typeof NotificationChannels>;

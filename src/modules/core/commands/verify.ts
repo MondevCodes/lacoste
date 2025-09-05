@@ -58,6 +58,19 @@ export default class SendCommand extends Command {
 
     const rawTargetDB = resultRaw.cursor.firstBatch[0];
 
+    const countSuggestions = await this.container.prisma.suggestions.groupBy({
+      by: ["type"],
+      _count: { _all: true },
+      where: {
+        authorId: rawTargetDB._id.$oid,
+        type: { in: ["SM", "SD"] },
+      },
+    });
+    const suggestions = {
+      SM: countSuggestions.find((c) => c.type === "SM")?._count._all ?? 0,
+      SD: countSuggestions.find((c) => c.type === "SD")?._count._all ?? 0,
+    };
+
     const targetDB = {
       ...rawTargetDB,
       _id: rawTargetDB._id?.$oid || rawTargetDB._id,
@@ -401,7 +414,7 @@ export default class SendCommand extends Command {
       ...(databaseUser.reportsHistoryCG ?? []),
     ];
 
-    let lastPresence = "Nenhuma presença registrada até o momento";
+    let lastPresence = "*Nenhuma presença registrada até o momento*";
 
     if (allPresences.length) {
       const sortedPresences = allPresences
@@ -449,11 +462,14 @@ export default class SendCommand extends Command {
         await message.reply({
           embeds: [
             new EmbedBuilder()
-              .setTitle(`Verificação de ***${databaseUser.habboName}*** 📇`)
+              .setTitle(
+                `Perfil de Carreira de ***${databaseUser.habboName}*** 📇`
+              )
               .setFields([
                 {
                   name: "💼 Setor // Cargo",
                   value: `**${currentSector?.name}** // **${currentJob?.name}**`,
+                  inline: false,
                 },
                 {
                   name: "📊 Última Promoção",
@@ -462,6 +478,12 @@ export default class SendCommand extends Command {
                         databaseUser?.latestPromotionDate
                       ).unix()}:f>`
                     : "N/D",
+                  inline: true,
+                },
+                {
+                  name: "🗓️ Tempo até a próxima Promoção",
+                  value: `${timeForPromote}`,
+                  inline: true,
                 },
                 {
                   name: "📈 Promoção Disponível",
@@ -469,39 +491,55 @@ export default class SendCommand extends Command {
                     shouldPromote && isPromotionPossible
                       ? "Sim ✅"
                       : denyMotive === "COURSE_ED"
-                      ? "Indisponível até a conclusão da ED (Especialização da Diretoria). 📙"
+                      ? "Indisponível até a conclusão da **ED (Especialização da Diretoria)**. 📙"
                       : denyMotive === "COURSE_EP"
-                      ? "Indisponível até a conclusão da EP (Especialização da Presidência). 📕"
+                      ? "Indisponível até a conclusão da **EP (Especialização da Presidência)**. 📕"
                       : "Não ❌",
-                },
-                {
-                  name: "🗓️ Tempo até a próxima Promoção",
-                  value: `${timeForPromote}`,
+                  inline: false,
                 },
                 {
                   name: "🪪 Discord Vinculado",
                   value: discordLinked
                     ? "Vinculado 🔗 ✅"
                     : "Não Vinculado ⛓️‍💥 ❌",
+                  inline: false,
                 },
                 {
                   name: "🏅 Medalhas",
                   value:
                     userMedalsList.length > 0
                       ? userMedalsList
-                      : "O colaborador não possui medalhas acumuladas",
+                      : "*O colaborador não possui medalhas acumuladas*",
+                  inline: false,
+                },
+                {
+                  name: "📩 Sugestões com Medalhas 🏅",
+                  value: suggestions.SM > 0 ? `${suggestions.SM}` : "*Nenhuma*",
+                  inline: true,
+                },
+                {
+                  name: "📩 Sugestões Diversas 🎨",
+                  value: suggestions.SD > 0 ? `${suggestions.SD}` : "*Nenhuma*",
+                  inline: true,
+                },
+                {
+                  name: "",
+                  value: "",
+                  inline: false,
                 },
                 {
                   name: "🗳️ Presenças Totais",
                   value: databaseUser.reportsHistory
                     ? databaseUser.reportsHistory.length.toString()
                     : "0",
+                  inline: true,
                 },
                 {
                   name: "🗳️ Presenças C.G",
                   value: databaseUser.reportsHistoryCG
                     ? databaseUser.reportsHistoryCG.length.toString()
                     : "0",
+                  inline: true,
                 },
                 {
                   name: "⌚ Última Presença em Sede",
@@ -509,6 +547,7 @@ export default class SendCommand extends Command {
                     lastPresence === `<t:1355314332:f>`
                       ? lastPresence + " *(adicionado manualmente)*"
                       : lastPresence,
+                  inline: false,
                 },
               ])
               .setFooter({

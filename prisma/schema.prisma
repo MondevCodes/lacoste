@@ -42,6 +42,8 @@ model User {
   // Tickets              Ticket[]
   SentTransactions     Transaction[] @relation(name: "URST")
   ReceivedTransactions Transaction[] @relation(name: "URRT")
+
+  Suggestions Suggestions[]
 }
 
 model Transaction {
@@ -98,4 +100,12 @@ model Medals {
   description String?
 
   users String[]
+}
+
+model Suggestions {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  author   User?   @relation(fields: [authorId], references: [id])
+  authorId String? @db.ObjectId
+  type String
+  msgLink String
 }

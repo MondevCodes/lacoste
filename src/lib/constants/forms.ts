@@ -20,4 +20,6 @@ export enum FormIds {
   Rebaixamento = "LCST::Form/Rebaixamento",
   adicionarPresença = "LCST::Form/adicionarPresenca",
   removerPresença = "LCST::Form/removerPresenca",
+  adicionarSugestao = "LCST::Form/adicionarSugestao",
+  removerSugestao = "LCST::Form/removerSugestao",
 }
