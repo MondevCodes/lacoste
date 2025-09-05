@@ -179,7 +179,7 @@ export default class SendCommand extends Command {
             .setColor(EmbedColors.Default)
             .setTitle("Sugestão / Reclamação e Denúncia")
             .setDescription(
-              "Clique no botão abaixo para abrir o questionário que, ao finalizar, será enviado para o canal de sugestões ou reclamações."
+              "Clique no botão abaixo para abrir o questionário que, ao finalizar, será enviado para o canal de sugestões ou reclamações.\n\n**Sugestão / Reclamação e Denúncia**\nUse estas opções para registrar na diretoria.\n**Adicionar/Remover Sugestões Aprovadas**\nAdicione sugestões já aprovadas no perfil de um colaborador.\nAntes confira as normativas atuais para sugestões consideradas SM.\n*SM: Sugestões com Medalhas*\n*SD: Sugestões Diversas*"
             )
             .setImage(ImgThumbnail.Diretoria),
         ],
@@ -194,6 +194,17 @@ export default class SendCommand extends Command {
               .setLabel("Reclamação e Denúncia")
               .setStyle(ButtonStyle.Danger)
               .setCustomId(FormIds.Reclamação)
+          ),
+          new ActionRowBuilder<ButtonBuilder>().addComponents(
+            new ButtonBuilder()
+              .setLabel("Adicionar Sugestão Aprovada")
+              .setStyle(ButtonStyle.Success)
+              .setCustomId(FormIds.adicionarSugestao),
+
+            new ButtonBuilder()
+              .setLabel("Remover Sugestão Aprovada")
+              .setStyle(ButtonStyle.Danger)
+              .setCustomId(FormIds.removerSugestao)
           ),
         ],
       });
