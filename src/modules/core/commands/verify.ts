@@ -523,8 +523,8 @@ export default class SendCommand extends Command {
                   inline: true,
                 },
                 {
-                  name: "",
-                  value: "",
+                  name: " ",
+                  value: " ",
                   inline: false,
                 },
                 {

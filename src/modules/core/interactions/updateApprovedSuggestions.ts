@@ -266,6 +266,10 @@ export class UpdateApprovedSuggestionsInteractionHandler extends InteractionHand
             msgLink: modalResult.link,
             type: suggestionType,
             authorId: targetDB._id.$oid,
+            title:
+              targetDB.habboName +
+              suggestionType +
+              String(suggestions[suggestionType]),
           },
         })
         .catch(async (error) => {
