@@ -108,4 +108,5 @@ model Suggestions {
   authorId String? @db.ObjectId
   type String
   msgLink String
+  title String?
 }
