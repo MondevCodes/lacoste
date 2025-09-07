@@ -56,7 +56,7 @@ export class UpdateApprovedSuggestionsInteractionHandler extends InteractionHand
 
     const isAuthorizedSector =
       this.container.utilities.discord.hasPermissionByRole({
-        checkFor: "FUNDAÇÃO" || "PRESIDÊNCIA" || "FEDERAÇÃO",
+        checkFor: ["FUNDAÇÃO", "PRESIDÊNCIA", "FEDERAÇÃO"],
         category: "SECTOR",
         roles,
       });
@@ -72,49 +72,65 @@ export class UpdateApprovedSuggestionsInteractionHandler extends InteractionHand
   }
 
   public override async run(interaction: ButtonInteraction) {
+    const inputs = [
+      new TextInputBuilder()
+        .setCustomId("target")
+        .setLabel("Membro")
+        .setPlaceholder("Informe o Habbo (Nick)")
+        .setStyle(TextInputStyle.Short)
+        .setRequired(true),
+
+      new TextInputBuilder()
+        .setCustomId("type")
+        .setLabel("Informe o tipo da Sugestão")
+        .setPlaceholder(
+          "SM (Sugestões com Medalhas) ou SD (Sugestões Diversas)"
+        )
+        .setStyle(TextInputStyle.Short)
+        .setMaxLength(2)
+        .setMinLength(2)
+        .setRequired(true),
+
+      new TextInputBuilder()
+        .setCustomId("link")
+        .setLabel("Insira o Link da Mensagem do Feedback")
+        .setPlaceholder("https://discord.com/channels/123/456/789")
+        .setStyle(TextInputStyle.Short)
+        .setRequired(true),
+
+      new TextInputBuilder()
+        .setCustomId("notes")
+        .setLabel("Observação")
+        .setPlaceholder("Adicione suas observações a essa sugestão")
+        .setStyle(TextInputStyle.Short)
+        .setRequired(false),
+    ];
+
+    if (interaction.customId === FormIds.adicionarSugestao) {
+      inputs.splice(
+        2,
+        0,
+        new TextInputBuilder()
+          .setCustomId("theme")
+          .setLabel("Informe o tema da Sugestão")
+          .setPlaceholder("Ex: Financeiro, Medalhas, Regras, etc.")
+          .setStyle(TextInputStyle.Short)
+          .setMaxLength(10)
+          .setMinLength(2)
+          .setRequired(true)
+      );
+    }
+
     const { interaction: interactionFromModal, result: modalResult } =
       await this.container.utilities.inquirer.awaitModal<
-        "target" | "type" | "link" | "notes"
+        "target" | "type" | "theme" | "link" | "notes"
       >(interaction, {
         title:
           interaction.customId === FormIds.adicionarSugestao
-            ? `Adicionar Sugestão Aprovada [Configuração]`
-            : `Remover Sugestão Aprovada [Configuração]`,
+            ? "Adicionar Sugestão Aprovada [Configuração]"
+            : "Remover Sugestão Aprovada [Configuração]",
         listenInteraction: true,
-
-        inputs: [
-          new TextInputBuilder()
-            .setCustomId("target")
-            .setLabel("Membro")
-            .setPlaceholder("Informe o Habbo (Nick)")
-            .setStyle(TextInputStyle.Short)
-            .setRequired(true),
-
-          new TextInputBuilder()
-            .setCustomId("type")
-            .setLabel(`Informe o tipo da Sugestão`)
-            .setPlaceholder(
-              `SM (Sugestões com Medalhas) ou SD (Sugestões Diversas)`
-            )
-            .setStyle(TextInputStyle.Short)
-            .setRequired(true),
-
-          new TextInputBuilder()
-            .setCustomId("link")
-            .setLabel(`Insira o Link da Mensagem do Feedback`)
-            .setPlaceholder(
-              `https://discord.com/channels/788612423346683935/1016447495758426213/1368757073143140452`
-            )
-            .setStyle(TextInputStyle.Short)
-            .setRequired(true),
-
-          new TextInputBuilder()
-            .setCustomId("notes")
-            .setLabel(`Observação`)
-            .setPlaceholder(`Adicione suas observações a essa sugestão`)
-            .setStyle(TextInputStyle.Short)
-            .setRequired(false),
-        ],
+        inputs,
       });
 
     const suggestionType = modalResult.type.toLocaleUpperCase();
@@ -132,6 +148,10 @@ export class UpdateApprovedSuggestionsInteractionHandler extends InteractionHand
     const matchMsgId = modalResult.link.match(regexMsgId);
     const msgId = matchMsgId ? matchMsgId[1] : null;
     const msgLink = msgId ? await channel.messages.fetch(msgId) : false;
+
+    let suggestionsTheme = modalResult.theme
+      ? modalResult.theme.toLocaleUpperCase()
+      : null;
 
     const rawName = modalResult.target
       .trim()
@@ -202,6 +222,11 @@ export class UpdateApprovedSuggestionsInteractionHandler extends InteractionHand
             : "Remover"
         } Sugestão Aprovada` +
         `\n- **Tipo da Sugestão:** ${suggestionType}` +
+        `${
+          interaction.customId === FormIds.adicionarSugestao
+            ? `\n- **Tema da Sugestão:** ${suggestionsTheme}`
+            : ""
+        }` +
         `\n- **Sugestão:** ${modalResult.link}` +
         `\n\nCaso esteja de acordo, clique em **Confirmar** para prosseguir ou **Cancelar** para abortar.`,
       components: [row],
@@ -266,10 +291,12 @@ export class UpdateApprovedSuggestionsInteractionHandler extends InteractionHand
             msgLink: modalResult.link,
             type: suggestionType,
             authorId: targetDB._id.$oid,
-            title:
+            theme: suggestionsTheme,
+            title: `${
               targetDB.habboName +
               suggestionType +
-              String(suggestions[suggestionType]),
+              String(suggestions[suggestionType])
+            }`,
           },
         })
         .catch(async (error) => {
@@ -356,6 +383,8 @@ export class UpdateApprovedSuggestionsInteractionHandler extends InteractionHand
           );
         });
 
+      suggestionsTheme = existsSuggestion.theme;
+
       await this.container.prisma.suggestions
         .delete({
           where: {
@@ -407,6 +436,21 @@ export class UpdateApprovedSuggestionsInteractionHandler extends InteractionHand
                 inline: true,
               },
               {
+                name: "📩 Sugestão",
+                value: `${modalResult.link}`,
+                inline: true,
+              },
+              {
+                name: " ",
+                value: " ",
+                inline: false,
+              },
+              {
+                name: `🏷️ Tema da Sugestão`,
+                value: `${suggestionsTheme}`,
+                inline: true,
+              },
+              {
                 name: `🛡️ Tipo da Sugestão`,
                 value: `${
                   suggestionType === "SM"
@@ -416,9 +460,9 @@ export class UpdateApprovedSuggestionsInteractionHandler extends InteractionHand
                 inline: true,
               },
               {
-                name: "📩 Sugestão",
-                value: `${modalResult.link}`,
-                inline: true,
+                name: " ",
+                value: " ",
+                inline: false,
               },
               {
                 name: `🗳️ 🔄 Sugestões ${suggestionType} (Anterior)`,

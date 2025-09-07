@@ -287,7 +287,7 @@ export class UpdatePresenceInteractionHandler extends InteractionHandler {
       (await interaction.client.guilds.fetch(interaction.guildId));
 
     const logUpdatedPresenceChannel = await guild.channels.fetch(
-      ENVIRONMENT.NOTIFICATION_CHANNELS.UPDATED_PRESENCE_LOGS
+      ENVIRONMENT.NOTIFICATION_CHANNELS.LOGS
     );
 
     if (!logUpdatedPresenceChannel?.isTextBased()) {
