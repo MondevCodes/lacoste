@@ -177,7 +177,7 @@ export default class SendCommand extends Command {
         embeds: [
           new EmbedBuilder()
             .setColor(EmbedColors.Default)
-            .setTitle("Sugestão / Reclamação e Denúncia")
+            .setTitle("Processos da Diretoria")
             .setDescription(
               "Clique no botão abaixo para abrir o questionário que, ao finalizar, será enviado para o canal de sugestões ou reclamações.\n\n**Sugestão / Reclamação e Denúncia**\nUse estas opções para registrar na diretoria.\n**Adicionar/Remover Sugestões Aprovadas**\nAdicione sugestões já aprovadas no perfil de um colaborador.\nAntes confira as normativas atuais para sugestões consideradas SM.\n*SM: Sugestões com Medalhas*\n*SD: Sugestões Diversas*"
             )

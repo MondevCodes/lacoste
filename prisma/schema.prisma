@@ -110,4 +110,5 @@ model Suggestions {
   theme String
   title String
   msgLink String
+  title String?
 }
