@@ -107,5 +107,7 @@ model Suggestions {
   author   User?   @relation(fields: [authorId], references: [id])
   authorId String? @db.ObjectId
   type String
+  theme String
+  title String
   msgLink String
 }

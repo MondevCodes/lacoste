@@ -47,7 +47,7 @@ export type DiscordHasPermissionOptions<
   U extends Roles<T> = Roles<T>
 > = {
   category: T;
-  checkFor: U;
+  checkFor: U | U[];
 
   /** Behavior for checking if the user has a higher role than the required. */
   exact?: boolean;
@@ -374,23 +374,32 @@ export class DiscordUtility extends Utility {
       roles: GuildMemberRoleManager;
     }
   ): boolean {
-    const exactRole: { id: string; index: number } =
-      // @ts-ignore
-      ROLES_ORDER[options.category]?.[options.checkFor];
+    const checkForArray = Array.isArray(options.checkFor)
+      ? options.checkFor
+      : [options.checkFor];
 
-    if (!exactRole) return false;
+    for (const role of checkForArray) {
+      const exactRole: { id: string; index: number } =
+        // @ts-ignore
+        ROLES_ORDER[options.category]?.[role];
 
-    const foundExactRole = options.roles.cache.some(
-      (x) => x.id === exactRole.id
-    );
+      if (!exactRole) continue;
 
-    if (foundExactRole) return foundExactRole;
+      const foundExactRole = options.roles.cache.some(
+        (x) => x.id === exactRole.id
+      );
+      if (foundExactRole) return true;
 
-    const higherRoles = Object.values(
-      ROLES_ORDER[options.category] ?? {}
-    ).filter((x) => x.index >= (exactRole.index ?? 0) && x.id !== exactRole.id);
+      const higherRoles = Object.values(
+        ROLES_ORDER[options.category] ?? {}
+      ).filter(
+        (x) => x.index >= (exactRole.index ?? 0) && x.id !== exactRole.id
+      );
 
-    return higherRoles.some((x) => options.roles.cache.has(x.id));
+      if (higherRoles.some((x) => options.roles.cache.has(x.id))) return true;
+    }
+
+    return false;
   }
 
   /**
