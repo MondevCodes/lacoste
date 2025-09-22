@@ -14,6 +14,8 @@ import {
   ComponentType,
   EmbedBuilder,
   MessageFlags,
+  StringSelectMenuBuilder,
+  StringSelectMenuOptionBuilder,
   TextChannel,
   TextInputBuilder,
   TextInputStyle,
@@ -81,24 +83,6 @@ export class UpdateApprovedSuggestionsInteractionHandler extends InteractionHand
         .setRequired(true),
 
       new TextInputBuilder()
-        .setCustomId("type")
-        .setLabel("Informe o tipo da Sugestão")
-        .setPlaceholder(
-          "SM (Sugestões com Medalhas) ou SD (Sugestões Diversas)"
-        )
-        .setStyle(TextInputStyle.Short)
-        .setMaxLength(2)
-        .setMinLength(2)
-        .setRequired(true),
-
-      new TextInputBuilder()
-        .setCustomId("link")
-        .setLabel("Insira o Link da Mensagem do Feedback")
-        .setPlaceholder("https://discord.com/channels/123/456/789")
-        .setStyle(TextInputStyle.Short)
-        .setRequired(true),
-
-      new TextInputBuilder()
         .setCustomId("notes")
         .setLabel("Observação")
         .setPlaceholder("Adicione suas observações a essa sugestão")
@@ -108,22 +92,47 @@ export class UpdateApprovedSuggestionsInteractionHandler extends InteractionHand
 
     if (interaction.customId === FormIds.adicionarSugestao) {
       inputs.splice(
+        1,
+        0,
+        new TextInputBuilder()
+          .setCustomId("type")
+          .setLabel("Informe o tipo da Sugestão")
+          .setPlaceholder(
+            "SM (Sugestões com Medalhas) ou SD (Sugestões Diversas)"
+          )
+          .setStyle(TextInputStyle.Short)
+          .setMaxLength(2)
+          .setMinLength(2)
+          .setRequired(true)
+      );
+      inputs.splice(
         2,
         0,
         new TextInputBuilder()
-          .setCustomId("theme")
-          .setLabel("Informe o tema da Sugestão")
-          .setPlaceholder("Ex: Financeiro, Medalhas, Regras, etc.")
+          .setCustomId("link")
+          .setLabel("Insira o Link da Mensagem do Feedback")
+          .setPlaceholder("https://discord.com/channels/123/456/7890")
           .setStyle(TextInputStyle.Short)
-          .setMaxLength(10)
-          .setMinLength(2)
+          .setRequired(true)
+      );
+    } else {
+      inputs.splice(
+        1,
+        0,
+        new TextInputBuilder()
+          .setCustomId("suggestionId")
+          .setLabel("Insira o ID da Sugestão")
+          .setPlaceholder(
+            "ID é adquirido no comando /verificar perfil sugestão. Ex: 3"
+          )
+          .setStyle(TextInputStyle.Short)
           .setRequired(true)
       );
     }
 
     const { interaction: interactionFromModal, result: modalResult } =
       await this.container.utilities.inquirer.awaitModal<
-        "target" | "type" | "theme" | "link" | "notes"
+        "target" | "type" | "link" | "suggestionId" | "notes"
       >(interaction, {
         title:
           interaction.customId === FormIds.adicionarSugestao
@@ -133,8 +142,15 @@ export class UpdateApprovedSuggestionsInteractionHandler extends InteractionHand
         inputs,
       });
 
-    const suggestionType = modalResult.type.toLocaleUpperCase();
-    const invalidType = suggestionType != "SD" && suggestionType != "SM";
+    let suggestionId = modalResult.suggestionId;
+    let suggestionTitle: string = null;
+
+    let suggestionType: "SM" | "SD" = modalResult.type
+      ? (modalResult.type.toLocaleUpperCase() as "SM" | "SD")
+      : null;
+    const invalidType = !modalResult.suggestionId
+      ? suggestionType != "SD" && suggestionType != "SM"
+      : false;
     let channel: TextChannel;
     try {
       channel = (await this.container.client.channels.fetch(
@@ -145,13 +161,13 @@ export class UpdateApprovedSuggestionsInteractionHandler extends InteractionHand
     }
     const regexMsgId =
       /^https:\/\/discord\.com\/channels\/\d+\/1016447495758426213\/(\d+)$/;
-    const matchMsgId = modalResult.link.match(regexMsgId);
+    const matchMsgId = modalResult.link
+      ? modalResult.link.match(regexMsgId)
+      : null;
     const msgId = matchMsgId ? matchMsgId[1] : null;
     const msgLink = msgId ? await channel.messages.fetch(msgId) : false;
 
-    let suggestionsTheme = modalResult.theme
-      ? modalResult.theme.toLocaleUpperCase()
-      : null;
+    let suggestionsTheme = null;
 
     const rawName = modalResult.target
       .trim()
@@ -172,7 +188,11 @@ export class UpdateApprovedSuggestionsInteractionHandler extends InteractionHand
       limit: 1,
     });
 
-    if (!resultRaw.cursor?.firstBatch.length || invalidType || !msgLink) {
+    if (
+      !resultRaw.cursor?.firstBatch.length ||
+      invalidType ||
+      (!msgLink && modalResult.link)
+    ) {
       return await interactionFromModal.editReply({
         content: `⚠️  Informações Inválidas:
         ${
@@ -184,7 +204,7 @@ export class UpdateApprovedSuggestionsInteractionHandler extends InteractionHand
             ? `\n❌ **Tipo de sugestão** está incorreta. Verifique se está inserindo corretamente **SM** ou **SD** no campo adequado.`
             : ""
         } ${
-          !msgLink
+          !msgLink && modalResult.link
             ? `\n❌ **Link do Feedback da Sugestão** está incorreto. Verifique se está inserindo corretamente, o link deve ser do canal <#${ENVIRONMENT.NOTIFICATION_CHANNELS.LOGS}>.`
             : ""
         } ${
@@ -212,6 +232,93 @@ export class UpdateApprovedSuggestionsInteractionHandler extends InteractionHand
       cancelButton
     );
 
+    if (interaction.customId === FormIds.adicionarSugestao) {
+      const themes = [
+        "FINANCEIRO",
+        "DISCORD",
+        "AUTOMATIZAÇÃO",
+        "EVENTOS",
+        "ORGANIZACIONAL",
+        "CAPACITAÇÃO",
+        "SEDE",
+        "NORMATIVAS",
+        "RECOMPENSAS",
+        "HIERARQUIA",
+        "MEDALHAS",
+        "INOVAÇÃO",
+        "OUTROS",
+      ];
+
+      const themeOptions = themes.map((theme) =>
+        new StringSelectMenuOptionBuilder().setLabel(theme).setValue(theme)
+      );
+
+      const selectMenuTheme = new StringSelectMenuBuilder()
+        .setCustomId("selecao_tema")
+        .setPlaceholder("Selecione o Tema da Sugestão")
+        .addOptions(themeOptions);
+
+      const themeRow =
+        new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+          selectMenuTheme
+        );
+
+      let selectedTheme: string = null;
+      let notSelected = true;
+
+      while (notSelected) {
+        const selectThemeMessage = await interactionFromModal.editReply({
+          content: `Selecione um **Tema** para a sugestão:`,
+          components: [themeRow],
+        });
+
+        try {
+          const interactionThemeSelect =
+            await selectThemeMessage.awaitMessageComponent({
+              componentType: ComponentType.StringSelect,
+              filter: (i) => i.user.id === interactionFromModal.member.user.id,
+              time: 30000,
+            });
+
+          selectedTheme = interactionThemeSelect.values[0];
+
+          await interactionThemeSelect.update({
+            content: `**Tema selecionado:** ${selectedTheme}\n\n**Confirme** ou **cancele** sua seleção.`,
+            components: [row],
+          });
+
+          const interactionThemeButton =
+            await selectThemeMessage.awaitMessageComponent({
+              componentType: ComponentType.Button,
+              filter: (i) => i.user.id === interactionFromModal.member.user.id,
+              time: 30000,
+            });
+          if (interactionThemeButton.customId === "confirm" && selectedTheme) {
+            await interactionThemeButton.update({
+              content: "🔄 Processando...",
+              components: [],
+            });
+            suggestionsTheme = selectedTheme;
+            notSelected = false;
+          }
+
+          if (interactionThemeButton.customId === "cancel") {
+            await interactionThemeButton.update({
+              content: "🔁 Escolha outro **Tema** abaixo:",
+              components: [themeRow, row],
+            });
+
+            continue;
+          }
+        } catch (error) {
+          return await interactionFromModal.editReply({
+            content: "⏰ ***Tempo esgotado. Operação cancelada.***",
+            components: [],
+          });
+        }
+      }
+    }
+
     const confirmMessage = await interactionFromModal.editReply({
       content:
         `⚠️ **ATENÇÃO!** Confirme se as informações estão corretas:\n` +
@@ -221,31 +328,39 @@ export class UpdateApprovedSuggestionsInteractionHandler extends InteractionHand
             ? "Adicionar"
             : "Remover"
         } Sugestão Aprovada` +
-        `\n- **Tipo da Sugestão:** ${suggestionType}` +
+        `${
+          interaction.customId === FormIds.adicionarSugestao
+            ? `\n- **Tipo da Sugestão:** ${suggestionType}`
+            : ""
+        }` +
         `${
           interaction.customId === FormIds.adicionarSugestao
             ? `\n- **Tema da Sugestão:** ${suggestionsTheme}`
             : ""
         }` +
-        `\n- **Sugestão:** ${modalResult.link}` +
+        `${
+          interaction.customId === FormIds.adicionarSugestao
+            ? `\n- **Sugestão:** ${modalResult.link}`
+            : `\n- **ID da Sugestão:** ${modalResult.suggestionId}`
+        }` +
         `\n\nCaso esteja de acordo, clique em **Confirmar** para prosseguir ou **Cancelar** para abortar.`,
       components: [row],
     });
 
     try {
-      const interaction = await confirmMessage.awaitMessageComponent({
+      const interactionConfirm = await confirmMessage.awaitMessageComponent({
         componentType: ComponentType.Button,
         filter: (i) => i.user.id === interactionFromModal.member.user.id,
         time: 30000,
       });
 
-      if (interaction.customId === "confirm") {
-        await interaction.update({
+      if (interactionConfirm.customId === "confirm") {
+        await interactionConfirm.update({
           content: "🔄 Processando...",
           components: [],
         });
       } else {
-        return await interaction.update({
+        return await interactionConfirm.update({
           content: "❌ Operação cancelada.",
           components: [],
         });
@@ -285,7 +400,7 @@ export class UpdateApprovedSuggestionsInteractionHandler extends InteractionHand
           content: `⚠️  A sugestão que está tentando **criar já existe** para ***${targetDB.habboName}***.`,
         });
 
-      await this.container.prisma.suggestions
+      const createSuggestion = await this.container.prisma.suggestions
         .create({
           data: {
             msgLink: modalResult.link,
@@ -301,7 +416,7 @@ export class UpdateApprovedSuggestionsInteractionHandler extends InteractionHand
         })
         .catch(async (error) => {
           this.container.logger.error({
-            message: `[UpdateApprovedSuggestionsInteractionHandler#run] Ocorreu um erro ao "${interactionFromModal.member.user.username}" tentar criar a sugestão de tipo "${suggestionType}" com o link "${modalResult.link}" no membro "${targetDB.habboName}".`,
+            message: `[UpdateApprovedSuggestionsInteractionHandler#run] Ocorreu um erro ao "${interactionFromModal.user.displayName}" tentar criar a sugestão de tipo "${suggestionType}" com o link "${modalResult.link}" no membro "${targetDB.habboName}".`,
             error: error.message,
           });
 
@@ -315,8 +430,11 @@ export class UpdateApprovedSuggestionsInteractionHandler extends InteractionHand
         });
 
       this.container.logger.info(
-        `[UpdateApprovedSuggestionsInteractionHandler#run] Sugestão criada com sucesso no banco de dados por "${interactionFromModal.member.user.username}" do tipo "${suggestionType}" com o link "${modalResult.link}" no membro "${targetDB.habboName}".`
+        `[UpdateApprovedSuggestionsInteractionHandler#run] Sugestão criada com sucesso no banco de dados por "${interactionFromModal.user.displayName}" do tipo "${suggestionType}" com o link "${modalResult.link}" no membro "${targetDB.habboName}".`
       );
+
+      suggestionId = createSuggestion.id;
+      suggestionTitle = createSuggestion.title;
 
       const targetMember = await interaction.guild.members.fetch(
         targetDB.discordId
@@ -340,7 +458,7 @@ export class UpdateApprovedSuggestionsInteractionHandler extends InteractionHand
               .setDescription(
                 `🎉 **Parabéns! Uma sugestão ${suggestionType} foi aprovada e adicionada ao seu perfil de carreira.**
               
-              Acesse a aba “***Verificações***” para consultá-la.
+              Acesse a aba “***Verificações***” para consultá-la, você poderá encontrá-la com o título "***${suggestionTitle}***".
               É a **sua** sugestão que transforma a ***Lacoste***, estamos ansiosos para a sua próxima!
               
               ***#OrgulhoDeSerLacoste***`
@@ -359,7 +477,7 @@ export class UpdateApprovedSuggestionsInteractionHandler extends InteractionHand
           return true;
         });
     } else {
-      if (!suggestions[suggestionType]) {
+      if (!suggestions) {
         return await interactionFromModal.editReply({
           content: `🚫 Membro ***${targetDB.habboName}*** não possui sugestões aprovadas registradas no banco de dados.`,
         });
@@ -368,8 +486,7 @@ export class UpdateApprovedSuggestionsInteractionHandler extends InteractionHand
       const existsSuggestion = await this.container.prisma.suggestions
         .findFirst({
           where: {
-            msgLink: modalResult.link,
-            type: suggestionType,
+            id: modalResult.suggestionId,
             authorId: targetDB._id.$oid,
           },
         })
@@ -383,7 +500,10 @@ export class UpdateApprovedSuggestionsInteractionHandler extends InteractionHand
           );
         });
 
+      suggestionType = existsSuggestion.type as "SM" | "SD";
       suggestionsTheme = existsSuggestion.theme;
+      suggestionTitle = existsSuggestion.title;
+      modalResult.link = existsSuggestion.msgLink;
 
       await this.container.prisma.suggestions
         .delete({
@@ -407,7 +527,7 @@ export class UpdateApprovedSuggestionsInteractionHandler extends InteractionHand
         });
 
       this.container.logger.info(
-        `[UpdateApprovedSuggestionsInteractionHandler#run] Sugestão deletada com sucesso do banco de dados por "${interactionFromModal.member.user.username}" do tipo "${suggestionType}" com o link "${modalResult.link}" no membro "${targetDB.habboName}".`
+        `[UpdateApprovedSuggestionsInteractionHandler#run] Sugestão deletada com sucesso do banco de dados por "${interactionFromModal.user.displayName}" do tipo "${suggestionType}" com o link "${modalResult.link}" no membro "${targetDB.habboName}".`
       );
     }
 
@@ -415,104 +535,93 @@ export class UpdateApprovedSuggestionsInteractionHandler extends InteractionHand
       ENVIRONMENT.NOTIFICATION_CHANNELS.LOGS
     )) as TextChannel;
 
-    await notificationChannel
-      .send({
-        embeds: [
-          new EmbedBuilder()
-            .setColor(EmbedColors.Info)
-            .setTitle(
-              interaction.customId === FormIds.adicionarSugestao
-                ? "Sugestão Aprovada ✅"
-                : "Sugestão Removida 🗑️"
-            )
-            .setAuthor({
-              name: `Aprovado por ${interactionFromModal.user.displayName}`,
-              iconURL: interactionFromModal.user.displayAvatarURL(),
-            })
-            .addFields([
-              {
-                name: "📇 Autor da Sugestão",
-                value: `${targetDB.habboName ?? `@${targetDB.discordId}`}`,
-                inline: true,
-              },
-              {
-                name: "📩 Sugestão",
-                value: `${modalResult.link}`,
-                inline: true,
-              },
-              {
-                name: " ",
-                value: " ",
-                inline: false,
-              },
-              {
-                name: `🏷️ Tema da Sugestão`,
-                value: `${suggestionsTheme}`,
-                inline: true,
-              },
-              {
-                name: `🛡️ Tipo da Sugestão`,
-                value: `${
-                  suggestionType === "SM"
-                    ? "Sugestão com Medalha 🏅"
-                    : "Sugestão Diversa 🎨"
-                }`,
-                inline: true,
-              },
-              {
-                name: " ",
-                value: " ",
-                inline: false,
-              },
-              {
-                name: `🗳️ 🔄 Sugestões ${suggestionType} (Anterior)`,
-                value: `${
-                  interaction.customId === FormIds.adicionarSugestao
-                    ? suggestionType === "SM"
-                      ? suggestions.SM > 0
-                        ? suggestions.SM - 1
-                        : 0
-                      : suggestions.SM > 0
-                      ? suggestions.SD - 1
-                      : 0
-                    : suggestionType === "SM"
-                    ? suggestions.SM > 0
-                      ? suggestions.SM + 1
-                      : 0
-                    : suggestions.SM > 0
-                    ? suggestions.SD + 1
-                    : 0
-                }`,
-                inline: true,
-              },
-              {
-                name: `🗳️ ✅ Sugestões ${suggestionType} (Atualizado)`,
-                value: `${
-                  suggestionType === "SM" ? suggestions.SM : suggestions.SD
-                }`,
-                inline: true,
-              },
-              {
-                name: "🗒️ Observações",
-                value: modalResult.notes ? modalResult.notes : `*Nenhuma*`,
-                inline: false,
-              },
-            ]),
-        ],
-      })
-      .catch((error) => {
-        this.container.logger.error({
-          message: `[UpdateApprovedSuggestionsInteractionHandler#run] Tentativa de enviar o log da sugestão do tipo "${suggestionType}" do membro "${interactionFromModal.user.displayName}" com o link "${modalResult.link}" no membro "${targetDB.habboName}" falhou.`,
-          error: error.message,
-        });
-      });
+    const logMessage = await notificationChannel.send({
+      embeds: [
+        new EmbedBuilder()
+          .setColor(EmbedColors.Info)
+          .setTitle(
+            interaction.customId === FormIds.adicionarSugestao
+              ? "Sugestão Aprovada ✅"
+              : "Sugestão Removida 🗑️"
+          )
+          .setAuthor({
+            name: `Aprovado por ${interactionFromModal.user.displayName}`,
+            iconURL: interactionFromModal.user.displayAvatarURL(),
+          })
+          .addFields([
+            {
+              name: "📇 Autor da Sugestão",
+              value: `${targetDB.habboName ?? `@${targetDB.discordId}`}`,
+              inline: true,
+            },
+            {
+              name: "📩 Sugestão",
+              value: `${modalResult.link}`,
+              inline: true,
+            },
+            {
+              name: "🆔 ID da Sugestão",
+              value: `${suggestionId}`,
+              inline: true,
+            },
+            {
+              name: `🛡️ Tipo da Sugestão`,
+              value: `${
+                suggestionType === "SM"
+                  ? "Sugestão com Medalha 🏅"
+                  : "Sugestão Diversa 🎨"
+              }`,
+              inline: true,
+            },
+            {
+              name: `🔖 Tema da Sugestão`,
+              value: `${suggestionsTheme}`,
+              inline: true,
+            },
+            {
+              name: "🏷️ Título da Sugestão",
+              value: `${suggestionTitle}`,
+              inline: true,
+            },
+            {
+              name: `🗳️ 🔄 Sugestões ${suggestionType} (Anterior)`,
+              value: `${
+                suggestionType === "SM" ? suggestions.SM : suggestions.SD
+              }`,
+              inline: true,
+            },
+            {
+              name: `🗳️ ✅ Sugestões ${suggestionType} (Atualizado)`,
+              value: `${
+                interaction.customId === FormIds.adicionarSugestao
+                  ? suggestionType === "SM"
+                    ? suggestions.SM + 1
+                    : suggestions.SD + 1
+                  : suggestionType === "SM"
+                  ? suggestions.SM - 1
+                  : suggestions.SD - 1
+              }`,
+              inline: true,
+            },
+            {
+              name: "🗒️ Observações",
+              value: modalResult.notes ? modalResult.notes : `*Nenhuma*`,
+              inline: false,
+            },
+          ]),
+      ],
+    });
+
+    const logMessageLink = `https://discord.com/channels/${logMessage.guildId}/${logMessage.channelId}/${logMessage.id}`;
 
     return await interactionFromModal.editReply({
       content: `📩 ✅ Sugestão Aprovada ${
         interaction.customId === FormIds.adicionarSugestao
           ? "**adicionada** ao"
           : "**removida** do"
-      } perfil de ***${targetDB.habboName}*** com sucesso.`,
+      } perfil de ***${
+        targetDB.habboName
+      }*** com sucesso.\n\n*Para mais detalhes, confira:* ${logMessageLink}`,
     });
   }
 }
