@@ -4,6 +4,7 @@ import { Utility } from "@sapphire/plugin-utilities-store";
 import { ENVIRONMENT } from "$lib/env";
 
 import type {
+  ChatInputCommandInteraction,
   Guild,
   GuildMember,
   GuildMemberRoleManager,
@@ -223,7 +224,7 @@ export class DiscordUtility extends Utility {
    * @returns If denied, the reason for the denial.
    */
   public async isPromotionPossible(
-    interaction: RepliableInteraction | Message,
+    interaction: RepliableInteraction | Message | ChatInputCommandInteraction,
     user: GuildMember,
     currentTargetJob: Snowflake
   ): Promise<

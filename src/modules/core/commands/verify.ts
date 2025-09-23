@@ -1,6 +1,16 @@
-import { EmbedBuilder, Message } from "discord.js";
+import {
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  ChatInputCommandInteraction,
+  EmbedBuilder,
+  MessageFlags,
+  StringSelectMenuBuilder,
+  StringSelectMenuOptionBuilder,
+  TextChannel,
+} from "discord.js";
 import { ApplyOptions } from "@sapphire/decorators";
-import { Args, Command } from "@sapphire/framework";
+import { Command } from "@sapphire/framework";
 
 import { find, values } from "remeda";
 
@@ -8,33 +18,75 @@ import { ENVIRONMENT } from "$lib/env";
 import { EmbedColors } from "$lib/constants/discord";
 import moment from "moment";
 
-@ApplyOptions<Command.Options>({ name: "verificar" })
+@ApplyOptions<Command.Options>({
+  name: "verificar",
+  description: "Verificar Perfil de Carreira & Sugestões de um Usuário",
+})
 export default class SendCommand extends Command {
-  public override async messageRun(message: Message, args: Args) {
-    if (!message.inGuild()) {
-      throw new Error("Cannot check permissions outside of a guild.");
+  public override registerApplicationCommands(registry: Command.Registry) {
+    const isProduction =
+      this.container.utilities.discord.verifyInjectSlashCommands(
+        ENVIRONMENT.NODE_ENV
+      );
+
+    if (!isProduction) return;
+
+    registry.registerChatInputCommand((builder) =>
+      builder
+        .setName(this.name)
+        .setDescription(this.description)
+        .addStringOption((option) =>
+          option
+            .setName("nick_habbo")
+            .setDescription("Nickname do usuário no Habbo")
+            .setRequired(true)
+        )
+        .addStringOption((options) =>
+          options
+            .setName("perfil")
+            .setDescription("Carreira / Sugestões")
+            .setRequired(false)
+            .addChoices(
+              { name: "Carreira", value: "carreira" },
+              { name: "Sugestão", value: "sugestao" }
+            )
+        )
+        .addStringOption((options) =>
+          options
+            .setName("tipo_sugestão")
+            .setDescription("Selecione um tipo de Sugestão")
+            .setRequired(false)
+            .addChoices(
+              { name: "SM", value: "SM" },
+              { name: "SD", value: "SD" }
+            )
+        )
+    );
+  }
+
+  public override async chatInputRun(interaction: ChatInputCommandInteraction) {
+    const interactionId = interaction.user.id;
+
+    if (!interaction.inGuild() || !interaction.user) {
+      this.container.logger.warn(
+        `[VerifyCommand#chatInputRun] ${interactionId} tried to perform an action in a DM.`
+      );
+      return await interaction.reply({
+        content:
+          "⚠️  Não consegui encontrar o perfil do usuário no Habbo, talvez sua conta esteja deletada ou renomeada? Veja se o perfil do usuário no jogo está como público.",
+        flags: MessageFlags.Ephemeral,
+      });
     }
 
-    const targetResult = await args.pickResult("string");
-    if (targetResult.isErr()) return;
+    const targetResult = interaction.options.getString("nick_habbo", true);
+    const selectProfile =
+      interaction.options.getString("perfil", false) ?? "carreira";
 
     const onlyHabbo = (
-      await this.container.utilities.habbo.getProfile(targetResult.unwrap())
+      await this.container.utilities.habbo.getProfile(targetResult)
     ).unwrapOr(undefined);
 
-    // if (!onlyHabbo?.name) {
-    //   await message.reply({
-    //     content:
-    //       "Não consegui encontrar o perfil do usuário no Habbo, talvez sua conta esteja deletada ou renomeada? Veja se o perfil do usuário no jogo está como público.",
-    //   });
-
-    //   return;
-    // }
-
-    const rawName = targetResult
-      .unwrap()
-      .trim()
-      .replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const rawName = targetResult.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
     const resultRaw: any = await this.container.prisma.$runCommandRaw({
       find: "User",
@@ -48,12 +100,11 @@ export default class SendCommand extends Command {
     });
 
     if (!resultRaw.cursor?.firstBatch.length) {
-      await message.reply({
+      return await interaction.reply({
         content:
-          "O usuário **não está vinculado** na nossa base de dados, verifique o nome ou **vincule-o**.",
+          "⚠️  O usuário **não está vinculado** na nossa base de dados, verifique o nome ou **vincule-o**.",
+        flags: MessageFlags.Ephemeral,
       });
-
-      return;
     }
 
     const rawTargetDB = resultRaw.cursor.firstBatch[0];
@@ -97,20 +148,19 @@ export default class SendCommand extends Command {
     let discordLinked: boolean | undefined;
 
     // START VERIFY WITHOUT DISCORD
-    if (targetDB?.discordLink === false) {
+    if (targetDB?.discordLink === false && selectProfile === "carreira") {
       discordLinked = false;
 
       this.container.logger.info(
-        `[VerifyCommand#run] ${message.author.username} use Verify on user ${targetDB.habboName} without discord`
+        `[VerifyCommand#run] ${interaction.user.username} use Verify on user ${targetDB.habboName} without discord`
       );
 
       if (!targetDB.latestPromotionRoleId) {
-        await message.reply({
+        return await interaction.reply({
           content:
-            "Não consegui encontrar o setor do usuário, talvez sua conta esteja deletada ou renomeada?",
+            "⚠️  Não consegui encontrar o setor do usuário, talvez sua conta esteja deletada ou renomeada?",
+          flags: MessageFlags.Ephemeral,
         });
-
-        return;
       }
 
       const currentSectorEnvironment = Object.values(
@@ -118,15 +168,14 @@ export default class SendCommand extends Command {
       ).find((r) => r.id === targetDB.latestPromotionRoleId);
 
       if (!currentSectorEnvironment) {
-        await message.reply({
+        return await interaction.reply({
           content:
-            "Não consegui encontrar o setor do usuário, talvez sua conta esteja deletada ou renomeada?",
+            "⚠️  Não consegui encontrar o setor do usuário, talvez sua conta esteja deletada ou renomeada?",
+          flags: MessageFlags.Ephemeral,
         });
-
-        return;
       }
 
-      const currentSector = await message.guild.roles.fetch(
+      const currentSector = await interaction.guild.roles.fetch(
         currentSectorEnvironment?.id
       );
 
@@ -135,20 +184,18 @@ export default class SendCommand extends Command {
       );
 
       if (!currentJobEnvironment) {
-        await message.reply({
+        return await interaction.reply({
           content:
-            "Não consegui encontrar o cargo do usuário, talvez sua conta esteja deletada ou renomeada?",
+            "⚠️  Não consegui encontrar o cargo do usuário, talvez sua conta esteja deletada ou renomeada?",
+          flags: MessageFlags.Ephemeral,
         });
-
-        return;
       }
 
-      const currentJob = await message.guild.roles.fetch(
+      const currentJob = await interaction.guild.roles.fetch(
         currentJobEnvironment?.id
       );
 
       let shouldPromote =
-        /** isFirstPromotion */
         !targetDB?.latestPromotionRoleId || !targetDB?.latestPromotionDate;
 
       const allPresences: Date[] = [
@@ -200,10 +247,12 @@ export default class SendCommand extends Command {
             }${hours}h${minutes < 10 ? "0" : ""}${minutes}min`;
           }
 
-          await message.reply({
+          await interaction.channel.send({
             embeds: [
               new EmbedBuilder()
-                .setTitle(`Verificação de ***${targetDB.habboName}*** 📇`)
+                .setTitle(
+                  `Perfil de Carreira de ***${targetDB.habboName}*** 📇`
+                )
                 .setFields([
                   {
                     name: "💼 Setor // Cargo",
@@ -249,10 +298,6 @@ export default class SendCommand extends Command {
                         : lastPresence,
                   },
                 ])
-                .setFooter({
-                  text: message.author.tag,
-                  iconURL: message.author.displayAvatarURL(),
-                })
                 .setColor(EmbedColors.LalaRed)
                 .setThumbnail(
                   onlyHabbo
@@ -261,17 +306,25 @@ export default class SendCommand extends Command {
                 ),
             ],
           });
+
+          return await interaction.reply({
+            content: `✅📇 Verificação Concluída`,
+            flags: MessageFlags.Ephemeral,
+          });
         } else {
           if (currentJob?.name !== "Vinculado") {
-            await message.reply({
+            return await interaction.reply({
               content: `Erro: Função 'minDaysProm': ${minDaysProm} e 'latestPromotionDate': ${latestPromotionDate}, contate o Desenvolvedor.`,
+              flags: MessageFlags.Ephemeral,
             });
           }
 
-          await message.reply({
+          await interaction.channel.send({
             embeds: [
               new EmbedBuilder()
-                .setTitle(`Verificação de ***${targetDB.habboName}*** 📇`)
+                .setTitle(
+                  `Perfil de Carreira de ***${targetDB.habboName}*** 📇`
+                )
                 .setFields([
                   {
                     name: "💼 Setor // Cargo",
@@ -290,10 +343,6 @@ export default class SendCommand extends Command {
                       : "Não Vinculado ⛓️‍💥 ❌",
                   },
                 ])
-                .setFooter({
-                  text: message.author.tag,
-                  iconURL: message.author.displayAvatarURL(),
-                })
                 .setColor(EmbedColors.LalaRed)
                 .setThumbnail(
                   onlyHabbo
@@ -302,29 +351,249 @@ export default class SendCommand extends Command {
                 ),
             ],
           });
+
+          return await interaction.reply({
+            content: `✅📇 Verificação Concluída`,
+            flags: MessageFlags.Ephemeral,
+          });
         }
       }
 
       // END VERIFY WITHOUT DISCORD
-      return;
     } else {
       discordLinked = true;
     }
 
     const { habbo } =
-      await this.container.utilities.habbo.inferTargetGuildMember(
-        targetResult.unwrap()
-      );
+      await this.container.utilities.habbo.inferTargetGuildMember(targetResult);
 
-    const member = await message.guild.members.fetch(targetDB.discordId);
+    const member = await interaction.guild.members.fetch(targetDB.discordId);
 
     if (!member) {
-      await message.reply({
+      return await interaction.reply({
         content:
-          "Não consegui encontrar o perfil do Discord do usuário que estava com o mesmo ativo, talvez saiu do Servidor?",
+          "⚠️  Não consegui encontrar o perfil do Discord do usuário que estava com o mesmo ativo, talvez saiu do Servidor?",
+        flags: MessageFlags.Ephemeral,
+      });
+    }
+
+    if (selectProfile === "sugestao") {
+      const suggestionTypeSelect =
+        interaction.options.getString("tipo_sugestão", false) ?? null;
+
+      const allSuggestions = await this.container.prisma.suggestions.findMany({
+        where: {
+          authorId: targetDB.id,
+          ...(suggestionTypeSelect ? { type: suggestionTypeSelect } : {}),
+        },
+        orderBy: {
+          title: "asc",
+        },
       });
 
-      return;
+      if (!allSuggestions.length) {
+        return interaction.reply({
+          content: `❌ Nenhuma sugestão encontrada para **${targetDB.habboName}**`,
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+
+      const options = allSuggestions.map((suggestion) =>
+        new StringSelectMenuOptionBuilder()
+          .setLabel(
+            `${suggestion.type + " - "}${suggestion.title ?? "Sem Título"} - ${
+              suggestion.theme ?? "Sem Tema"
+            }`
+          )
+          .setValue(String(suggestion.id))
+      );
+
+      const selectMenu = new StringSelectMenuBuilder()
+        .setCustomId("selecao_sugestao")
+        .setPlaceholder("Selecione uma Sugestão")
+        .addOptions(options);
+
+      const row = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+        selectMenu
+      );
+
+      let titleMenu = `📩  Todas Sugestões de **${targetDB.habboName}**`;
+      switch (suggestionTypeSelect) {
+        case "SM":
+          titleMenu = `📩 🏅 Sugestões com Medalha de **${targetDB.habboName}**`;
+          break;
+        case "SD":
+          titleMenu = `📩 🎨 Sugestões Diversas de **${targetDB.habboName}**`;
+          break;
+      }
+
+      let titleMenuContinue = `📩  Deseja ver mais Sugestões de **${targetDB.habboName}**?`;
+      switch (suggestionTypeSelect) {
+        case "SM":
+          titleMenuContinue = `📩 🏅 Deseja ver mais Sugestões com Medalha de **${targetDB.habboName}**?`;
+          break;
+        case "SD":
+          titleMenuContinue = `📩 🎨 Deseja ver mais Sugestões Diversas de **${targetDB.habboName}**?`;
+          break;
+      }
+
+      const endMenuButton = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        new ButtonBuilder()
+          .setCustomId("endMenu")
+          .setLabel("🛑 Finalizar")
+          .setStyle(ButtonStyle.Danger)
+      );
+
+      await interaction.reply({
+        content: titleMenu,
+        components: [row, endMenuButton],
+        flags: MessageFlags.Ephemeral,
+      });
+
+      const viewedSuggestions = new Set();
+
+      const collector =
+        await interaction.channel?.createMessageComponentCollector({
+          filter: (i) =>
+            i.user.id === interaction.user.id &&
+            (i.customId === "selecao_sugestao" || i.customId === "endMenu"),
+          time: 120000,
+        });
+
+      collector?.on("collect", async (response) => {
+        try {
+          await response.deferUpdate();
+
+          if (response.customId === "endMenu") {
+            return collector.stop("manual_finish");
+          }
+
+          const suggestionSelected = allSuggestions.find(
+            (suggestion) =>
+              suggestion.id ===
+              (response.isStringSelectMenu() ? response.values[0] : null)
+          );
+
+          if (!suggestionSelected) {
+            return await interaction.followUp({
+              content: "❌ Sugestão não encontrada!",
+              flags: MessageFlags.Ephemeral,
+            });
+          }
+
+          const [, , , , , , msgId] = suggestionSelected.msgLink.split("/");
+          const feedbackChannel = (await interaction.guild.channels.fetch(
+            ENVIRONMENT.NOTIFICATION_CHANNELS.FEEDBACKS
+          )) as TextChannel;
+          const originalMessage = await feedbackChannel.messages.fetch(msgId);
+
+          viewedSuggestions.add(suggestionSelected.id);
+
+          const updatedOptions = allSuggestions.map((suggestion) =>
+            new StringSelectMenuOptionBuilder()
+              .setLabel(
+                `${viewedSuggestions.has(suggestion.id) ? "✔️ VISTO - " : ""}${
+                  suggestion.type + " - "
+                }${suggestion.title ?? "Sem Título"} - ${
+                  suggestion.theme ?? "Sem Tema"
+                }`
+              )
+              .setValue(String(suggestion.id))
+          );
+
+          const updatedSelectMenu = new StringSelectMenuBuilder()
+            .setCustomId("selecao_sugestao")
+            .setPlaceholder("Selecione uma Sugestão")
+            .addOptions(updatedOptions);
+
+          const updatedRow =
+            new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+              updatedSelectMenu
+            );
+
+          const suggestionInfos = `\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n${titleMenuContinue}\n\n✅ **Última seleção:** ${suggestionSelected.title}\n🆔 **ID da Sugestão:** ${suggestionSelected.id}`;
+          const cutMsgWarn = `**(...)**\n\n📝✂️ **A mensagem é muito grande!** *Caso queira ver completo, confira:* ${suggestionSelected.msgLink}`;
+          const lengthLimitDiscord = 2000 - suggestionInfos.length;
+          if (originalMessage.content.length > lengthLimitDiscord) {
+            originalMessage.content =
+              originalMessage.content.slice(
+                0,
+                lengthLimitDiscord - cutMsgWarn.length
+              ) + cutMsgWarn;
+          }
+
+          await interaction.editReply({
+            embeds: originalMessage.embeds,
+            files: [...originalMessage.attachments.values()].map((att) => ({
+              attachment: att.url,
+              name: att.name,
+            })),
+            content: `${originalMessage.content}${suggestionInfos}`,
+            components: [updatedRow, endMenuButton],
+          });
+        } catch (error) {
+          this.container.logger.error(
+            `[VerifyCommand#run/Suggestion] ${interaction.user.displayName} tentou achar a sugestão de ${targetDB.habboName} e falhou: ${error}`
+          );
+          return await interaction.editReply({
+            content: `❌ *Erro ao buscar a mensagem*`,
+          });
+        }
+      });
+
+      collector?.on("end", async (_, reason) => {
+        try {
+          if (reason === "manual_finish") {
+            return await interaction.editReply({
+              content: `✅ 📩  **Verificação de Sugestões finalizada manualmente**`,
+              components: [],
+            });
+          }
+
+          if (reason === "user_closed") {
+            return await interaction.editReply({
+              content: `✅ 📩  **Verificação finalizada pelo usuário**`,
+              components: [],
+            });
+          } else {
+            const disabledSelectMenu = new StringSelectMenuBuilder()
+              .setCustomId("selecao_sugestao_disabled")
+              .setPlaceholder("Tempo esgotado - Menu desabilitado")
+              .addOptions([
+                new StringSelectMenuOptionBuilder()
+                  .setLabel("Sessão finalizada")
+                  .setValue("disabled"),
+              ])
+              .setDisabled(true);
+
+            const disabledRow =
+              new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+                disabledSelectMenu
+              );
+
+            const disabledButton = new ButtonBuilder()
+              .setCustomId("endMenu")
+              .setLabel("⏱️ Sessão Expirada")
+              .setStyle(ButtonStyle.Danger)
+              .setDisabled(true);
+
+            const disabledButtonRow =
+              new ActionRowBuilder<ButtonBuilder>().addComponents(
+                disabledButton
+              );
+
+            return await interaction.editReply({
+              content: `⏱️ **Sessão expirada**\n*Use o comando novamente para continuar verificando.*`,
+              components: [disabledRow, disabledButtonRow],
+            });
+          }
+        } catch (error) {
+          console.log("Erro ao finalizar collector");
+        }
+        return "";
+      });
+
+      return "";
     }
 
     const currentSectorId =
@@ -333,31 +602,29 @@ export default class SendCommand extends Command {
       );
 
     if (!currentSectorId) {
-      await message.reply({
+      return await interaction.reply({
         content:
-          "Não consegui encontrar o setor do usuário, talvez sua conta esteja deletada ou renomeada?",
+          "⚠️  Não consegui encontrar o setor do usuário, talvez sua conta esteja deletada ou renomeada?",
+        flags: MessageFlags.Ephemeral,
       });
-
-      return;
     }
 
-    const currentSector = await message.guild.roles.fetch(currentSectorId);
+    const currentSector = await interaction.guild.roles.fetch(currentSectorId);
 
     const currentJobId = this.container.utilities.discord.inferHighestJobRole(
       member.roles.cache.map((r) => r.id)
     );
 
     if (!currentJobId) {
-      await message.reply({
+      return await interaction.reply({
         content:
-          "Não consegui encontrar o cargo do usuário, talvez sua conta esteja deletada ou renomeada?",
+          "⚠️  Não consegui encontrar o cargo do usuário, talvez sua conta esteja deletada ou renomeada?",
+        flags: MessageFlags.Ephemeral,
       });
-
-      return;
     }
 
     const currentJob = currentJobId
-      ? await message.guild.roles.fetch(currentJobId)
+      ? await interaction.guild.roles.fetch(currentJobId)
       : member.roles.highest;
 
     const databaseUser = await this.container.prisma.user.findUnique({
@@ -373,11 +640,10 @@ export default class SendCommand extends Command {
     });
 
     this.container.logger.info(
-      `[VerifyCommand#run] ${message.author.username} use Verify on user ${databaseUser.habboName}, currentSectorId: ${currentSectorId}`
+      `[VerifyCommand#run] ${interaction.user.username} use Verify on user ${databaseUser.habboName}, currentSectorId: ${currentSectorId}`
     );
 
     let shouldPromote =
-      /** isFirstPromotion */
       !databaseUser?.latestPromotionRoleId ||
       !databaseUser?.latestPromotionDate;
 
@@ -392,7 +658,9 @@ export default class SendCommand extends Command {
     let userMedals: string[] = [];
     if (medals.length > 0) {
       for await (const medal of medals) {
-        const targetMedal = await message.guild.roles.fetch(medal.discordId);
+        const targetMedal = await interaction.guild.roles.fetch(
+          medal.discordId
+        );
 
         if (targetMedal) {
           userMedals.push(targetMedal?.name);
@@ -404,11 +672,10 @@ export default class SendCommand extends Command {
 
     const [isPromotionPossible, _, denyMotive] =
       await this.container.utilities.discord.isPromotionPossible(
-        message,
+        interaction,
         member,
         targetDB.latestPromotionJobId
       );
-
     const allPresences: Date[] = [
       ...(databaseUser.reportsHistory ?? []),
       ...(databaseUser.reportsHistoryCG ?? []),
@@ -459,7 +726,7 @@ export default class SendCommand extends Command {
           }${hours}h${minutes < 10 ? "0" : ""}${minutes}min`;
         }
 
-        await message.reply({
+        await interaction.channel.send({
           embeds: [
             new EmbedBuilder()
               .setTitle(
@@ -550,10 +817,6 @@ export default class SendCommand extends Command {
                   inline: false,
                 },
               ])
-              .setFooter({
-                text: message.author.tag,
-                iconURL: message.author.displayAvatarURL(),
-              })
               .setColor(EmbedColors.LalaRed)
               .setThumbnail(
                 habbo
@@ -562,17 +825,25 @@ export default class SendCommand extends Command {
               ),
           ],
         });
+
+        return await interaction.reply({
+          content: `✅📇 Verificação Concluída`,
+          flags: MessageFlags.Ephemeral,
+        });
       } else {
         if (currentJob?.name !== "Vinculado") {
-          await message.reply({
-            content: `Erro: Função 'minDaysProm': ${minDaysProm} e 'latestPromotionDate': ${latestPromotionDate}, contate o Desenvolvedor.`,
+          return await interaction.reply({
+            content: `❌ Erro: Função 'minDaysProm': ${minDaysProm} e 'latestPromotionDate': ${latestPromotionDate}, contate o Desenvolvedor.`,
+            flags: MessageFlags.Ephemeral,
           });
         }
 
-        await message.reply({
+        await interaction.channel.send({
           embeds: [
             new EmbedBuilder()
-              .setTitle(`Verificação de ***${databaseUser.habboName}*** 📇`)
+              .setTitle(
+                `Perfil de Carreira de ***${databaseUser.habboName}*** 📇`
+              )
               .setFields([
                 {
                   name: "💼 Setor // Cargo",
@@ -593,10 +864,6 @@ export default class SendCommand extends Command {
                     : "Não Vinculado ⛓️‍💥 ❌",
                 },
               ])
-              .setFooter({
-                text: message.author.tag,
-                iconURL: message.author.displayAvatarURL(),
-              })
               .setColor(EmbedColors.LalaRed)
               .setThumbnail(
                 habbo
@@ -605,7 +872,16 @@ export default class SendCommand extends Command {
               ),
           ],
         });
+
+        return await interaction.reply({
+          content: `✅📇 Verificação Concluída`,
+          flags: MessageFlags.Ephemeral,
+        });
       }
     }
+    return await interaction.reply({
+      content: `✅ Comando finalizado.`,
+      flags: MessageFlags.Ephemeral,
+    });
   }
 }
