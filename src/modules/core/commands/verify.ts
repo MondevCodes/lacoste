@@ -86,14 +86,6 @@ export default class SendCommand extends Command {
       await this.container.utilities.habbo.getProfile(targetResult)
     ).unwrapOr(undefined);
 
-    if (!onlyHabbo?.name) {
-      return await interaction.reply({
-        content:
-          "⚠️  Não consegui encontrar o perfil do usuário no Habbo, talvez sua conta esteja deletada ou renomeada? Veja se o perfil do usuário no jogo está como público.",
-        flags: MessageFlags.Ephemeral,
-      });
-    }
-
     const rawName = targetResult.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
     const resultRaw: any = await this.container.prisma.$runCommandRaw({

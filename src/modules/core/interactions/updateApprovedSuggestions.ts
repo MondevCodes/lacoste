@@ -21,6 +21,8 @@ import {
   TextInputStyle,
 } from "discord.js";
 
+const pendingRequests = new Map<string, number>();
+
 @ApplyOptions<InteractionHandler.Options>({
   interactionHandlerType: InteractionHandlerTypes.Button,
 })
@@ -74,6 +76,21 @@ export class UpdateApprovedSuggestionsInteractionHandler extends InteractionHand
   }
 
   public override async run(interaction: ButtonInteraction) {
+    if (interaction.customId === FormIds.adicionarSugestao) {
+      if (pendingRequests.has(interaction.user.id)) {
+        const startTime = pendingRequests.get(interaction.user.id)!;
+        const elapsedTime = Date.now() - startTime;
+        const remainingTime = Math.ceil((60 * 1000 - elapsedTime) / 1000);
+
+        return await interaction.reply({
+          content: `⏳ Você já tem uma criação de uma sugestão aprovada em andamento. Aguarde **${remainingTime}s** para evitar duplicidades antes de tentar novamente.`,
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+
+      pendingRequests.set(interaction.user.id, Date.now());
+    }
+
     const inputs = [
       new TextInputBuilder()
         .setCustomId("target")
@@ -193,6 +210,7 @@ export class UpdateApprovedSuggestionsInteractionHandler extends InteractionHand
       invalidType ||
       (!msgLink && modalResult.link)
     ) {
+      pendingRequests.delete(interaction.user.id);
       return await interactionFromModal.editReply({
         content: `⚠️  Informações Inválidas:
         ${
@@ -311,6 +329,7 @@ export class UpdateApprovedSuggestionsInteractionHandler extends InteractionHand
             continue;
           }
         } catch (error) {
+          pendingRequests.delete(interaction.user.id);
           return await interactionFromModal.editReply({
             content: "⏰ ***Tempo esgotado. Operação cancelada.***",
             components: [],
@@ -360,12 +379,14 @@ export class UpdateApprovedSuggestionsInteractionHandler extends InteractionHand
           components: [],
         });
       } else {
+        pendingRequests.delete(interaction.user.id);
         return await interactionConfirm.update({
           content: "❌ Operação cancelada.",
           components: [],
         });
       }
     } catch (error) {
+      pendingRequests.delete(interaction.user.id);
       return await confirmMessage.edit({
         content: "⏰ Tempo esgotado. Operação cancelada.",
         components: [],
@@ -395,10 +416,12 @@ export class UpdateApprovedSuggestionsInteractionHandler extends InteractionHand
           },
         });
 
-      if (existsSuggestion)
+      if (existsSuggestion) {
+        pendingRequests.delete(interaction.user.id);
         return await interactionFromModal.editReply({
           content: `⚠️  A sugestão que está tentando **criar já existe** para ***${targetDB.habboName}***.`,
         });
+      }
 
       const createSuggestion = await this.container.prisma.suggestions
         .create({
@@ -441,6 +464,7 @@ export class UpdateApprovedSuggestionsInteractionHandler extends InteractionHand
       );
 
       if (!targetMember) {
+        pendingRequests.delete(interaction.user.id);
         return await interactionFromModal.editReply({
           content: `⚠️  Ocorreu um erro ao tentar notificar ${targetDB.habboName} de sua sugestão aprovada, verifique se está ingresso no servidor.`,
         });
@@ -478,6 +502,7 @@ export class UpdateApprovedSuggestionsInteractionHandler extends InteractionHand
         });
     } else {
       if (!suggestions) {
+        pendingRequests.delete(interaction.user.id);
         return await interactionFromModal.editReply({
           content: `🚫 Membro ***${targetDB.habboName}*** não possui sugestões aprovadas registradas no banco de dados.`,
         });
@@ -614,6 +639,7 @@ export class UpdateApprovedSuggestionsInteractionHandler extends InteractionHand
 
     const logMessageLink = `https://discord.com/channels/${logMessage.guildId}/${logMessage.channelId}/${logMessage.id}`;
 
+    pendingRequests.delete(interaction.user.id);
     return await interactionFromModal.editReply({
       content: `📩 ✅ Sugestão Aprovada ${
         interaction.customId === FormIds.adicionarSugestao
