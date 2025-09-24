@@ -82,10 +82,14 @@ export class UpdateApprovedSuggestionsInteractionHandler extends InteractionHand
         const elapsedTime = Date.now() - startTime;
         const remainingTime = Math.ceil((60 * 1000 - elapsedTime) / 1000);
 
-        return await interaction.reply({
-          content: `⏳ Você já tem uma criação de uma sugestão aprovada em andamento. Aguarde **${remainingTime}s** para evitar duplicidades antes de tentar novamente.`,
-          flags: MessageFlags.Ephemeral,
-        });
+        if (remainingTime <= 0) {
+          pendingRequests.delete(interaction.user.id);
+        } else {
+          return await interaction.reply({
+            content: `⏳ Você já tem uma criação de uma sugestão aprovada em andamento. Aguarde **${remainingTime}s** para evitar duplicidades antes de tentar novamente.`,
+            flags: MessageFlags.Ephemeral,
+          });
+        }
       }
 
       pendingRequests.set(interaction.user.id, Date.now());
@@ -102,7 +106,7 @@ export class UpdateApprovedSuggestionsInteractionHandler extends InteractionHand
       new TextInputBuilder()
         .setCustomId("notes")
         .setLabel("Observação")
-        .setPlaceholder("Adicione suas observações a essa sugestão")
+        .setPlaceholder("Adicione suas observações")
         .setStyle(TextInputStyle.Short)
         .setRequired(false),
     ];
@@ -127,7 +131,7 @@ export class UpdateApprovedSuggestionsInteractionHandler extends InteractionHand
         0,
         new TextInputBuilder()
           .setCustomId("link")
-          .setLabel("Insira o Link da Mensagem do Feedback")
+          .setLabel("Link da Mensagem do Feedback")
           .setPlaceholder("https://discord.com/channels/123/456/7890")
           .setStyle(TextInputStyle.Short)
           .setRequired(true)
@@ -139,9 +143,7 @@ export class UpdateApprovedSuggestionsInteractionHandler extends InteractionHand
         new TextInputBuilder()
           .setCustomId("suggestionId")
           .setLabel("Insira o ID da Sugestão")
-          .setPlaceholder(
-            "ID é adquirido no comando /verificar perfil sugestão. Ex: 3"
-          )
+          .setPlaceholder("ID da Sugestão. Pegar em Logs ou /verificar")
           .setStyle(TextInputStyle.Short)
           .setRequired(true)
       );
