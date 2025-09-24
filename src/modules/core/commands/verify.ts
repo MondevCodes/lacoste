@@ -45,7 +45,7 @@ export default class SendCommand extends Command {
           options
             .setName("perfil")
             .setDescription("Carreira / Sugestões")
-            .setRequired(false)
+            .setRequired(true)
             .addChoices(
               { name: "Carreira", value: "carreira" },
               { name: "Sugestão", value: "sugestao" }
@@ -54,7 +54,9 @@ export default class SendCommand extends Command {
         .addStringOption((options) =>
           options
             .setName("tipo_sugestão")
-            .setDescription("Selecione um tipo de Sugestão")
+            .setDescription(
+              "Para filtrar as sugestões selecione um tipo de Sugestão"
+            )
             .setRequired(false)
             .addChoices(
               { name: "SM", value: "SM" },
