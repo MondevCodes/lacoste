@@ -13,6 +13,7 @@ import {
   TextInputStyle,
   GuildMemberRoleManager,
   type ButtonInteraction,
+  MessageFlags,
 } from "discord.js";
 
 import { ApplyOptions } from "@sapphire/decorators";
@@ -130,9 +131,10 @@ export class HireInteractionHandler extends InteractionHandler {
     interaction: ButtonInteraction,
     { action }: ParsedData
   ) {
+    const interactionTag = interaction.user.tag;
     if (!interaction.inGuild()) {
       this.container.logger.warn(
-        `[HireInteractionHandler#run] ${interaction.user.tag} tried to perform an action in a DM.`
+        `[HireInteractionHandler#run] ${interactionTag} tried to perform an action in a DM.`
       );
 
       return;
@@ -158,34 +160,56 @@ export class HireInteractionHandler extends InteractionHandler {
       ).unwrapOr(undefined);
 
       if (!onlyHabbo?.name) {
-        await modalInteraction.editReply({
+        await modalInteraction.reply({
           content:
             "Não consegui encontrar o perfil do usuário no Habbo, talvez sua conta esteja deletada ou renomeada? Veja se o perfil do usuário no jogo está como público.",
+          flags: MessageFlags.Ephemeral,
         });
+      }
 
+      const rawName = result.Target.trim().replace(
+        /[.*+?^${}()|[\]\\]/g,
+        "\\$&"
+      );
+
+      const resultRaw: any = await this.container.prisma.$runCommandRaw({
+        find: "User",
+        filter: {
+          habboName: {
+            $regex: `^${rawName}$`,
+            $options: "i",
+          },
+        },
+        projection: {
+          _id: 1,
+          discordId: 1,
+          habboName: 1,
+          latestPromotionDate: 1,
+          latestPromotionRoleId: 1,
+          latestPromotionJobId: 1,
+          discordLink: 1,
+        },
+        limit: 1,
+      });
+
+      if (!resultRaw.cursor?.firstBatch.length) {
+        await modalInteraction.reply({
+          content:
+            "⚠️  O usuário **não está vinculado** na nossa base de dados, verifique o nome ou **vincule-o**.",
+          flags: MessageFlags.Ephemeral,
+        });
         return;
       }
 
-      const targetDBOnlyHabbo = await this.container.prisma.user.findUnique({
-        where: { habboId: onlyHabbo.uniqueId },
-        select: {
-          id: true,
-          discordId: true,
-          latestPromotionDate: true,
-          latestPromotionRoleId: true,
-          latestPromotionJobId: true,
-          habboName: true,
-          discordLink: true,
-        },
-      });
+      const targetDB = resultRaw.cursor.firstBatch[0];
+
+      const guild =
+        interaction.guild ??
+        (await interaction.client.guilds.fetch(interaction.guildId));
 
       // START USER WITHOUT DISCORD
-      if (targetDBOnlyHabbo?.discordLink === false) {
-        const guild =
-          interaction.guild ??
-          (await interaction.client.guilds.fetch(interaction.guildId));
-
-        if (!targetDBOnlyHabbo.latestPromotionRoleId) {
+      if (targetDB?.discordLink === false) {
+        if (!targetDB.latestPromotionRoleId) {
           await modalInteraction.editReply({
             content:
               "Não consegui encontrar o setor do usuário, talvez sua conta esteja deletada ou renomeada?",
@@ -196,7 +220,7 @@ export class HireInteractionHandler extends InteractionHandler {
 
         const currentSectorEnvironment = Object.values(
           ENVIRONMENT.SECTORS_ROLES
-        ).find((r) => r.id === targetDBOnlyHabbo.latestPromotionRoleId);
+        ).find((r) => r.id === targetDB.latestPromotionRoleId);
 
         if (!currentSectorEnvironment) {
           await modalInteraction.editReply({
@@ -213,7 +237,7 @@ export class HireInteractionHandler extends InteractionHandler {
 
         const currentJobEnvironment = Object.values(
           ENVIRONMENT.JOBS_ROLES
-        ).find((r) => r.id === targetDBOnlyHabbo.latestPromotionJobId);
+        ).find((r) => r.id === targetDB.latestPromotionJobId);
 
         if (!currentJobEnvironment) {
           await modalInteraction.editReply({
@@ -244,7 +268,7 @@ export class HireInteractionHandler extends InteractionHandler {
           await modalInteraction.reply({
             content:
               "Este colaborador não pode ser contratado pois já é o cargo mais alto.",
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
           });
 
           return;
@@ -275,6 +299,14 @@ export class HireInteractionHandler extends InteractionHandler {
         if (!selectedJob)
           throw new Error("Unexpected error while selecting job role.");
 
+        if (selectedJob.id === ENVIRONMENT.JOBS_ROLES.ESTAGIÁRIO.id) {
+          await modalInteraction.editReply({
+            content: `🚫 **Ação não permitida.** Não é possivel **Contratar** um ***Estagiário***, por favor prossiga para **Promoção**.`,
+            components: [],
+          });
+          return;
+        }
+
         const authorResult = await Result.fromAsync(
           this.container.utilities.habbo.inferTargetGuildMember(
             `@${interaction.user.tag}`,
@@ -293,14 +325,18 @@ export class HireInteractionHandler extends InteractionHandler {
 
         const confirmationEmbed = new EmbedBuilder()
           .setThumbnail(
-            `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo.figureString}`
+            onlyHabbo
+              ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo.figureString}`
+              : null
           )
           .setFooter({
-            text: `${onlyHabbo.name ?? targetDBOnlyHabbo.habboName}`,
+            text: `${onlyHabbo.name ?? targetDB.habboName}`,
           })
           .setTitle("Você tem certeza?")
           .setDescription(
-            `Você está contratando ${onlyHabbo.name} como <@&${selectedJob.id}>.`
+            `Você está contratando ${
+              onlyHabbo.name ?? targetDB.habboName
+            } como <@&${selectedJob.id}>.`
           )
           .setColor(EmbedColors.Default);
 
@@ -347,7 +383,9 @@ export class HireInteractionHandler extends InteractionHandler {
 
         const approvalEmbed = new EmbedBuilder()
           .setTitle(
-            `Solicitação de Contratação para ${onlyHabbo.name} como ${selectedJob.name}`
+            `Solicitação de Contratação para ${
+              onlyHabbo.name ?? targetDB.habboName
+            } como ${selectedJob.name}`
           )
           .setColor(EmbedColors.Default)
           .setAuthor({
@@ -355,7 +393,7 @@ export class HireInteractionHandler extends InteractionHandler {
             iconURL: interaction.user.displayAvatarURL(),
           })
           .setFooter({
-            text: targetDBOnlyHabbo.id,
+            text: targetDB._id.$oid,
           })
           .addFields([
             {
@@ -377,9 +415,7 @@ export class HireInteractionHandler extends InteractionHandler {
             {
               name: "🗓️ Última Promoção",
               value:
-                targetDBOnlyHabbo.latestPromotionDate?.toLocaleString(
-                  "pt-BR"
-                ) ?? "N/A",
+                targetDB.latestPromotionDate?.toLocaleString("pt-BR") ?? "N/A",
               inline: true,
             },
             {
@@ -389,11 +425,13 @@ export class HireInteractionHandler extends InteractionHandler {
             },
           ])
           .setImage(
-            `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo?.figureString}&size=b`
+            onlyHabbo
+              ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo?.figureString}&size=b`
+              : null
           );
 
         await this.container.prisma.user.update({
-          where: { id: targetDBOnlyHabbo.id },
+          where: { id: targetDB._id.$oid },
           data: { pendingPromotionRoleId: selectedJob.id },
         });
 
@@ -439,7 +477,7 @@ export class HireInteractionHandler extends InteractionHandler {
         await modalInteraction.reply({
           content:
             "Não consegui encontrar o perfil do colaborador, tem certeza que ele está registrado no servidor?",
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
 
         return;
@@ -453,7 +491,7 @@ export class HireInteractionHandler extends InteractionHandler {
         await modalInteraction.reply({
           content:
             "Não consegui encontrar o perfil do colaborador, tem certeza que ele está registrado no servidor?",
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
 
@@ -472,7 +510,7 @@ export class HireInteractionHandler extends InteractionHandler {
         await modalInteraction.reply({
           content:
             "Este colaborador não pode ser contratado pois já é o cargo mais alto.",
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
 
         return;
@@ -503,6 +541,14 @@ export class HireInteractionHandler extends InteractionHandler {
       if (!selectedJob)
         throw new Error("Unexpected error while selecting job role.");
 
+      if (selectedJob.id === ENVIRONMENT.JOBS_ROLES.ESTAGIÁRIO.id) {
+        await modalInteraction.editReply({
+          content: `🚫 **Ação não permitida.** Não é possivel **Contratar** um ***Estagiário***, por favor prossiga para **Promoção**.`,
+          components: [],
+        });
+        return;
+      }
+
       const authorResult = await Result.fromAsync(
         this.container.utilities.habbo.inferTargetGuildMember(
           `@${interaction.user.tag}`,
@@ -521,7 +567,9 @@ export class HireInteractionHandler extends InteractionHandler {
 
       const confirmationEmbed = new EmbedBuilder()
         .setThumbnail(
-          `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}`
+          targetHabbo
+            ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}`
+            : null
         )
         .setFooter({
           text: `@${targetMember.user.tag} | ${targetHabbo?.name ?? "N/D"}`,
@@ -529,7 +577,9 @@ export class HireInteractionHandler extends InteractionHandler {
         })
         .setTitle("Você tem certeza?")
         .setDescription(
-          `Você está contratando ${targetHabbo?.name} como <@&${selectedJob.id}>.`
+          `Você está contratando ${
+            targetHabbo?.name ?? targetDB.habboName
+          } como <@&${selectedJob.id}>.`
         )
         .setColor(EmbedColors.Default);
 
@@ -573,7 +623,9 @@ export class HireInteractionHandler extends InteractionHandler {
 
       const approvalEmbed = new EmbedBuilder()
         .setTitle(
-          `Solicitação de Contratação para ${targetHabbo?.name} como ${selectedJob.name}`
+          `Solicitação de Contratação para ${
+            targetHabbo?.name ?? targetDB.habboName
+          } como ${selectedJob.name}`
         )
         .setColor(EmbedColors.Default)
         .setAuthor({
@@ -614,7 +666,9 @@ export class HireInteractionHandler extends InteractionHandler {
           },
         ])
         .setImage(
-          `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`
+          targetHabbo
+            ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`
+            : null
         );
 
       await this.container.prisma.user.update({
@@ -642,7 +696,7 @@ export class HireInteractionHandler extends InteractionHandler {
     if (!targetUserId) {
       await interaction.followUp({
         content: "Ocorreu um erro, contate o desenvolvedor.",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
 
       return;
@@ -677,7 +731,7 @@ export class HireInteractionHandler extends InteractionHandler {
     if (!targetUser) {
       await interaction.reply({
         content: "Ocorreu um erro, contate o desenvolvedor.",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
 
       return;
@@ -690,7 +744,7 @@ export class HireInteractionHandler extends InteractionHandler {
     if (!targetUser.pendingPromotionRoleId) {
       await interaction.reply({
         content: "Ocorreu um erro, contate o desenvolvedor.",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
 
       return;
@@ -704,7 +758,7 @@ export class HireInteractionHandler extends InteractionHandler {
       await interaction.reply({
         content:
           "Não consegui encontrar o cargo pendente, contate o desenvolvedor.",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
 
       return;
@@ -720,7 +774,7 @@ export class HireInteractionHandler extends InteractionHandler {
       await interaction.reply({
         content:
           "Não consegui encontrar o setor da contratação, contate o desenvolvedor.",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
 
       return;
