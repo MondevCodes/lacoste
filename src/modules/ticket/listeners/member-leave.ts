@@ -30,6 +30,33 @@ export class OnGuildMemberRemoveListener extends Listener {
       `Listener guildMemberRemove, a member left the server USER.ID: ${member.user.id}`
     );
 
+    const rolesToUnlinkDiscord = [
+      ENVIRONMENT.JOBS_ROLES.ESTAGIÁRIO.id,
+      ENVIRONMENT.JOBS_ROLES.LÍDER_DE_MODELO.id,
+    ];
+
+    if (rolesToUnlinkDiscord.some((roleId) => member.roles.cache.has(roleId))) {
+      this.container.logger.info(
+        `[OnGuildMemberRemoveListener#run] Membro "${
+          member.user.displayName ?? member.displayName
+        }" com o cargo de "Estagiário" ou "Líder de Modelos" saiu do servidor principal e seu discord será desvinculado do banco de dados.`
+      );
+
+      await this.container.prisma.user
+        .update({
+          where: { discordId: member.user.id },
+          data: { discordLink: false },
+        })
+        .catch((error) => {
+          this.container.logger.error({
+            message: `[OnGuildMemberRemoveListener#run] Membro "${member.user.displayName}" com o cargo de "Estagiário" ou "Líder de Modelos" saiu do servidor principal e seu discord falhou em ser desvinculado do banco de dados.`,
+            error: error.message,
+          });
+        });
+
+      return;
+    }
+
     const targetDBamount = await this.container.prisma.transaction.findMany({
       where: {
         user: { discordId: member.user.id },
@@ -162,7 +189,7 @@ export class OnGuildMemberRemoveListener extends Listener {
             ])
             .setThumbnail(
               onlyHabbo
-                ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo.figureString}&size=b`
+                ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo?.figureString}&size=b`
                 : null
             ),
         ],
@@ -193,7 +220,7 @@ export class OnGuildMemberRemoveListener extends Listener {
             ])
             .setThumbnail(
               onlyHabbo
-                ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo.figureString}&size=b`
+                ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo?.figureString}&size=b`
                 : null
             ),
         ],
