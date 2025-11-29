@@ -42,16 +42,27 @@ jobs:
           echo "$ALL_COMMENTS" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
       - name: Send Discord notification
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_COMMENTS: ${{ steps.get-comments.outputs.result }}
+          GITHUB_USER: ${{ steps.discord-mapping.outputs.github_user }}
+          DISCORD_ID: ${{ steps.discord-mapping.outputs.discord_id }}
         run: |
           DISCORD_MENTION=""
-          if [ -n "${{ steps.discord-mapping.outputs.discord_id }}" ]; then
-            DISCORD_MENTION=" / <@${{ steps.discord-mapping.outputs.discord_id }}>"
+          if [ -n "$DISCORD_ID" ]; then
+            DISCORD_MENTION=" / <@${DISCORD_ID}>"
           fi
-          MESSAGE="📜🤖 **Bot Lala Atualizado @everyone!**
-          **Autor da Atualização:** ${{ steps.discord-mapping.outputs.github_user }}${DISCORD_MENTION}
-          **Notas da Atualização:**
-          ${{ github.event.pull_request.body }} ${{ steps.get-comments.outputs.result }}"
+
+          # Sanitizar e limitar o corpo do PR
+          CLEAN_BODY=$(echo "$PR_BODY" | tr '\n\r' ' ' | head -c 500)
+          CLEAN_COMMENTS=$(echo "$PR_COMMENTS" | tr '\n\r' ' ' | head -c 300)
+
+          MESSAGE=$(printf "📜🤖 **Bot Lala Atualizado @everyone!**\n**Autor da Atualização:** %s%s\n**Notas da Atualização:**\n%s %s" "$GITHUB_USER" "$DISCORD_MENTION" "$CLEAN_BODY" "$CLEAN_COMMENTS")
+
+          # Usar jq para criar JSON válido
+          JSON_PAYLOAD=$(jq -n --arg msg "$MESSAGE" '{content: $msg}')
+
           curl -H "Content-Type: application/json" \
                -X POST \
-               -d "{\"content\": \"$MESSAGE\"}" \
+               -d "$JSON_PAYLOAD" \
                "${{ secrets.DISCORD_WEBHOOK }}"

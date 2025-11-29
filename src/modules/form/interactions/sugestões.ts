@@ -6,6 +6,7 @@ import {
 
 import {
   EmbedBuilder,
+  MessageFlags,
   TextInputBuilder,
   TextInputStyle,
   type ButtonInteraction,
@@ -64,30 +65,78 @@ export class SuggestionFormInteractionHandler extends InteractionHandler {
         }
       );
 
-    const { member: targetMember, habbo: targetHabbo } =
-      await this.container.utilities.habbo.inferTargetGuildMember(
-        result.Target
-      );
-
-    if (!interactionFromModal.deferred) {
-      await interaction.deferReply({ ephemeral: true });
-    }
-
-    if (!targetMember) {
-      await interactionFromModal.editReply({
-        content: "Não foi possível encontrar o usuário informado.",
-      });
-
-      return;
-    }
+    this.container.logger.info(
+      `Inicio do envio da Sugestão de ${result.Target} para análise por ${interaction.user.tag}. 📩⌛`
+    );
 
     const guild =
       interaction.guild ??
       (await interaction.client.guilds.fetch(ENVIRONMENT.GUILD_ID));
 
+    const rawName = result.Target.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+    const resultRaw: any = await this.container.prisma.$runCommandRaw({
+      find: "User",
+      filter: {
+        habboName: {
+          $regex: `^${rawName}$`,
+          $options: "i",
+        },
+      },
+      projection: {
+        _id: 1,
+        discordId: 1,
+        habboName: 1,
+        habboId: 1,
+      },
+      limit: 1,
+    });
+
+    if (!resultRaw.cursor?.firstBatch.length) {
+      await interaction.reply({
+        content: `⚠️  O usuário ${result.Target} **não está vinculado** na nossa base de dados, verifique o nome ou **vincule-o**.`,
+        flags: MessageFlags.Ephemeral,
+      });
+      this.container.logger.error(
+        `Tentativa de envio de Sugestão de ${result.Target} por ${interaction.user.tag} falhou em encontrar o usuário no banco de dados. 📩❌`
+      );
+      return;
+    }
+
+    const rawTargetDB = resultRaw.cursor.firstBatch[0];
+
+    const targetDB = {
+      ...rawTargetDB,
+      _id: rawTargetDB._id?.$oid || rawTargetDB._id,
+      id: rawTargetDB._id?.$oid || rawTargetDB._id,
+    };
+
+    const onlyHabbo = (
+      await this.container.utilities.habbo.getProfile(targetDB.habboId)
+    ).unwrapOr(undefined);
+
+    const targetDiscord = await interaction.guild.members.fetch(
+      targetDB.discordId
+    );
+    if (!targetDiscord) {
+      this.container.logger.error(
+        `Tentativa de envio de Sugestão de ${result.Target} por ${interaction.user.tag} falhou em encontrar o usuário no banco de dados do Discord. 📩❌`
+      );
+      await interaction.reply({
+        content: `⚠️  Usuário alvo da indicação ${result.Target} não foi encontrado na base de dados do Discord.`,
+        flags: MessageFlags.Ephemeral,
+      });
+
+      return;
+    }
+
+    if (!interactionFromModal.deferred) {
+      await interaction.deferReply({ ephemeral: true });
+    }
+
     const targetHighestSectorId =
       this.container.utilities.discord.inferHighestJobRole(
-        targetMember.roles.cache.map((r) => r.id)
+        targetDiscord.roles.cache.map((r) => r.id)
       );
 
     const targetHighestSector = targetHighestSectorId
@@ -97,17 +146,17 @@ export class SuggestionFormInteractionHandler extends InteractionHandler {
     const embed = new EmbedBuilder()
       .setTitle("Sugestão")
       .setThumbnail(
-        targetHabbo
-          ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${targetHabbo?.figureString}&size=b`
+        onlyHabbo
+          ? `https://www.habbo.com/habbo-imaging/avatarimage?figure=${onlyHabbo?.figureString}&size=b`
           : null
       )
       .addFields([
         {
           name: "Autor(a)",
           value: `${
-            targetHabbo?.name.replaceAll(MarkdownCharactersRegex, "\\$&") ??
+            onlyHabbo?.name.replaceAll(MarkdownCharactersRegex, "\\$&") ??
             result.Target
-          } // ${targetMember.toString()}`,
+          } // ${targetDiscord.toString()}`,
         },
         {
           name: "Diretor(a)",
@@ -141,6 +190,10 @@ export class SuggestionFormInteractionHandler extends InteractionHandler {
     await channel.send({
       embeds: [embed],
     });
+
+    this.container.logger.info(
+      `Sugestão de ${result.Target} enviada para análise por ${interaction.user.tag}. 📩✅`
+    );
 
     await interactionFromModal.deleteReply();
   }
