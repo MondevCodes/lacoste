@@ -24,6 +24,8 @@ jobs:
           echo "github_user=$GITHUB_USER" >> $GITHUB_OUTPUT
       - name: Get PR comments
         id: get-comments
+        env:
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
         run: |
           COMMENTS_RESPONSE=$(curl -s -H "Authorization: token ${{ github.token }}" \
             "https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments")
@@ -31,11 +33,11 @@ jobs:
             "https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments")
           ALL_COMMENTS=""
           if [ "$COMMENTS_RESPONSE" != "[]" ]; then
-            GENERAL_COMMENTS=$(echo "$COMMENTS_RESPONSE" | jq -r '.[] | .body' | head -c 500)
+            GENERAL_COMMENTS=$(echo "$COMMENTS_RESPONSE" | jq -r --arg author "$PR_AUTHOR" '.[] | select(.user.login == $author) | .body' | head -c 500)
             ALL_COMMENTS="$ALL_COMMENTS $GENERAL_COMMENTS"
           fi
           if [ "$REVIEW_COMMENTS_RESPONSE" != "[]" ]; then
-            REVIEW_COMMENTS=$(echo "$REVIEW_COMMENTS_RESPONSE" | jq -r '.[] | .body' | head -c 500)
+            REVIEW_COMMENTS=$(echo "$REVIEW_COMMENTS_RESPONSE" | jq -r --arg author "$PR_AUTHOR" '.[] | select(.user.login == $author) | .body' | head -c 500)
             ALL_COMMENTS="$ALL_COMMENTS $REVIEW_COMMENTS"
           fi
           echo "result<<EOF" >> $GITHUB_OUTPUT
@@ -57,7 +59,7 @@ jobs:
           CLEAN_BODY=$(echo "$PR_BODY" | tr '\n\r' ' ' | head -c 500)
           CLEAN_COMMENTS=$(echo "$PR_COMMENTS" | tr '\n\r' ' ' | head -c 300)
 
-          MESSAGE=$(printf "📜🤖 **Bot Lala Atualizado @everyone!**\n**Autor da Atualização:** %s%s\n**Notas da Atualização:**\n%s %s" "$GITHUB_USER" "$DISCORD_MENTION" "$CLEAN_BODY" "$CLEAN_COMMENTS")
+          MESSAGE=$(printf "📜🤖 **Bot Lala Atualizado @everyone!**\n\n**Autor da Atualização:** %s%s\n\n**Notas da Atualização:**\n%s %s" "$GITHUB_USER" "$DISCORD_MENTION" "$CLEAN_BODY" "$CLEAN_COMMENTS")
 
           # Usar jq para criar JSON válido
           JSON_PAYLOAD=$(jq -n --arg msg "$MESSAGE" '{content: $msg}')
